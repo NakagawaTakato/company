@@ -1,0 +1,27 @@
+{
+  "name": "bluetab-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode fastapi",
+    "dev:fastapi": "vite --mode fastapi",
+    "build:fastapi": "tsc --noEmit && vite build --mode fastapi",
+    "preview:fastapi": "vite preview --mode fastapi",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "react-router": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0"
+  }
+}

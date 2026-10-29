@@ -1,0 +1,19 @@
+# 設定（パスワードを含むため共有しない）
+.env
+
+# データベース
+data/*.db
+data/*.db-journal
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# React
+frontend/node_modules/
+frontend/dist/
+
+# Outlook のサインイン情報（パスワードと同じく共有しない）
+data/microsoft-oauth.json
+data/*.tmp

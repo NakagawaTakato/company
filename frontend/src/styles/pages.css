@@ -1,0 +1,285 @@
+/* ------------------------------------------------------------------
+   下層ページ（お問い合わせ・LINE・事業者情報）
+   ------------------------------------------------------------------ */
+.subpage {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+.subpage--line {
+  max-width: 600px;
+}
+
+.subpage--form {
+  max-width: 680px;
+}
+
+.subpage--doc {
+  max-width: 800px;
+}
+
+.subpage__header {
+  padding: 28px 0 0;
+}
+
+.subpage__main {
+  padding-top: 48px;
+}
+
+.subpage__back {
+  margin-top: 30px;
+}
+
+.page-title {
+  font-size: 32px;
+  line-height: 1.5;
+}
+
+.page-lead {
+  margin: 10px 0 30px;
+  color: var(--c-text);
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+/* ---------------------------------------------------------------- お問い合わせフォーム */
+.btn--submit {
+  margin-top: 6px;
+  padding: 0 36px;
+  font-size: 17px;
+}
+
+.policy-box {
+  height: 280px;
+  overflow-y: auto;
+  padding: 18px 20px 8px;
+  border: 2px solid var(--c-field);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  overscroll-behavior: contain;
+}
+
+.policy h3 {
+  font-size: 18px;
+}
+
+.policy h4 {
+  margin: 16px 0 6px;
+  color: var(--c-primary);
+  font-size: 16px;
+}
+
+.policy p,
+.policy li {
+  color: var(--c-ink);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.policy > p:first-of-type {
+  margin-top: 6px;
+}
+
+.policy ul {
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.policy p:last-child {
+  margin-bottom: 10px;
+}
+
+.policy-hint {
+  margin: 8px 0 12px;
+  color: var(--c-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.agree-box {
+  padding: 16px 18px 18px;
+  border: 2px solid var(--c-field);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+}
+
+.agree-box__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.agree-box--disabled .agree-box__label {
+  color: #98a3b5;
+  cursor: not-allowed;
+}
+
+.agree-box--disabled input {
+  cursor: not-allowed;
+}
+
+.agree-box p {
+  margin-top: 6px;
+  color: var(--c-text);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.complete-card {
+  padding: 40px 28px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  text-align: center;
+}
+
+.complete-card__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+  color: var(--c-success);
+}
+
+.complete-card .page-lead {
+  margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------- LINE */
+.line-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 24px 34px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  text-align: center;
+}
+
+.line-card__title {
+  font-size: 23px;
+}
+
+.line-card__text {
+  max-width: 320px;
+  margin-top: 8px;
+  color: var(--c-text);
+  font-size: 15px;
+  line-height: 1.95;
+}
+
+.line-card__qr {
+  margin: 18px 0 30px;
+  padding: 20px;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.line-card .btn {
+  min-width: 140px;
+  margin-top: 18px;
+}
+
+/* ---------------------------------------------------------------- 事業者情報 */
+.doc h2 {
+  margin: 48px 0 14px;
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.doc h2:first-child {
+  margin-top: 10px;
+}
+
+.doc p,
+.doc li {
+  color: var(--c-body);
+  font-size: 16px;
+  line-height: 1.85;
+}
+
+.doc ul {
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.doc li + li {
+  margin-top: 8px;
+}
+
+.doc ul + p,
+.doc p + p {
+  margin-top: 6px;
+}
+
+.doc p + ul {
+  margin-top: 6px;
+}
+
+.doc strong {
+  color: var(--c-ink);
+}
+
+.info-table {
+  overflow: hidden;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.info-table__row {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+}
+
+.info-table__row + .info-table__row {
+  border-top: 1px solid var(--c-border);
+}
+
+.info-table dt,
+.info-table dd {
+  padding: 17px 22px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.info-table dt {
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+.info-table dd {
+  color: var(--c-ink);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .subpage__main {
+    padding-top: 40px;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
+
+  .form-card {
+    padding: 28px 22px 26px;
+  }
+
+  .info-table__row {
+    grid-template-columns: 1fr;
+  }
+
+  .info-table dt {
+    padding-bottom: 0;
+  }
+
+  .info-table dd {
+    padding-top: 4px;
+  }
+}
