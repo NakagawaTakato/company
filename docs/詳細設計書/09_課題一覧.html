@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>09 課題一覧｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">09 課題一覧</h1>
+<p>設計書の「仕様」と今のコードの違い、気づいた不具合、まだ決まっていないことの一覧です。直したら「状態」を「対応済み」にし、本文の「※課題 No.n」の注記を消します。</p>
+<h2 id="sec-2">1. 一覧</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>区分</th>
+<th>重要度</th>
+<th>内容</th>
+<th>状態</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>仕様との違い</td>
+<td>高</td>
+<td>お問い合わせを削除しても、送信履歴が残る</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>2</td>
+<td>仕様との違い</td>
+<td>中</td>
+<td>領収書の発行日が、印刷のたびに変わる</td>
+<td>未対応（直し方は未決）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>未決</td>
+<td>中</td>
+<td>操作の記録・ログイン履歴に保存期間がなく、削除したお問い合わせのお名前・メールが残る</td>
+<td>未決</td>
+</tr>
+<tr>
+<td>4</td>
+<td>不具合</td>
+<td>低</td>
+<td>見積書の画面で「有効期限は発行日以降…」のエラーが表示されない</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>5</td>
+<td>不具合</td>
+<td>低</td>
+<td>「送信中」のまま残った送信履歴を、画面から送り直し・削除できない</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>6</td>
+<td>不具合</td>
+<td>低</td>
+<td>返信を送り直して送れても、お問い合わせの記録と対応状況が変わらない</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>7</td>
+<td>不具合</td>
+<td>低</td>
+<td>サイト内容で、あるタブを保存すると、ほかのタブの保存していない入力が元に戻る</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>8</td>
+<td>確認</td>
+<td>−</td>
+<td>収入印紙の注意が「現金」のときしか出ない</td>
+<td>要確認</td>
+</tr>
+<tr>
+<td>9</td>
+<td>ドキュメント</td>
+<td>低</td>
+<td>入金一覧 API の説明（「期間内の合計つき」）と実際の動きが違う</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>10</td>
+<td>不具合</td>
+<td>低</td>
+<td>ダッシュボードの「今月の入金」に、来月以降の入金日のものも入る</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>11</td>
+<td>確認</td>
+<td>低</td>
+<td>いちばん新しい見積書・領収書を削除すると、次に同じ番号が付く</td>
+<td>未対応</td>
+</tr>
+<tr>
+<td>12</td>
+<td>ドキュメント</td>
+<td>低</td>
+<td>プロジェクトの README.md の記載が、今の構成と合わない</td>
+<td>未対応</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-3">2. 詳細</h2>
+<h3 id="sec-4">No.1 お問い合わせを削除しても、送信履歴が残る</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>仕様</td>
+<td>お問い合わせを削除したら（管理画面からの削除・自動削除とも）、そのお問い合わせの送信履歴も削除する（2026-10-30 に決定）</td>
+</tr>
+<tr>
+<td>今の動き</td>
+<td><code>mail_outbox.inquiry_id</code> の外部キーが <code>ON DELETE SET NULL</code> のため、送信履歴の行が残り、お問い合わせとのひもづけだけが外れる。新着通知・自動返信の本文には、お名前・メール・電話番号などが入っている。削除の確認文（「メモや送信履歴も消え、元に戻せません」）とも合わない</td>
+</tr>
+<tr>
+<td>影響</td>
+<td>「個人情報の取扱い」の「不要になった情報は削除します」が守られない。自動削除を有効にしても、送信履歴に個人情報が残る</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>お問い合わせを削除する処理（<code>inquiries.delete_inquiry</code>・<code>maintenance.run_retention</code>）で、先に <code>mail_outbox</code> の該当する行を削除する。または、外部キーを <code>ON DELETE CASCADE</code> に変えるマイグレーションを追加する（SQLite では、外部キーを変えるには表を作り直す必要がある）</td>
+</tr>
+<tr>
+<td>関係する箇所</td>
+<td><a href="04_API%E8%A8%AD%E8%A8%88.html">04</a> API-14、<a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> 4.8・5章、<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 11.2、<a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">07</a> 12章</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-5">No.2 領収書の発行日が、印刷のたびに変わる</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>仕様</td>
+<td>発行日は一度決まったら、印刷し直しても変わらない（2026-10-30 に決定）</td>
+</tr>
+<tr>
+<td>今の動き</td>
+<td>印刷画面（A-09）を開いた日（今日）を表示する。発行日はどこにも保存しない</td>
+</tr>
+<tr>
+<td>影響</td>
+<td>後日に印刷し直すと、最初に渡した領収書と発行日が違うものになる</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>(a) 入金日を発行日として表示する（変更がいちばん少ない）/ (b) <code>payments</code> に発行日の列を追加し、初めて印刷したとき（または入金を記録したとき）の日付を保存する / (c) 入金の入力欄に発行日を追加する。どれにするかは未決</td>
+</tr>
+<tr>
+<td>関係する箇所</td>
+<td><a href="03_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E7%AE%A1%E7%90%86%E7%94%BB%E9%9D%A2.html">03</a> A-09、<a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> 4.13、<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 14章</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-6">No.3 操作の記録・ログイン履歴に保存期間がない</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>操作の記録「お問い合わせを削除」に「#{ID} {お名前} 様（{メール}）」を残す。対応状況の変更・返信などの記録にもお名前が入る。操作の記録とログイン履歴は、自動では削除されない</td>
+</tr>
+<tr>
+<td>影響</td>
+<td>No.1 と同じく、削除したお問い合わせの個人情報の一部が残り続ける</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>操作の記録にはお問い合わせの ID だけを残す。または、操作の記録・ログイン履歴を一定期間（例: 1〜2年）で自動削除する</td>
+</tr>
+<tr>
+<td>決めること</td>
+<td>操作の記録に何を、どれくらいの期間残すか</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-7">No.4 見積書の画面で、日付の前後関係のエラーが表示されない</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>有効期限が発行日より前のとき、API はキー <code>body</code> で「有効期限は発行日以降の日付にしてください。」を返すが、見積書の画面（A-06）は <code>body</code> のエラーを表示しないため、上部に「入力内容をご確認ください。」だけが出る</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>A-06 で <code>errors.body</code> を表示する（保守契約の画面 A-10 と同じ）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-8">No.5 「送信中」のまま残った送信履歴</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>送信の途中で API が止まると、送信履歴が「送信中」（<code>pending</code>）のまま残る。A-13 は送信中の記録に「送り直す」「削除」を出さず、API-46 も送信中の記録の削除を断る</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>登録から一定時間（例: 10分）たった送信中の記録は、送り直し・削除できるようにする。または、API の起動時に古い送信中の記録を「失敗」にする</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-9">No.6 返信の送り直しの後処理</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>返信（API-17）が送れなかったあと、送信履歴から送り直して送れても（API-45）、お問い合わせの記録（種類「メール」）の追加と、未対応 → 対応中の変更をしない</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>送り直しで送れたメールの種類が <code>reply</code> のときは、API-17 と同じ後処理をする</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-10">No.7 サイト内容の、ほかのタブの入力が元に戻る</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>A-11 で保存すると、すべてのタブの入力を、保存した時点のサーバーの内容で置き換える。ほかのタブで入力中だった内容は消える</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>保存したタブの入力だけを、サーバーの内容で置き換える</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-11">No.8 収入印紙の注意を出す条件</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>お支払い方法が現金で、金額が5万円以上のときだけ、注意を出す</td>
+</tr>
+<tr>
+<td>確認したいこと</td>
+<td>紙で渡す領収書は、銀行振込で受け取った代金でも、5万円以上なら収入印紙が必要になる場合があるとされています（クレジットカード払いで、その旨を書いた領収書や、PDF をメールで送る場合は不要とされています）。税務署や税理士に確認して、注意を出す条件を決める</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-12">No.9 入金一覧 API の説明</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>説明ページ（<code>/api/docs</code>）の説明は「入金の一覧（期間内の合計つき）」だが、期間の絞り込みはなく、合計は検索条件（キーワード）に合う入金の合計</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>説明を「検索条件に合う入金の合計つき」に直す（<code>routers/admin_billing.py</code> の <code>summary</code>）。期間で絞り込みたい場合は、パラメータを追加する</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-13">No.10 ダッシュボードの「今月の入金」</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>入金日が今月1日以降の入金をすべて合計するため、入金日を来月以降にした記録も入る</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>「入金日が来月1日より前」の条件も加える（<code>dashboard.summary</code>）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-14">No.11 番号の使い回し</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>連番は「同じ年月の番号のうち、いちばん大きい番号 + 1」なので、いちばん大きい番号の記録を削除すると、次に作る記録に同じ番号が付く</td>
+</tr>
+<tr>
+<td>影響</td>
+<td>お客さまに渡した領収書の記録を削除して作り直すと、同じ番号の領収書が2枚になる</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>削除しても番号を使い回さない（年月ごとに採番した最大値を保存する）。または、入金の記録は削除ではなく「取り消し」にする</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-15">No.12 プロジェクトの README.md</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>今の動き</td>
+<td>(1) フォルダ構成と起動手順が <code>C:\Users\document\python</code>（<code>/mnt/c/Users/document/python</code>）を起点に書かれているが、プロジェクトは <code>company</code> フォルダの中にある。(2)「内容を変えたいとき」で、事業者情報は <code>frontend/src/lib/site.ts</code>、料金・よくある質問は <code>content/home.ts</code> で変えると書かれているが、今は管理画面のサイト内容（初期値は <code>shared/site_defaults.json</code>）で変える</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>README.md を今の構成に合わせて直し、この設計書（<code>docs/詳細設計書/</code>）への案内も加える</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/09_課題一覧.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+
+</body>
+</html>

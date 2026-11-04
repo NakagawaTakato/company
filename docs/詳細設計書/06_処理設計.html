@@ -1,0 +1,1598 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>06 処理設計｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">06 処理設計</h1>
+<p>画面・API の中で行う処理の決まりです。API の入出力は <a href="04_API%E8%A8%AD%E8%A8%88.html">04 API 設計</a>、表の定義は <a href="05_DB%E8%A8%AD%E8%A8%88.html">05 データベース設計</a> を見てください。</p>
+<h2 id="sec-2">1. 起動と終了の処理（<code>main.py</code>）</h2>
+<p>API を起動したときに、次の順番で準備します。</p>
+<ol>
+<li>設定を読む（<code>.env</code>、<code>shared/contact_options.json</code>、<code>shared/site_defaults.json</code>）。OS の環境変数があれば <code>.env</code> より優先します。</li>
+<li><code>data</code> フォルダがなければ作り、マイグレーションで表・列をそろえる（<a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> 8章）。</li>
+<li><code>.env</code> の管理者を反映する（6.5）。設定が正しくなければ、エラーで起動を止めます。</li>
+<li>期限切れのセッションを削除する。</li>
+<li>自動削除の定期処理を始める（11章）。起動の10秒後に1回目、その後は24時間ごと。定期処理でエラーが起きても、ログに残すだけで API は止めません。</li>
+</ol>
+<p>API を止めるときは、定期処理を止めてから終わります。</p>
+<h2 id="sec-3">2. お問い合わせの受付（API-03）</h2>
+<h3 id="sec-4">2.1 処理の流れ</h3>
+<pre class="mermaid">sequenceDiagram
+  autonumber
+  actor U as お客さま
+  participant F as 画面（P-02）
+  participant A as API（POST /api/contact）
+  participant D as データベース
+  participant M as メール送信（応答のあと）
+  U-&gt;&gt;F: 入力して「お問い合わせ送信」
+  F-&gt;&gt;F: 画面で入力チェック
+  F-&gt;&gt;A: 入力内容（JSON）
+  A-&gt;&gt;A: 回数の上限を確認（同じ IP から10分に10件まで）
+  A-&gt;&gt;A: 隠し欄に値があれば、保存せずに成功を返して終わり
+  A-&gt;&gt;A: 入力チェックと整形（2.2）
+  A-&gt;&gt;D: ブロックリストに当てはまるか（2.3）
+  A-&gt;&gt;D: お問い合わせを保存
+  A-&gt;&gt;D: 新着通知・自動返信を送信履歴に登録（迷惑送信でないとき）
+  A--&gt;&gt;F: 201（受け付けた）
+  F-&gt;&gt;U: 送信完了（P-03）へ
+  A-&gt;&gt;M: 登録したメールを順番に送る（4.1）
+  M-&gt;&gt;D: 送信の結果を記録
+</pre>
+<ul>
+<li><strong>隠し欄</strong>（<code>website</code>）は、人には見えない入力欄です。値が入っているのは機械的な送信なので、保存もメール送信もせず、成功したように返します（送った側に見破られないため）。</li>
+<li>ブロックリストに当てはまるときは、<strong>迷惑送信として保存</strong>し、メールは送りません（管理画面の迷惑送信の一覧で確認できる）。</li>
+<li>メールは応答を返したあとで送るので、メールサーバーが遅くても、お客さまを待たせません。</li>
+</ul>
+<h3 id="sec-5">2.2 入力チェックと整形（<code>inquiries.validate_contact</code>）</h3>
+<p>すべての項目をチェックして、エラーをまとめて返します。画面（P-02）も同じルールで先にチェックします。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>整形</th>
+<th>チェック</th>
+<th>エラー文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>topics</td>
+<td>配列の中の文字列のうち、選択肢にある値だけを、重複なしで残す（配列でなければ空）</td>
+<td>1つ以上</td>
+<td>ご相談内容を選択してください。</td>
+</tr>
+<tr>
+<td>name</td>
+<td>前後の空白を除く</td>
+<td>空でない・100文字以内</td>
+<td>お名前を入力してください。/ お名前は100文字以内で入力してください。</td>
+</tr>
+<tr>
+<td>email</td>
+<td>全角の英数字・記号・空白を半角にし、前後の空白を除く</td>
+<td>空でない・254文字以内・<code>^[^\s@]+@[^\s@]+\.[^\s@]+$</code></td>
+<td>メールアドレスを入力してください。/ メールアドレスの形式が正しくありません。</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>半角にし、空白・ハイフン類（<code>-</code> <code>‐</code> <code>‑</code> <code>‒</code> <code>–</code> <code>—</code> <code>―</code> <code>−</code>）・長音（<code>ー</code> <code>ｰ</code>）・かっこを除く</td>
+<td>入力が空でない・<code>^0[0-9]{9,10}$</code></td>
+<td>電話番号を入力してください。/ 電話番号の形式が正しくありません（例:09012345678）。</td>
+</tr>
+<tr>
+<td>prefecture</td>
+<td>前後の空白を除く</td>
+<td>47都道府県のどれか</td>
+<td>お住まいを選択してください。</td>
+</tr>
+<tr>
+<td>age</td>
+<td>半角にし、前後の空白を除く。空なら NULL</td>
+<td>半角の数字だけ・1〜120</td>
+<td>ご年齢は数字で入力してください。/ ご年齢は1〜120の範囲で入力してください。</td>
+</tr>
+<tr>
+<td>initial_payment</td>
+<td>前後の空白を除く</td>
+<td>選択肢の値</td>
+<td>初期費用のお支払い方法を選択してください。</td>
+</tr>
+<tr>
+<td>monthly_payment</td>
+<td>前後の空白を除く</td>
+<td>選択肢の値</td>
+<td>月額(保守プラン)のお支払い方法を選択してください。</td>
+</tr>
+<tr>
+<td>agreed</td>
+<td>−</td>
+<td>真偽の <code>true</code>（文字列の <code>&quot;true&quot;</code> は不可）</td>
+<td>「個人情報の取扱い」への同意が必要です。</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>文字列の項目に数値が送られたときは文字列に直します。真偽・null・配列・オブジェクトは空として扱います。</li>
+<li>全角から半角への変換は、<code>！</code>〜<code>～</code>（U+FF01〜U+FF5E）を対応する半角に、全角の空白（U+3000）を半角の空白にします。</li>
+</ul>
+<h3 id="sec-6">2.3 迷惑送信の判定（<code>inquiries.is_blocked</code>）</h3>
+<p>メールアドレスを小文字にし、ブロックリストの各行と比べます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パターン</th>
+<th>当てはまる条件</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>メールアドレス</td>
+<td>完全に同じ</td>
+<td><code>spam@example.com</code></td>
+</tr>
+<tr>
+<td><code>@ドメイン</code></td>
+<td>メールアドレスの最後が <code>@ドメイン</code></td>
+<td><code>@example.com</code> は <code>a@example.com</code> に当てはまり、<code>a@sub.example.com</code> には当てはまらない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-7">3. お問い合わせの一覧・検索（API-10・API-11）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>SQL の条件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>迷惑送信</td>
+<td><code>is_spam = 1</code>（迷惑送信の一覧）/ <code>is_spam = 0</code>（それ以外）</td>
+</tr>
+<tr>
+<td>対応状況</td>
+<td><code>status = ?</code></td>
+</tr>
+<tr>
+<td>キーワード</td>
+<td>お名前・メール（どちらも小文字にして比べる）・電話番号のどれかに含まれる。<code>instr</code> で探すので、<code>%</code> や <code>_</code> も普通の文字として扱う</td>
+</tr>
+<tr>
+<td>受付日（から）</td>
+<td><code>created_at &gt;=</code>（その日の日本時間 0:00 を UTC にした日時）</td>
+</tr>
+<tr>
+<td>受付日（まで）</td>
+<td><code>created_at &lt;</code>（その翌日の日本時間 0:00 を UTC にした日時）</td>
+</tr>
+</tbody></table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>並び順</th>
+<th>ORDER BY</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>newest</code>（新しい順・初期）</td>
+<td><code>created_at DESC, id DESC</code></td>
+</tr>
+<tr>
+<td><code>oldest</code>（古い順）</td>
+<td><code>created_at ASC, id ASC</code></td>
+</tr>
+<tr>
+<td><code>name</code>（名前順）</td>
+<td><code>name COLLATE NOCASE ASC, id DESC</code></td>
+</tr>
+<tr>
+<td><code>updated</code>（更新が新しい順）</td>
+<td><code>updated_at DESC, id DESC</code></td>
+</tr>
+</tbody></table></div>
+<p>ページ分けは、同じ条件の件数（<code>COUNT(*)</code>）と <code>LIMIT 20 OFFSET (ページ − 1) × 20</code> で取ります。CSV は同じ条件・同じ並び順で、すべての行を取ります。</p>
+<h2 id="sec-8">4. メール送信（<code>mailer.py</code>）</h2>
+<h3 id="sec-9">4.1 送信の流れと、送信履歴の状態</h3>
+<p>すべてのメールは、まず送信履歴（<code>mail_outbox</code>）に「送信中」で登録してから送り、結果をその行に記録します。</p>
+<pre class="mermaid">stateDiagram-v2
+  [*] --&gt; pending : 送信履歴に登録
+  pending --&gt; sent : 送れた
+  pending --&gt; failed : 送るときにエラー
+  pending --&gt; skipped : 送れる状態ではない（4.3）
+  failed --&gt; sent : 送り直して送れた
+  skipped --&gt; sent : 送り直して送れた
+  sent --&gt; [*]
+</pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>状態</th>
+<th>表示</th>
+<th>意味</th>
+<th>記録すること</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pending</code></td>
+<td>送信中</td>
+<td>登録して、まだ結果が出ていない</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sent</code></td>
+<td>送信済み</td>
+<td>送れた</td>
+<td><code>sent_at</code> に送った日時</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td>失敗</td>
+<td>メールサーバーや Microsoft がエラーを返した・つながらない</td>
+<td><code>error</code> に理由</td>
+</tr>
+<tr>
+<td><code>skipped</code></td>
+<td>未送信</td>
+<td>送信方法の設定やサインインがまだで、送らなかった</td>
+<td><code>error</code> に理由（4.3）</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>送り直し（API-45）で、もう一度失敗したときは「失敗」「未送信」のまま、理由を書き換えます。</li>
+<li>送るタイミング: 新着通知・自動返信は、お問い合わせの応答のあとで、登録した順に送ります。返信・テスト・送り直しは、その場で送り、結果を応答で返します。</li>
+<li>API が送信の途中で止まると、その行は「送信中」のまま残ります（※課題 No.5）。</li>
+</ul>
+<h3 id="sec-10">4.2 送信方法の決め方</h3>
+<ol>
+<li><code>settings</code> の <code>mail.method</code> が <code>outlook</code> か <code>smtp</code> なら、それを使う。</li>
+<li>保存されていなければ、<code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> があれば <code>outlook</code>、なければ <code>smtp</code>。</li>
+</ol>
+<h3 id="sec-11">4.3 送れる状態かの判定</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>送信方法</th>
+<th>送れない条件</th>
+<th>理由（<code>error</code> と画面に出る文）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>outlook</td>
+<td><code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> がない</td>
+<td>.env の MICROSOFT_CLIENT_ID が設定されていないため、Outlook で送れません。</td>
+</tr>
+<tr>
+<td>outlook</td>
+<td>トークンのファイル（<code>data/microsoft-oauth.json</code>）がない</td>
+<td>Outlook にまだサインインしていないため、送信していません。管理画面の「メール」でサインインしてください。</td>
+</tr>
+<tr>
+<td>smtp</td>
+<td>SMTP のサーバー名か送信元のアドレスがない</td>
+<td>メールの送信設定（SMTP）がされていないため、送信していません。</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-12">4.4 差出人</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>送信方法</th>
+<th>差出人名</th>
+<th>送信元のアドレス</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>outlook</td>
+<td><code>.env</code> の <code>MAIL_FROM_NAME</code>、なければ屋号</td>
+<td><code>.env</code> の <code>MAIL_FROM_ADDRESS</code>、なければ事業者情報のメール</td>
+</tr>
+<tr>
+<td>smtp</td>
+<td>SMTP の設定の差出人名、なければ屋号</td>
+<td>SMTP の設定の送信元のアドレス</td>
+</tr>
+</tbody></table></div>
+<p>Outlook では、サインインした Outlook アカウントから送られます。送信元のアドレスは、そのアカウントと同じにします。</p>
+<h3 id="sec-13">4.5 メールの組み立て（<code>build_message</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ヘッダー・本文</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>To</td>
+<td>宛先。形式に合わなければ送らずに「送信先のメールアドレスが正しくありません: {宛先}」（失敗）</td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>件名。改行や続いた空白は、1つの空白にする（ヘッダーに改行を入れさせない）</td>
+</tr>
+<tr>
+<td>From</td>
+<td>差出人名（同じく1行にする）と送信元のアドレス</td>
+</tr>
+<tr>
+<td>Reply-To</td>
+<td>返信先。メールの形式に合うときだけ付ける（新着通知だけ）</td>
+</tr>
+<tr>
+<td>Message-ID</td>
+<td>送信元のアドレスのドメインで作る</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>テキスト（UTF-8）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-14">4.6 SMTP での送信</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>接続方式（security）</th>
+<th>接続のしかた</th>
+<th>ポートが空のとき</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ssl</code></td>
+<td>最初から暗号化して接続（SMTP over SSL/TLS）</td>
+<td>465</td>
+</tr>
+<tr>
+<td><code>starttls</code>（初期）</td>
+<td>接続してから STARTTLS で暗号化</td>
+<td>587</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>暗号化しない</td>
+<td>587</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>待ち時間は20秒。暗号化するときは、サーバーの証明書を確認します。</li>
+<li>ユーザー名が入っていればログインします。</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エラー</th>
+<th>理由の文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>認証の失敗</td>
+<td>メールサーバーの認証に失敗しました。ユーザー名とパスワードを確認してください。</td>
+</tr>
+<tr>
+<td>STARTTLS に対応していない</td>
+<td>メールサーバーが暗号化（STARTTLS）に対応していません。接続方式を確認してください。</td>
+</tr>
+<tr>
+<td>時間切れ</td>
+<td>メールサーバーへの接続がタイムアウトしました。サーバー名とポートを確認してください。</td>
+</tr>
+<tr>
+<td>そのほか（つながらないなど）</td>
+<td>メールを送信できませんでした（{エラーの種類}: {内容}）。</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-15">4.7 Outlook（Microsoft Graph）での送信（<code>outlook.py</code>）</h3>
+<ol>
+<li>アクセストークンを用意する。保存したトークンの期限まで60秒より長く残っていれば、そのまま使う。残りが短ければ、リフレッシュトークンで新しいトークンをもらい、ファイルに保存する（新しいリフレッシュトークンが返らなければ、今のものを使い続ける）。</li>
+<li><code>POST {Graph}/v1.0/me/sendMail</code> に、4.5 で組み立てたメール（MIME 形式）を Base64 にして送る（<code>Content-Type: text/plain</code>、<code>Authorization: Bearer {トークン}</code>）。件名・本文・返信先が、そのまま届きます。</li>
+<li>待ち時間は30秒。</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エラー</th>
+<th>理由の文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>サインインしていない</td>
+<td>Outlook にまだサインインしていません。管理画面の「メール」でサインインしてください。</td>
+</tr>
+<tr>
+<td>トークンのファイルが読めない</td>
+<td>保存したサインイン情報を読み込めませんでした。サインインし直してください。</td>
+</tr>
+<tr>
+<td>トークンの更新に失敗</td>
+<td>Outlook の認証を更新できませんでした。管理画面の「メール」でサインインし直してください。（{理由}）</td>
+</tr>
+<tr>
+<td>送信のエラー</td>
+<td>Outlook での送信に失敗しました。（{コード} {Microsoft の応答の先頭300文字}）</td>
+</tr>
+<tr>
+<td>つながらない</td>
+<td>Outlook（Microsoft Graph）に接続できませんでした（{内容}）。</td>
+</tr>
+</tbody></table></div>
+<p>トークンの読み出しと更新は、同時に2つ動かないように鍵（ロック）をかけます。Outlook.com は SMTP のパスワード認証を廃止しているため、この方法を標準にしています。</p>
+<h3 id="sec-16">4.8 新着通知と自動返信（<code>queue_new_inquiry_mails</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>メール</th>
+<th>送る条件</th>
+<th>宛先</th>
+<th>件名</th>
+<th>返信先</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>新着通知（<code>admin_notify</code>）</td>
+<td>設定「お問い合わせが届いたら、メールで知らせる」がオン</td>
+<td>設定の送り先（1人ずつ別の送信履歴）。空なら事業者情報のメール</td>
+<td>【お問い合わせ】{お名前} 様</td>
+<td>お客さまのメールアドレス</td>
+</tr>
+<tr>
+<td>自動返信（<code>auto_reply</code>）</td>
+<td>設定「お客さまにメールで知らせる」がオン</td>
+<td>お客さまのメールアドレス</td>
+<td>設定の件名（差し込み項目を置き換える）</td>
+<td>なし</td>
+</tr>
+</tbody></table></div>
+<p>新着通知の本文:</p>
+<pre><code>お問い合わせフォームから、新しいお問い合わせが届きました。
+このメールに返信すると、お客さまのメールアドレス宛てに送られます。
+
+■ ご相談内容
+Python(React/FastAPI)
+
+■ お名前
+山田 太郎
+
+■ メールアドレス
+taro@example.com
+
+■ 電話番号
+09012345678
+
+■ お住まい
+兵庫県
+
+■ ご年齢
+30            ← 未入力なら「(未入力)」
+
+■ 初期費用のお支払い方法
+手渡し
+
+■ 月額(保守プラン)のお支払い方法
+保守プランなし
+
+■ 受付日時
+2026年10月30日 14:05     ← 日本時間
+
+管理画面で確認する: {サイトの URL}/admin/inquiries/{ID}
+</code></pre>
+<p>自動返信の本文の初期値（<code>settings_store.py</code> の <code>DEFAULT_AUTO_REPLY_BODY</code>）:</p>
+<pre><code>{name} 様
+
+{business_name}です。
+このたびはお問い合わせいただき、ありがとうございます。
+以下の内容で受け付けました。内容を確認して、ご連絡いたします。
+
+{inquiry_summary}
+
+※ このメールは自動でお送りしています。
+※ お心当たりのない場合は、お手数ですがこのメールを破棄してください。
+
+――――――――――――――――
+{business_name}
+メール: {business_email}
+電話: {business_phone}
+対応時間: {hours}
+</code></pre>
+<p>件名の初期値は「【{business_name}】お問い合わせを受け付けました」です。</p>
+<h3 id="sec-17">4.9 差し込み項目</h3>
+<p><code>{項目名}</code> を、送るときに次の値に置き換えます。知らない項目は、そのまま残します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>値</th>
+<th>使えるところ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>{name}</code></td>
+<td>お客さまのお名前</td>
+<td>自動返信・返信テンプレート</td>
+</tr>
+<tr>
+<td><code>{business_name}</code></td>
+<td>屋号</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>{owner}</code></td>
+<td>運営責任者</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>{business_email}</code></td>
+<td>事業者のメールアドレス</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>{business_phone}</code></td>
+<td>事業者の電話番号</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>{hours}</code></td>
+<td>対応時間</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>{inquiry_summary}</code></td>
+<td>お問い合わせの内容（下の形）</td>
+<td>自動返信だけ</td>
+</tr>
+</tbody></table></div>
+<pre><code>ご相談内容: Python(React/FastAPI)
+お名前: 山田 太郎
+メールアドレス: taro@example.com
+電話番号: 09012345678
+お住まい: 兵庫県
+ご年齢: 30            ← 未入力なら「未入力」
+初期費用のお支払い方法: 手渡し
+月額(保守プラン)のお支払い方法: 保守プランなし
+</code></pre>
+<ul>
+<li>自動返信は API で置き換えます（<code>mailer.render</code>）。</li>
+<li>返信テンプレートは、管理画面（A-04）でテンプレートを選んだときに画面で置き換え、管理者が直してから送ります。</li>
+<li>事業者の情報は、サイト内容の事業者情報です。</li>
+</ul>
+<h3 id="sec-18">4.10 管理画面からの返信（API-17）</h3>
+<ol>
+<li>送信履歴に「返信」として登録し、その場で送る。</li>
+<li>送れたときだけ、お問い合わせの記録（種類「メール」）に件名と本文を残し、未対応なら対応中に変える。</li>
+<li>送れなかったときは、エラーを返す。送信履歴には「失敗」「未送信」で残り、送信履歴から送り直せる（※課題 No.6: 送り直しで送れても、2 の記録・対応状況の変更は行われない）。</li>
+</ol>
+<h2 id="sec-19">5. Outlook のサインイン（デバイスコード）</h2>
+<p>管理者の Outlook アカウントで1回だけサインインし、そのトークンでメールを送ります。OAuth 2.0 のデバイス認可フローを使います。</p>
+<pre class="mermaid">sequenceDiagram
+  autonumber
+  actor Ad as 管理者
+  participant S as 管理画面（A-13）
+  participant A as API
+  participant MS as Microsoft（login.microsoftonline.com）
+  Ad-&gt;&gt;S: 「Outlook にサインイン」
+  S-&gt;&gt;A: POST /api/admin/mail/outlook/device-code
+  A-&gt;&gt;MS: コードの発行を依頼（client_id・scope）
+  MS--&gt;&gt;A: device_code・user_code・verification_uri・expires_in・interval
+  A-&gt;&gt;A: flow_id を作り、device_code をメモリに保存
+  A--&gt;&gt;S: flow_id・user_code・verification_uri・expires_in・interval
+  S-&gt;&gt;Ad: 開くページとコードを表示
+  Ad-&gt;&gt;MS: ブラウザでページを開き、コードを入力してサインイン・許可
+  loop interval 秒ごと（slow_down のときは5秒のばす）
+    S-&gt;&gt;A: POST /api/admin/mail/outlook/poll（flow_id）
+    A-&gt;&gt;MS: トークンを依頼（device_code）
+    MS--&gt;&gt;A: まだ / 間隔を空けて / トークン
+    A--&gt;&gt;S: pending / slow_down / ok
+  end
+  A-&gt;&gt;A: トークンを microsoft-oauth.json に保存
+  S-&gt;&gt;Ad: 「サインインしました」
+</pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Azure のアプリ</td>
+<td><code>.env</code> の <code>MICROSOFT_CLIENT_ID</code>。クライアントシークレットは使わない</td>
+</tr>
+<tr>
+<td>テナント</td>
+<td><code>.env</code> の <code>MICROSOFT_TENANT</code>（初期値 <code>consumers</code> = 個人の Microsoft アカウント）</td>
+</tr>
+<tr>
+<td>権限（scope）</td>
+<td><code>offline_access https://graph.microsoft.com/Mail.Send</code></td>
+</tr>
+<tr>
+<td>接続先</td>
+<td><code>https://login.microsoftonline.com/{テナント}/oauth2/v2.0/devicecode</code>・<code>/token</code>。テストでは環境変数 <code>MICROSOFT_LOGIN_URL</code>・<code>MICROSOFT_GRAPH_URL</code> で偽のサーバーに向ける</td>
+</tr>
+<tr>
+<td>途中の情報</td>
+<td><code>flow_id</code>（ランダム）ごとに <code>device_code</code> と期限を、API のメモリに持つ。<code>device_code</code> は画面に渡さない。完了・エラーで捨て、期限切れのものは次にコードを発行するときに捨てる</td>
+</tr>
+<tr>
+<td>トークンの保存</td>
+<td><code>{&quot;access_token&quot;, &quot;refresh_token&quot;, &quot;expires_at&quot;}</code> を、権限 600 の一時ファイル（<code>.tmp</code>）に書いてから置き換える（書きかけのファイルを残さない）</td>
+</tr>
+<tr>
+<td>サインインの解除</td>
+<td>トークンのファイルを削除する</td>
+</tr>
+</tbody></table></div>
+<p>確認（poll）の結果:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Microsoft の応答</th>
+<th>API の結果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>トークンが返った</td>
+<td><code>ok</code>（トークンを保存）</td>
+</tr>
+<tr>
+<td><code>authorization_pending</code></td>
+<td><code>pending</code></td>
+</tr>
+<tr>
+<td><code>slow_down</code></td>
+<td><code>slow_down</code></td>
+</tr>
+<tr>
+<td><code>expired_token</code></td>
+<td>エラー「サインインの有効期限が切れました。もう一度やり直してください。」</td>
+</tr>
+<tr>
+<td><code>authorization_declined</code></td>
+<td>エラー「サインインがキャンセルされました。もう一度やり直してください。」</td>
+</tr>
+<tr>
+<td>そのほか</td>
+<td>エラー「サインインできませんでした。（{理由}）」</td>
+</tr>
+</tbody></table></div>
+<p>コマンドからもサインインできます（<code>cd backend &amp;&amp; .venv/bin/python -m app.outlook_login</code>）。開くページとコードを表示し、<code>interval</code> 秒ごと（<code>slow_down</code> なら5秒のばす）に、有効期限まで確認します。</p>
+<h2 id="sec-20">6. ログインとセッション（<code>security.py</code>）</h2>
+<h3 id="sec-21">6.1 ログイン（API-06）</h3>
+<ol>
+<li>回数の上限を確認する（7章）。</li>
+<li>メールアドレスの前後の空白を除いて小文字にし、管理者を探す。</li>
+<li>いなければ、ダミーのハッシュでパスワードを確かめ（同じだけ時間をかけて、登録の有無を推測されにくくする）、失敗にする。</li>
+<li>いれば、パスワードを確かめる（<a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">07</a> 2章）。</li>
+<li>結果をログイン履歴に記録する（メール254文字・IP 64文字・User-Agent 300文字で切る）。</li>
+<li>成功なら、ランダムなトークン（32バイト）を作り、その SHA-256 をセッションとして保存して（期限は12時間後）、トークンを Cookie で返す。</li>
+</ol>
+<h3 id="sec-22">6.2 ログインの確認（<code>require_admin</code>）</h3>
+<p>Cookie のトークンの SHA-256 で、期限が切れていないセッションを探し、管理者を返します。見つからなければ 401 です。期限は延長しません（ログインから12時間で切れる）。</p>
+<h3 id="sec-23">6.3 ログアウト</h3>
+<p>Cookie のトークンのセッションを削除し、Cookie も削除します。</p>
+<h3 id="sec-24">6.4 パスワードの変更（API-09）</h3>
+<p>今のパスワードを確かめてから新しいハッシュに変え、<strong>この画面以外のセッションをすべて削除</strong>します（ほかの端末はログアウトされる）。</p>
+<h3 id="sec-25">6.5 起動時の管理者の反映（<code>sync_admin</code>）</h3>
+<p><code>.env</code> の <code>ADMIN_EMAIL</code>・<code>ADMIN_PASSWORD</code> を、管理者のアカウントに反映します。</p>
+<pre class="mermaid">flowchart TD
+  S[&quot;API の起動&quot;] --&gt; C1{&quot;ADMIN_EMAIL に&lt;br&gt;@ がある？&quot;}
+  C1 --&gt;|いいえ| X[&quot;エラーで起動を止める&quot;]
+  C1 --&gt;|はい| C2{&quot;ADMIN_PASSWORD が 8〜128 文字で、&lt;br&gt;初期の印（__GENERATE__）ではない？&quot;}
+  C2 --&gt;|いいえ| X
+  C2 --&gt;|はい| C3{&quot;そのメールの&lt;br&gt;管理者がいる？&quot;}
+  C3 --&gt;|いいえ| N[&quot;管理者を作る&lt;br&gt;（.env のパスワード）&quot;]
+  C3 --&gt;|はい| C4{&quot;.env のパスワードが前回の起動から変わり、&lt;br&gt;今のパスワードとも違う？&quot;}
+  C4 --&gt;|はい| R[&quot;パスワードを .env の値にする&lt;br&gt;その管理者のセッションをすべて削除&quot;]
+  C4 --&gt;|いいえ| K[&quot;パスワードは変えない&lt;br&gt;（管理画面で変えたものを残す）&quot;]
+  N --&gt; D[&quot;ほかのメールアドレスの管理者を削除&quot;]
+  R --&gt; D
+  K --&gt; D
+  D --&gt; H[&quot;.env のパスワードが変わっていれば、&lt;br&gt;そのハッシュを settings に保存&quot;]
+</pre>
+<ul>
+<li>「前回の起動から変わったか」は、前回反映した <code>.env</code> のパスワードのハッシュ（<code>settings</code> の <code>admin.env_password_hash</code>）と比べて判定します。</li>
+<li>これにより、管理画面で変えたパスワードは再起動しても残り、パスワードを忘れたときは <code>.env</code> を書き換えて再起動すればリセットできます。</li>
+<li><code>ADMIN_EMAIL</code> を変えると、新しいメールアドレスの管理者が作られ、古い管理者（とそのセッション）は削除されます。</li>
+</ul>
+<h2 id="sec-26">7. 試行回数の制限（<code>security.RateLimiter</code>）</h2>
+<p>接続元の IP アドレスごとに、一定時間内の回数を数えます（スライディングウィンドウ）。回数は API のメモリにだけ持つので、API を再起動すると0に戻ります。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>上限</th>
+<th>数えるもの</th>
+<th>0に戻すとき</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ログイン</td>
+<td>15分に10回</td>
+<td>失敗したログイン</td>
+<td>ログインに成功したとき</td>
+</tr>
+<tr>
+<td>お問い合わせ</td>
+<td>10分に10件（環境変数 <code>BLUETAB_CONTACT_LIMIT</code> で変えられる。テストでは1000）</td>
+<td>受け付けた（保存した）お問い合わせ。入力エラーと隠し欄の送信は数えない</td>
+<td>なし（時間がたつと減る）</td>
+</tr>
+</tbody></table></div>
+<p>接続元の IP は、API に直接つないできた相手の IP です。リバースプロキシの後ろで動かすときの注意は <a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 8.4 です。</p>
+<h2 id="sec-27">8. 対応状況と迷惑送信の変更</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対応状況</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>未対応（<code>new</code>）</td>
+<td>受け付けたまま。受付直後はこの状況</td>
+</tr>
+<tr>
+<td>対応中（<code>in_progress</code>）</td>
+<td>やり取りを始めた</td>
+</tr>
+<tr>
+<td>見積送付済み（<code>quoted</code>）</td>
+<td>見積書を送った</td>
+</tr>
+<tr>
+<td>契約済み（<code>contracted</code>）</td>
+<td>契約した</td>
+</tr>
+<tr>
+<td>対応済み（<code>done</code>）</td>
+<td>対応が終わった</td>
+</tr>
+<tr>
+<td>お断り（<code>declined</code>）</td>
+<td>お受けしなかった</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>対応状況は、どの状況からどの状況へも、管理者が手で変えられます。自動で変わるのは「返信を送れたときに、未対応なら対応中にする」だけです。</li>
+<li>迷惑送信の印（<code>is_spam</code>）を付けると、通常の一覧・タブの件数・ダッシュボードの集計から外れ、迷惑送信の一覧に出ます。自動削除では、受付からの日数で削除します（11章）。</li>
+<li>変えたときは、お問い合わせの記録（9章）と操作の記録（21章）を残します。</li>
+</ul>
+<h2 id="sec-28">9. メモ・記録（タイムライン）</h2>
+<p>お問い合わせごとの出来事を、<code>inquiry_notes</code> に新しい順で残します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>種類</th>
+<th>作るとき</th>
+<th>本文</th>
+<th>画面から削除</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>メモ（<code>note</code>）</td>
+<td>管理者がメモを追加したとき</td>
+<td>入力した文</td>
+<td>できる</td>
+</tr>
+<tr>
+<td>メール（<code>email</code>）</td>
+<td>返信を送れたとき</td>
+<td>「メールで返信しました」「件名: {件名}」と本文</td>
+<td>できない</td>
+</tr>
+<tr>
+<td>記録（<code>system</code>）</td>
+<td>対応状況を変えたとき</td>
+<td>対応状況を「{前}」から「{後}」に変更</td>
+<td>できない</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>迷惑送信の印を変えたとき</td>
+<td>迷惑送信にしました / 迷惑送信から戻しました</td>
+<td>できない</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>返信で対応中にしたとき</td>
+<td>返信したため、対応状況を「対応中」に変更</td>
+<td>できない</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>ひもづけた見積書を作ったとき</td>
+<td>見積書 {番号} を作成（{合計}円）</td>
+<td>できない</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>ひもづけた保守契約を登録したとき</td>
+<td>保守契約「{サイト名}」を登録</td>
+<td>できない</td>
+</tr>
+</tbody></table></div>
+<p>どの種類でも、記録を追加すると、お問い合わせの最終更新（<code>updated_at</code>）が変わります（自動削除の期間の数え始めも変わる。11章）。</p>
+<h2 id="sec-29">10. CSV 出力（API-11）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>列</td>
+<td>ID / 受付日時 / 対応状況 / ご相談内容 / お名前 / メールアドレス / 電話番号 / お住まい / ご年齢 / 初期費用のお支払い方法 / 月額(保守プラン)のお支払い方法 / 最終更新</td>
+</tr>
+<tr>
+<td>値</td>
+<td>選択肢はラベルで出す（ご相談内容は「、」でつなぐ）。日時は日本時間の <code>YYYY/MM/DD HH:MM</code></td>
+</tr>
+<tr>
+<td>形式</td>
+<td>UTF-8 の BOM 付き（Excel で文字化けしない）、改行は CRLF、すべての値を <code>&quot;</code> で囲む</td>
+</tr>
+<tr>
+<td>数式の対策</td>
+<td>値の先頭が <code>=</code> <code>+</code> <code>-</code> <code>@</code> タブ・CR のときは、先頭に <code>&#39;</code> を付ける（Excel で数式として実行されない。CSV インジェクション対策）</td>
+</tr>
+<tr>
+<td>行</td>
+<td>一覧と同じ絞り込み・並び順で、すべての行</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-30">11. 個人情報の自動削除</h2>
+<p>「個人情報の取扱い」に「不要になった情報は削除します」と書いているため、対応が終わったお問い合わせを、決めた期間のあとに削除します。</p>
+<h3 id="sec-31">11.1 削除の対象（<code>maintenance.retention_targets</code>）</h3>
+<p>次のどちらかに当てはまるお問い合わせです。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>条件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>対応が終わったもの</td>
+<td>迷惑送信でない、対応状況が設定の「対応が終わった」とみなす状況（初期: 対応済み・お断り）のどれか、最終更新が「今から設定の月数（初期24）前」より前</td>
+</tr>
+<tr>
+<td>迷惑送信</td>
+<td>受付日時が「今から設定の日数（初期30）前」より前</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>「n か月前」は、今の日時から月を n 戻した日の同じ時刻（UTC）です。日が29日以降のときは28日にします。</li>
+<li>対応状況を1つも選んでいなければ、迷惑送信だけが対象になります。</li>
+</ul>
+<h3 id="sec-32">11.2 削除するもの</h3>
+<p>お問い合わせ・そのメモと記録・<strong>そのお問い合わせの送信履歴</strong>を削除します（※課題 No.1: 今は送信履歴が残る）。見積書・保守契約は残し、ひもづけだけを外します。</p>
+<h3 id="sec-33">11.3 実行のタイミングと記録</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>実行</th>
+<th>条件</th>
+<th>記録</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>自動</td>
+<td>設定で「有効」のときだけ。API の起動の10秒後と、その後24時間ごと</td>
+<td>前回の実行（日時・件数）を <code>settings</code> の <code>retention.last_run</code> に保存。1件以上削除したときは、操作の記録「古いお問い合わせを削除（自動）」</td>
+</tr>
+<tr>
+<td>手動（A-16「今すぐ削除を実行」）</td>
+<td>保存済みの設定で実行（「無効」でも実行できる）</td>
+<td>前回の実行を保存し、操作の記録「古いお問い合わせを削除（手動）」</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-34">12. バックアップ（API-21・<code>maintenance.create_backup</code>）</h2>
+<ol>
+<li>一時フォルダを作る。</li>
+<li>SQLite のバックアップ機能で、<code>app.db</code> の写しを作る（API を動かしたままでも、壊れていない写しになる）。</li>
+<li>次のファイルを zip（圧縮あり）にまとめる。<ul>
+<li><code>data/app.db</code>（2 の写し）</li>
+<li><code>data/uploads/</code> のすべての画像</li>
+<li><code>README.txt</code>（「戻すときは、サーバーを止めてから data/app.db と data/uploads/ をプロジェクトの data フォルダに上書きしてください。」）</li>
+</ul>
+</li>
+<li>zip を返し、送り終わったら一時フォルダごと削除する。</li>
+</ol>
+<p><code>.env</code> と <code>data/microsoft-oauth.json</code>（Outlook のトークン）は zip に入りません。戻したあとは Outlook のサインインをし直します（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 9章）。</p>
+<h2 id="sec-35">13. 見積書（<code>billing.py</code>）</h2>
+<h3 id="sec-36">13.1 金額の計算</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>金額</th>
+<th>計算</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>明細の金額</td>
+<td>数量 × 単価 を、1円未満を四捨五入（10進数で計算し、小数の誤差を出さない）</td>
+</tr>
+<tr>
+<td>小計（税抜）</td>
+<td>明細の金額の合計</td>
+</tr>
+<tr>
+<td>消費税</td>
+<td>小計 × 税率 ÷ 100 の1円未満を切り捨て</td>
+</tr>
+<tr>
+<td>合計（税込）</td>
+<td>小計 + 消費税</td>
+</tr>
+<tr>
+<td>入金済み</td>
+<td>この見積書にひもづけた入金の合計</td>
+</tr>
+<tr>
+<td>残額</td>
+<td>合計 − 入金済み（入金が多ければマイナスになる）</td>
+</tr>
+</tbody></table></div>
+<p>例: 明細「トップページのデザイン 1式 × 50,000円」「下層ページ 2.5ページ × 15,000円」→ 小計 87,500円、消費税（10%）8,750円、合計 96,250円。</p>
+<p>画面（A-06）も同じ計算で、入力しながら合計を表示します。保存した値ではなく、読むたびに計算します。</p>
+<h3 id="sec-37">13.2 番号の採番（見積書・領収書）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>形式</td>
+<td>見積書 <code>Q-{年月}-{連番}</code>、領収書 <code>R-{年月}-{連番}</code>（例 <code>Q-202610-001</code>）</td>
+</tr>
+<tr>
+<td>年月</td>
+<td><strong>作成した日</strong>の年月（日本時間）。発行日・入金日の年月ではない</td>
+</tr>
+<tr>
+<td>連番</td>
+<td>同じ年月の番号のうち、いちばん大きい番号 + 1（なければ 1）。3桁にそろえる（1000以上はそのまま4桁）</td>
+</tr>
+<tr>
+<td>変更</td>
+<td>作成したあとは変えない</td>
+</tr>
+</tbody></table></div>
+<p>いちばん大きい番号の記録を削除すると、次に作る記録に同じ番号が付きます（※課題 No.11）。</p>
+<h3 id="sec-38">13.3 保存</h3>
+<ul>
+<li>作成: 番号を採番して保存し、明細を順番（<code>sort_order</code> 0から）に保存する。</li>
+<li>変更: 番号以外の項目を変え、明細はいったんすべて削除して入れ直す。</li>
+<li>お問い合わせにひもづけて作成したときは、そのお問い合わせに記録を追加する（変更のときは追加しない）。</li>
+</ul>
+<h3 id="sec-39">13.4 状態</h3>
+<p>状態は管理者が選びます（自動では変わりません）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>状態</th>
+<th>意味</th>
+<th>集計への使われ方</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>下書き（<code>draft</code>）</td>
+<td>作成中</td>
+<td>ダッシュボードの「作成中・送付済みの見積書」</td>
+</tr>
+<tr>
+<td>送付済み（<code>sent</code>）</td>
+<td>お客さまに送った</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>承諾（<code>accepted</code>）</td>
+<td>お客さまが承諾した</td>
+<td>ダッシュボードの「未入金」（残額）、見積書一覧の残額の表示</td>
+</tr>
+<tr>
+<td>不成立（<code>rejected</code>）</td>
+<td>成立しなかった</td>
+<td>なし</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-40">14. 入金と領収書</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>領収書番号</td>
+<td>入金を記録したときに採番する（13.2）</td>
+</tr>
+<tr>
+<td>金額</td>
+<td>税込の金額を入力する（税の内訳は出さない）</td>
+</tr>
+<tr>
+<td>見積書とのひもづけ</td>
+<td>任意。ひもづけると、その見積書の入金済み・残額に入る</td>
+</tr>
+<tr>
+<td>領収書の発行日</td>
+<td><strong>一度決まったら、印刷し直しても変わらない日付</strong>（決め方は ※課題 No.2。今は印刷画面を開いた日）</td>
+</tr>
+<tr>
+<td>収入印紙の注意</td>
+<td>お支払い方法が現金で、金額が5万円以上のとき、入力画面と印刷画面（印刷されない）に注意を出す（※課題 No.8）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-41">15. 保守契約</h2>
+<h3 id="sec-42">15.1 状態の判定（<code>billing.contract_status</code>）</h3>
+<p>状態は保存せず、読むたびに「今日（日本時間）」で判定します。</p>
+<pre class="mermaid">flowchart TD
+  S[&quot;保守契約&quot;] --&gt; Q1{&quot;終了日があり、&lt;br&gt;今日より前？&quot;}
+  Q1 --&gt;|はい| E[&quot;終了（ended）&quot;]
+  Q1 --&gt;|いいえ| Q2{&quot;解約の申し出日がある？&quot;}
+  Q2 --&gt;|はい| C[&quot;解約予定（cancel_requested）&quot;]
+  Q2 --&gt;|いいえ| A[&quot;契約中（active）&quot;]
+</pre>
+<ul>
+<li>終了日の当日は、まだ「解約予定」です（翌日から「終了」）。</li>
+<li>申し出日を入れずに終了日だけを入れたときは、終了日を過ぎるまで「契約中」です。</li>
+</ul>
+<h3 id="sec-43">15.2 解約の申し出（API-68）</h3>
+<p>保守プランは「解約のお申し出は前月末まで」なので、終了日を<strong>申し出日の翌月の末日</strong>にします。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>申し出日</th>
+<th>終了日</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2026-10-30</td>
+<td>2026-11-30</td>
+</tr>
+<tr>
+<td>2026-12-15</td>
+<td>2027-01-31</td>
+</tr>
+<tr>
+<td>2027-01-31</td>
+<td>2027-02-28</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-44">15.3 月額の合計</h3>
+<p>状態が「終了」でなく、開始日が今日以前の契約の月額を合計します（契約中と解約予定を含む）。ダッシュボードと保守契約の画面で使います。</p>
+<h2 id="sec-45">16. ダッシュボードの集計（<code>dashboard.summary</code>）</h2>
+<p>日付の区切りはすべて日本時間です。お問い合わせの件数は、迷惑送信を除きます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>計算</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>未対応のお問い合わせ</td>
+<td>対応状況が未対応の件数</td>
+</tr>
+<tr>
+<td>今月 / 先月のお問い合わせ</td>
+<td>受付日時が今月1日 0:00 以降 / 先月1日 0:00 以降で今月1日 0:00 より前</td>
+</tr>
+<tr>
+<td>月ごとの件数</td>
+<td>今月を含む直近12か月。受付日時に9時間を足した年月で数え、0件の月も入れる</td>
+</tr>
+<tr>
+<td>未対応の一覧</td>
+<td>未対応を受付の新しい順に5件</td>
+</tr>
+<tr>
+<td>保守契約</td>
+<td>終了していない契約の件数 / そのうち解約予定の件数 / 月額の合計（15.3）</td>
+</tr>
+<tr>
+<td>今月の入金</td>
+<td>入金日が今月1日以降の入金の合計（※課題 No.10）</td>
+</tr>
+<tr>
+<td>未入金</td>
+<td>状態が承諾の見積書の残額のうち、0より大きいものの合計</td>
+</tr>
+<tr>
+<td>作成中・送付済みの見積書</td>
+<td>状態が下書き・送付済みの件数</td>
+</tr>
+<tr>
+<td>送れていないメール</td>
+<td>今から30日（30×24時間）前以降に登録した送信履歴のうち、失敗・未送信の件数</td>
+</tr>
+<tr>
+<td>前回のログイン</td>
+<td>成功したログインを新しい順に並べて2番目（1番目は今回のログイン）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-46">17. 画像のアップロード（API-35・<code>uploads.py</code>）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大きさ</td>
+<td>5MB まで（画面でも、選んだときに確認する）</td>
+</tr>
+<tr>
+<td>種類の判定</td>
+<td>拡張子や Content-Type ではなく、ファイルの先頭のバイトで判定する</td>
+</tr>
+<tr>
+<td>PNG</td>
+<td><code>89 50 4E 47 0D 0A 1A 0A</code> で始まる</td>
+</tr>
+<tr>
+<td>JPEG</td>
+<td><code>FF D8 FF</code> で始まる</td>
+</tr>
+<tr>
+<td>GIF</td>
+<td><code>GIF87a</code> か <code>GIF89a</code> で始まる</td>
+</tr>
+<tr>
+<td>WebP</td>
+<td>1〜4バイト目が <code>RIFF</code>、9〜12バイト目が <code>WEBP</code></td>
+</tr>
+<tr>
+<td>保存先と名前</td>
+<td><code>data/uploads/{ランダムな16進数24桁}.{png・jpg・gif・webp}</code></td>
+</tr>
+<tr>
+<td>配信（API-05）</td>
+<td>名前が上の形に合うときだけ返す。名前は使い回さないので、ブラウザに1年間キャッシュさせる</td>
+</tr>
+<tr>
+<td>使われなくなった画像</td>
+<td>自動では削除しない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-47">18. サイト内容とテーマ色の保存</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>保存の単位</td>
+<td>サイト内容は6つの項目ごと（<code>settings</code> の <code>content.{項目}</code>）、テーマ色は <code>theme</code></td>
+</tr>
+<tr>
+<td>公開サイトへの反映</td>
+<td>公開サイトは開いたときに API-04 を読むので、保存した次の表示から反映される（管理画面と同じブラウザでは、保存したときに読み込み直す）</td>
+</tr>
+<tr>
+<td>初期値に戻す</td>
+<td>保存した行を削除する（<code>shared/site_defaults.json</code> の値に戻る）</td>
+</tr>
+<tr>
+<td>画面の初期表示</td>
+<td>API を読み込めるまでは <code>shared/site_defaults.json</code> の値。テーマ色は前回の色（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a> 3.1）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-48">19. テーマ色の計算（画面・<code>lib/theme.ts</code>）</h2>
+<h3 id="sec-49">19.1 白い文字とのコントラスト比</h3>
+<p>WCAG の計算方法です。API（<code>schemas.contrast_with_white</code>）も同じ式でチェックします。</p>
+<ol>
+<li>R・G・B をそれぞれ 0〜1 にする（÷255）。</li>
+<li>値が 0.03928 以下なら ÷12.92、それより大きければ ((値 + 0.055) ÷ 1.055) の 2.4 乗。</li>
+<li>明るさ L = 0.2126 × R + 0.7152 × G + 0.0722 × B</li>
+<li>白とのコントラスト比 = 1.05 ÷ (L + 0.05)</li>
+</ol>
+<p>4.5 以上を「読みやすい」とします（WCAG 2.1 の AA の基準）。</p>
+<h3 id="sec-50">19.2 読みやすい濃さに調整</h3>
+<p>コントラスト比が 4.5 になるまで、黒を6%ずつ混ぜます（最大40回）。</p>
+<h3 id="sec-51">19.3 CSS 変数</h3>
+<p>テーマ色から、次の CSS 変数を作って公開サイトの枠に設定します。「白 n%」は白に n% 近づけた色、「黒 n%」は黒に n% 近づけた色です。テーマ色が初期の青のときは設定せず、<code>base.css</code> の元の色を使います。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数</th>
+<th>値</th>
+<th>変数</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--c-primary</code></td>
+<td>テーマ色</td>
+<td><code>--c-tint</code></td>
+<td>白 84%</td>
+</tr>
+<tr>
+<td><code>--c-primary-dark</code></td>
+<td>黒 20%</td>
+<td><code>--c-tint-2</code></td>
+<td>白 92%</td>
+</tr>
+<tr>
+<td><code>--c-primary-rgb</code></td>
+<td><code>r, g, b</code></td>
+<td><code>--c-tint-3</code></td>
+<td>白 88%</td>
+</tr>
+<tr>
+<td><code>--shadow-card</code></td>
+<td><code>0 12px 32px rgba(r, g, b, 0.08)</code></td>
+<td><code>--c-tint-4</code></td>
+<td>白 90%</td>
+</tr>
+<tr>
+<td><code>--c-accent-1</code></td>
+<td>テーマ色</td>
+<td><code>--c-current</code></td>
+<td>白 91%</td>
+</tr>
+<tr>
+<td><code>--c-accent-2</code> / <code>--c-blue-2</code></td>
+<td>白 18%</td>
+<td><code>--c-hero-from</code></td>
+<td>白 88%</td>
+</tr>
+<tr>
+<td><code>--c-accent-3</code></td>
+<td>白 10%</td>
+<td><code>--c-hero-mid</code></td>
+<td>白 95%</td>
+</tr>
+<tr>
+<td><code>--c-accent-4</code> / <code>--c-sky</code></td>
+<td>白 14%</td>
+<td><code>--c-band-card</code></td>
+<td>白 8%</td>
+</tr>
+<tr>
+<td><code>--c-accent-5</code> / <code>--c-blue-3</code></td>
+<td>白 40%</td>
+<td><code>--c-band-text</code></td>
+<td>白 84%</td>
+</tr>
+<tr>
+<td><code>--c-accent-6</code></td>
+<td>白 12%</td>
+<td><code>--c-band-eyebrow</code></td>
+<td>白 76%</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-52">19.4 ファビコンとアドレスバーの色</h3>
+<p>ロゴと同じ図形（電球と回路）の SVG をテーマ色で作り、<code>data:</code> URL にしてファビコンを差し替えます。<code>meta[name=&quot;theme-color&quot;]</code> もテーマ色にします。管理画面では初期の青にします。</p>
+<h2 id="sec-53">20. アクセス解析（画面・<code>lib/analytics.ts</code>）</h2>
+<p>次の条件をすべて満たすときだけ、Google Analytics 4（gtag.js）を読み込みます。</p>
+<ol>
+<li><code>frontend/.env.fastapi</code> の <code>VITE_GA_ID</code> に測定 ID がある</li>
+<li>本番用にビルドした画面である（<code>npm run build:fastapi</code>）</li>
+<li>ホスト名が <code>localhost</code>・<code>127.0.0.1</code> でない</li>
+<li>最初に開いた URL が <code>/admin</code> で始まらない</li>
+</ol>
+<p>ページの移動（画面の切り替え）は、GA4 の拡張計測機能（ブラウザの履歴の変化）で計測します。測定 ID があるときは、「個人情報の取扱い」にアクセス解析の説明を出します（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a> 4.2）。</p>
+<h2 id="sec-54">21. 操作の記録（<code>audit.py</code>）</h2>
+<p>管理画面での操作を <code>audit_logs</code> に残し、A-15 で確認できます。内容は1000文字で切ります。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>パスワードを変更</td>
+<td>ほかの端末のログインは無効にしました</td>
+</tr>
+<tr>
+<td>お問い合わせを CSV で出力</td>
+<td>{n} 件</td>
+</tr>
+<tr>
+<td>対応状況を変更</td>
+<td>#{ID} {お名前} 様: {状況}</td>
+</tr>
+<tr>
+<td>迷惑送信にしました / 迷惑送信から戻しました</td>
+<td>#{ID} {お名前} 様</td>
+</tr>
+<tr>
+<td>お問い合わせを削除</td>
+<td>#{ID} {お名前} 様（{メール}）（※課題 No.3）</td>
+</tr>
+<tr>
+<td>メールで返信</td>
+<td>#{ID} {お名前} 様: {件名}</td>
+</tr>
+<tr>
+<td>バックアップをダウンロード</td>
+<td></td>
+</tr>
+<tr>
+<td>自動削除の設定を変更</td>
+<td>{有効・無効} / {n}か月 / 迷惑送信 {n}日</td>
+</tr>
+<tr>
+<td>古いお問い合わせを削除（手動）/（自動）</td>
+<td>{n} 件</td>
+</tr>
+<tr>
+<td>テーマ色を変更</td>
+<td>{色}</td>
+</tr>
+<tr>
+<td>サイト内容を変更 / サイト内容を初期値に戻す</td>
+<td>{項目名}</td>
+</tr>
+<tr>
+<td>画像をアップロード</td>
+<td>{ファイル名}</td>
+</tr>
+<tr>
+<td>メールの送信方法を変更</td>
+<td>Outlook（Microsoft Graph）/ SMTP</td>
+</tr>
+<tr>
+<td>Outlook にサインイン / Outlook のサインインを解除</td>
+<td></td>
+</tr>
+<tr>
+<td>メールの送信設定を変更</td>
+<td>{サーバー名}:{ポート}</td>
+</tr>
+<tr>
+<td>通知・自動返信の設定を変更</td>
+<td></td>
+</tr>
+<tr>
+<td>テストメールを送信</td>
+<td>{宛先}</td>
+</tr>
+<tr>
+<td>メールを送り直し</td>
+<td>送信履歴 #{ID}</td>
+</tr>
+<tr>
+<td>送信履歴のメールを削除</td>
+<td>#{ID} {宛先}「{件名}」</td>
+</tr>
+<tr>
+<td>返信テンプレートを追加 / 変更 / 削除</td>
+<td>{名前}</td>
+</tr>
+<tr>
+<td>ブロックに追加 / ブロックを解除</td>
+<td>{パターン}</td>
+</tr>
+<tr>
+<td>見積書を作成</td>
+<td>{番号} {お客さま名} 様 {合計}円</td>
+</tr>
+<tr>
+<td>見積書を変更</td>
+<td>{番号}（{状態}） {合計}円</td>
+</tr>
+<tr>
+<td>見積書を削除</td>
+<td>{番号} {お客さま名} 様</td>
+</tr>
+<tr>
+<td>入金を記録</td>
+<td>{番号} {お客さま名} 様 {金額}円</td>
+</tr>
+<tr>
+<td>入金の記録を変更</td>
+<td>{番号} {金額}円</td>
+</tr>
+<tr>
+<td>入金の記録を削除</td>
+<td>{番号} {お客さま名} 様</td>
+</tr>
+<tr>
+<td>保守契約を登録</td>
+<td>{お客さま名} 様 {サイト名} 月額{金額}円</td>
+</tr>
+<tr>
+<td>保守契約を変更 / 保守契約を削除</td>
+<td>{お客さま名} 様 {サイト名}</td>
+</tr>
+<tr>
+<td>保守契約の解約申し出を登録</td>
+<td>{お客さま名} 様 {サイト名}（{終了日} で終了）</td>
+</tr>
+</tbody></table></div>
+<p>ログイン・ログアウトは操作の記録に入れず、ログインはログイン履歴（<code>login_history</code>）に残します。</p>
+<h2 id="sec-55">22. 画面の API の呼び出し（<code>api/client.ts</code>）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>接続先</td>
+<td><code>VITE_API_BASE_URL</code>（末尾の <code>/</code> は除く）。空なら画面と同じ場所。接続先と画面がどちらも <code>127.0.0.1</code>・<code>localhost</code> のときは、接続先のホスト名を画面に合わせる（<a href="04_API%E8%A8%AD%E8%A8%88.html">04</a> 1.1）</td>
+</tr>
+<tr>
+<td>送り方</td>
+<td><code>fetch</code>・<code>credentials: &#39;include&#39;</code>・<code>Accept: application/json</code>。本文が JSON なら <code>Content-Type: application/json</code>、画像のアップロードはファイルの種類</td>
+</tr>
+<tr>
+<td>通信できないとき</td>
+<td><code>ApiError</code>（コード 0）「通信に失敗しました。接続を確認して、もう一度お試しください。」</td>
+</tr>
+<tr>
+<td>エラーの応答</td>
+<td><code>ApiError</code>（コード・<code>message</code>・<code>errors</code>）。<code>message</code> がなければ「エラーが発生しました（{コード}）。」</td>
+</tr>
+<tr>
+<td>ダウンロード（CSV・zip）</td>
+<td>応答をファイルにして保存する。名前は <code>Content-Disposition</code> から（なければ <code>inquiries.csv</code>・<code>katachi-backup.zip</code>）</td>
+</tr>
+<tr>
+<td>画像の URL</td>
+<td><code>/uploads/</code> で始まるものは API の接続先を前に付ける（<code>assetUrl</code>）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/06_処理設計.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>

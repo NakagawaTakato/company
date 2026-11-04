@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>07 セキュリティ設計｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">07 セキュリティ設計</h1>
+<h2 id="sec-2">1. 方針</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>方針</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>管理画面</td>
+<td>管理者1人だけがログインして使う。ログインは Cookie のセッションで保つ</td>
+</tr>
+<tr>
+<td>公開サイト</td>
+<td>ログインなしで使える。お問い合わせフォームは、機械的な送信と大量の送信を防ぐ</td>
+</tr>
+<tr>
+<td>入力</td>
+<td>画面のチェックは補助とし、API で必ずチェックする</td>
+</tr>
+<tr>
+<td>秘密情報</td>
+<td>パスワード・トークンはハッシュにするか、git で管理しないファイルに置く</td>
+</tr>
+<tr>
+<td>個人情報</td>
+<td>必要なものだけを取り、不要になったら削除する。カード番号は扱わない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-3">2. 管理者の認証</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>管理者</td>
+<td><code>.env</code> の <code>ADMIN_EMAIL</code> の1人だけ（起動時に、ほかの管理者は削除する。<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 6.5）</td>
+</tr>
+<tr>
+<td>パスワードのハッシュ</td>
+<td>PBKDF2-HMAC-SHA256、600,000回、ソルトはランダムな16バイト</td>
+</tr>
+<tr>
+<td>保存の形</td>
+<td><code>pbkdf2_sha256${回数}${ソルト（Base64）}${ハッシュ（Base64）}</code></td>
+</tr>
+<tr>
+<td>比べ方</td>
+<td>一定の時間で比べる（<code>hmac.compare_digest</code>）</td>
+</tr>
+<tr>
+<td>パスワードの長さ</td>
+<td>8〜128文字</td>
+</tr>
+<tr>
+<td>メールアドレス</td>
+<td>前後の空白を除き、小文字にして比べる</td>
+</tr>
+<tr>
+<td>登録されていないメール</td>
+<td>ダミーのハッシュで同じだけ計算してから失敗にする（応答の時間で、登録の有無を推測されにくくする）</td>
+</tr>
+<tr>
+<td>失敗のメッセージ</td>
+<td>メールとパスワードのどちらが違うかは言わない（「メールアドレスまたはパスワードが正しくありません。」）</td>
+</tr>
+<tr>
+<td>初めのパスワード</td>
+<td>起動スクリプトが <code>.env</code> を作るときに、ランダムな16文字（英数字）にして、ターミナルに表示する</td>
+</tr>
+<tr>
+<td>忘れたとき</td>
+<td><code>.env</code> の <code>ADMIN_PASSWORD</code> を書き換えて再起動すると、その値になる（ログイン中のセッションはすべて無効）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-4">3. セッションと Cookie</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>トークン</td>
+<td>ランダムな32バイト（<code>secrets.token_urlsafe(32)</code>）</td>
+</tr>
+<tr>
+<td>データベース</td>
+<td>トークンの SHA-256 だけを保存する（データベースが漏れても、そのままではログインに使えない）</td>
+</tr>
+<tr>
+<td>期限</td>
+<td>ログインから12時間（使っても延長しない）</td>
+</tr>
+<tr>
+<td>Cookie の名前</td>
+<td><code>bt_admin_session</code></td>
+</tr>
+<tr>
+<td>HttpOnly</td>
+<td>あり（画面の JavaScript から読めない）</td>
+</tr>
+<tr>
+<td>SameSite</td>
+<td>Strict（ほかのサイトから来たリクエストには付かない）</td>
+</tr>
+<tr>
+<td>Path</td>
+<td><code>/api</code>（API にだけ送る）</td>
+</tr>
+<tr>
+<td>Secure</td>
+<td><code>.env</code> の <code>COOKIE_SECURE=true</code> のときあり（HTTPS の通信にだけ付く）。本番は必ず <code>true</code></td>
+</tr>
+</tbody></table></div>
+<p>セッションを無効にするとき:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>きっかけ</th>
+<th>無効にするセッション</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ログアウト</td>
+<td>そのセッション</td>
+</tr>
+<tr>
+<td>パスワードの変更（A-17）</td>
+<td>その画面以外のすべて</td>
+</tr>
+<tr>
+<td><code>.env</code> のパスワードでのリセット（再起動）</td>
+<td>すべて</td>
+</tr>
+<tr>
+<td><code>.env</code> の <code>ADMIN_EMAIL</code> の変更（再起動）</td>
+<td>古い管理者のすべて（管理者ごと削除）</td>
+</tr>
+<tr>
+<td>期限切れ</td>
+<td>使えなくなる。行は起動時に削除</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-5">4. 試行回数の制限</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>上限</th>
+<th>超えたとき</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ログインの失敗</td>
+<td>同じ IP から15分に10回</td>
+<td>429「ログインの試行回数が多すぎます。しばらくしてからお試しください。」</td>
+</tr>
+<tr>
+<td>お問い合わせの送信</td>
+<td>同じ IP から10分に10件</td>
+<td>429「送信回数が多すぎます。しばらくしてからお試しください。」</td>
+</tr>
+</tbody></table></div>
+<p>数え方は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 7章です。回数は API のメモリに持つため、API は1つのプロセスで動かします。リバースプロキシの後ろでは、本当の接続元の IP が API に届くように設定します（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 8.4）。</p>
+<h2 id="sec-6">5. ほかのサイトからの不正なリクエストの対策（CSRF・CORS）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対策</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SameSite=Strict の Cookie</td>
+<td>ほかのサイトのページから管理画面の API を呼んでも、ログインの Cookie が付かないので、401 になる</td>
+</tr>
+<tr>
+<td>CORS</td>
+<td><code>.env</code> の <code>FRONTEND_ORIGINS</code> の接続元にだけ、応答を読む許可（<code>Access-Control-Allow-Origin</code>）を返す。ほかの接続元の JavaScript は、応答を読めない</td>
+</tr>
+<tr>
+<td>許可するメソッド・ヘッダー</td>
+<td>GET・POST・PUT・PATCH・DELETE、<code>Content-Type</code>・<code>Accept</code> だけ</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-7">6. 応答ヘッダー</h2>
+<p>API のすべての応答に付けます（<code>main.py</code>）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ヘッダー</th>
+<th>値</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>X-Content-Type-Options</td>
+<td>nosniff</td>
+<td>ブラウザに、ファイルの種類を推測させない</td>
+</tr>
+<tr>
+<td>X-Frame-Options</td>
+<td>DENY</td>
+<td>ほかのサイトの枠（iframe）の中に表示させない（クリックジャッキングの対策）</td>
+</tr>
+<tr>
+<td>Referrer-Policy</td>
+<td>strict-origin-when-cross-origin</td>
+<td>ほかのサイトへ移るときに、URL のパスを渡さない</td>
+</tr>
+<tr>
+<td>Cache-Control（<code>/api/</code> 以下）</td>
+<td>no-store</td>
+<td>個人情報を含む応答を、ブラウザや途中のサーバーに保存させない</td>
+</tr>
+</tbody></table></div>
+<p>画面のファイル（<code>frontend/dist</code>）は API が配信しないので、本番では配信するサーバーにも同じようなヘッダーを設定します（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 8.2）。</p>
+<h2 id="sec-8">7. 入力のチェック</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>対策</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>すべての入力</td>
+<td>API で必ずチェックする（<a href="04_API%E8%A8%AD%E8%A8%88.html">04</a>・<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 2.2）。長さ・件数・数値の範囲に上限を決める</td>
+</tr>
+<tr>
+<td>選択肢</td>
+<td><code>shared/contact_options.json</code> などの決まった値だけを受け付ける</td>
+</tr>
+<tr>
+<td>URL</td>
+<td><code>http://</code>・<code>https://</code> で始まるものだけ（<code>javascript:</code> などは不可）。LINE の URL は <code>https://</code> だけ</td>
+</tr>
+<tr>
+<td>メールアドレス・色・日付</td>
+<td>形式をチェックする</td>
+</tr>
+<tr>
+<td>パスの ID</td>
+<td>12桁以内の半角数字だけ（ほかは 404）</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>JSON のオブジェクトでなければ 400</td>
+</tr>
+<tr>
+<td>SQL</td>
+<td>値はすべてプレースホルダ（<code>?</code>）で渡す。並び順などは決まった候補から選ぶ。検索は <code>instr</code> を使い、ワイルドカード（<code>%</code> <code>_</code>）を解釈しない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-9">8. 表示・出力するときの対策</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象</th>
+<th>対策</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>画面の表示</td>
+<td>React で表示する（文字は自動でエスケープされ、HTML として実行されない）。HTML をそのまま埋め込む書き方（<code>dangerouslySetInnerHTML</code> など）は使わない</td>
+</tr>
+<tr>
+<td>外部へのリンク</td>
+<td>新しいタブで開くリンクには <code>rel=&quot;noopener noreferrer&quot;</code> を付ける</td>
+</tr>
+<tr>
+<td>CSV</td>
+<td>先頭が <code>=</code> <code>+</code> <code>-</code> <code>@</code> などの値に <code>&#39;</code> を付け、Excel で数式として実行させない（CSV インジェクションの対策）</td>
+</tr>
+<tr>
+<td>メールのヘッダー</td>
+<td>件名・差出人名の改行を空白にする（ヘッダーインジェクションの対策）。宛先・返信先はメールの形式に合うときだけ使う</td>
+</tr>
+<tr>
+<td>エラー</td>
+<td>予期しないエラーの詳しい内容（プログラムの中身）は応答に出さない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-10">9. ファイルのアップロード</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対策</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ログイン</td>
+<td>管理者だけがアップロードできる</td>
+</tr>
+<tr>
+<td>大きさ</td>
+<td>5MB まで（<code>Content-Length</code> と本文の両方で確認）</td>
+</tr>
+<tr>
+<td>種類</td>
+<td>ファイルの先頭のバイトで判定し、PNG・JPEG・GIF・WebP だけを受け付ける。スクリプトを含められる SVG は受け付けない</td>
+</tr>
+<tr>
+<td>名前</td>
+<td>サーバーでランダムな名前を付ける（送られた名前は使わない）</td>
+</tr>
+<tr>
+<td>取り出し</td>
+<td>名前が決まった形（16進数24桁 + 拡張子）に合うときだけ返す。フォルダをさかのぼる名前（<code>../</code>）は使えない</td>
+</tr>
+<tr>
+<td>種類の表示</td>
+<td>拡張子から <code>Content-Type</code> を決め、<code>nosniff</code> を付ける</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-11">10. 迷惑送信の対策</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対策</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>隠し欄</td>
+<td>人には見えない入力欄に値があれば、保存せずに成功として返す（機械的な送信は、ほとんどがここで止まる）</td>
+</tr>
+<tr>
+<td>ブロックリスト</td>
+<td>登録したアドレス・ドメインからの送信は「迷惑送信」として保存し、新着通知・自動返信を送らない</td>
+</tr>
+<tr>
+<td>回数の制限</td>
+<td>同じ IP から10分に10件まで。自動返信は入力されたアドレスに送るため、他人のアドレスあてに大量に送られるのも防ぐ</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-12">11. 秘密情報の扱い</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>置き場所</th>
+<th>守り方</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>管理者のパスワード（平文）</td>
+<td><code>.env</code></td>
+<td>git 管理外（<code>.gitignore</code>）。起動スクリプトが作るときは権限 600。データベースにはハッシュだけ</td>
+</tr>
+<tr>
+<td>ログインのトークン</td>
+<td>ブラウザの Cookie</td>
+<td>HttpOnly。データベースにはハッシュだけ</td>
+</tr>
+<tr>
+<td>SMTP のパスワード</td>
+<td><code>settings</code> 表の <code>smtp</code>（メールサーバーへのログインに使うため、平文）</td>
+<td>画面・API の応答には返さない（設定済みかどうかだけ返す）。入力欄が空なら変えない。データベースとバックアップの zip に入るので、zip の保管に注意する</td>
+</tr>
+<tr>
+<td>Outlook のトークン</td>
+<td><code>data/microsoft-oauth.json</code></td>
+<td>git 管理外、権限 600、書き込みは一時ファイルからの置き換え。バックアップの zip に入れない</td>
+</tr>
+<tr>
+<td><code>MICROSOFT_CLIENT_ID</code></td>
+<td><code>.env</code></td>
+<td>秘密の値ではない（クライアントシークレットを使わない公開クライアント）が、<code>.env</code> で管理する</td>
+</tr>
+<tr>
+<td>データベース</td>
+<td><code>data/app.db</code></td>
+<td>git 管理外</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-13">12. 個人情報の扱い</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>取る情報</td>
+<td>お名前・メール・電話番号・都道府県・年齢（任意）・ご相談内容・お支払い方法の選択（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a> 4.2）</td>
+</tr>
+<tr>
+<td>取らない情報</td>
+<td>カード番号など。フォームにも「入力しないでください」と書き、カードの決済は決済サービス会社の画面で行う</td>
+</tr>
+<tr>
+<td>同意</td>
+<td>「個人情報の取扱い」の全文を最後までスクロールしてから、「同意する」を押せるようにする</td>
+</tr>
+<tr>
+<td>保存される場所</td>
+<td><code>inquiries</code>（本体）、<code>inquiry_notes</code>（メモ・返信の本文）、<code>mail_outbox</code>（宛先・本文）、<code>audit_logs</code>（削除したお問い合わせのお名前・メールなど）、<code>estimates</code>・<code>payments</code>・<code>contracts</code>（お客さま名・メール）、<code>login_history</code>（管理者のメール・IP）</td>
+</tr>
+<tr>
+<td>削除</td>
+<td>管理画面から1件ずつ、または自動削除（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 11章）。お問い合わせを削除したときは、メモ・記録と送信履歴も削除する（※課題 No.1）。操作の記録・ログイン履歴の扱いは ※課題 No.3</td>
+</tr>
+<tr>
+<td>持ち出し</td>
+<td>CSV とバックアップの zip には個人情報が入る。保管と削除に注意する</td>
+</tr>
+<tr>
+<td>アクセス解析</td>
+<td>手元の確認と管理画面では計測しない。お名前などの個人を特定する情報は送らない</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-14">13. 記録</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>記録</th>
+<th>内容</th>
+<th>見る場所</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>操作の記録</td>
+<td>管理画面での変更・ダウンロード（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 21章）</td>
+<td>A-15</td>
+</tr>
+<tr>
+<td>ログイン履歴</td>
+<td>成功・失敗、入力されたメール、IP、ブラウザの情報</td>
+<td>A-15</td>
+</tr>
+<tr>
+<td>前回のログイン</td>
+<td>1つ前の成功したログインの日時と IP</td>
+<td>A-02（身に覚えのないログインに気づけるように）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-15">14. 本番で必ず行う設定</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>設定</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HTTPS で公開し、<code>.env</code> を <code>COOKIE_SECURE=true</code> にする</td>
+<td>ログインの Cookie を暗号化した通信でだけ送る</td>
+</tr>
+<tr>
+<td><code>.env</code> の <code>FRONTEND_ORIGINS</code> を、公開する画面の URL だけにする</td>
+<td>ほかの接続元から API の応答を読ませない</td>
+</tr>
+<tr>
+<td>画面と API を同じドメインの配下にする</td>
+<td>SameSite=Strict の Cookie を使うため</td>
+</tr>
+<tr>
+<td><code>.env</code> の <code>ADMIN_PASSWORD</code> を推測されにくい値にし、<code>.env</code> を他人に渡さない</td>
+<td>管理画面を守る</td>
+</tr>
+<tr>
+<td>リバースプロキシの後ろでは、本当の接続元 IP を API に渡す</td>
+<td>回数の制限とログイン履歴の IP のため（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 8.4）</td>
+</tr>
+<tr>
+<td>画面のファイルを配信するサーバーにも、6章のような応答ヘッダーを付ける</td>
+<td>画面のページにも、クリックジャッキングなどの対策をする</td>
+</tr>
+<tr>
+<td>必要に応じて、API の説明ページ（<code>/api/docs</code>）を止める</td>
+<td>本番では使わないため（止めるときは <code>main.py</code> の <code>docs_url</code>・<code>openapi_url</code>）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/07_セキュリティ設計.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+
+</body>
+</html>

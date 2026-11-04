@@ -7,20 +7,39 @@ import {
   MdFormatQuote,
   MdLiveHelp,
   MdMail,
+  MdMailOutline,
+  MdPlace,
   MdRadioButtonChecked,
   MdSms,
 } from 'react-icons/md'
 import { assetUrl } from '../api/client'
 import { Logo } from '../components/Logo'
 import { SectionHeading } from '../components/SectionHeading'
-import { CAREER, FLOW, NAV, PROMISES, SERVICES, SKILLS, STATS, STRENGTHS, type Feature } from '../content/home'
+import {
+  CAREER,
+  FLOW,
+  HEADER_CTA,
+  NAV,
+  PROMISES,
+  SERVICE_AREA,
+  SERVICES,
+  SKILLS,
+  STATS,
+  STRENGTHS,
+  type Feature,
+} from '../content/home'
 import { useSite } from '../lib/SiteContext'
+import { useActiveSection } from '../lib/useActiveSection'
 import { usePageTitle } from '../lib/usePageTitle'
 
 const accentStyle = (accent?: string) => (accent ? ({ '--accent': accent } as CSSProperties) : undefined)
 
 // 制作実績のバッジは、1つ目・2つ目…で色を交互にします（テーマ色に連動）
 const BADGE_COLORS = ['var(--c-accent-2)', 'var(--c-accent-5)']
+
+// 今見ているエリアを調べる対象です。「ご相談」エリアはメニューにありませんが、
+// そこまで来たら「よくある質問」の強調を外したいので、最後に加えています。
+const SECTION_IDS = [...NAV.map((item) => item.href.slice(1)), HEADER_CTA.href.slice(1)]
 
 function FeatureCard({ item }: { item: Feature }) {
   const Icon = item.icon
@@ -39,26 +58,37 @@ export function HomePage() {
   usePageTitle()
   const { business, prices, faq, works, other_works: otherWorks, testimonials } = useSite().content
   const publishedVoices = testimonials.filter((t) => t.published)
+  const activeSection = useActiveSection(SECTION_IDS)
 
   return (
     <div className="home">
-      {/* ヘッダー */}
-      <header className="container home-header">
-        <Logo variant="stacked" />
-        <nav className="home-nav" aria-label="ページ内メニュー">
-          {NAV.map((item) =>
-            item.to ? (
-              <Link key={item.label} to={item.to}>
-                {item.label}
-              </Link>
-            ) : (
-              <a key={item.label} href={item.href}>
-                {item.label}
-              </a>
-            ),
-          )}
-        </nav>
+      {/* ヘッダー（ロゴと「ご相談はこちら」ボタン）。画面上部に固定します */}
+      <header className="home-header">
+        <div className="home-header__inner">
+          <Logo variant="stacked" />
+          <a className="btn btn--primary home-header__cta" href={HEADER_CTA.href}>
+            <MdMailOutline aria-hidden="true" />
+            {HEADER_CTA.label}
+          </a>
+        </div>
       </header>
+
+      {/* ページ内メニュー。PCはヘッダーの真ん中に重ねて1行、タブレットはヘッダーの下に1行、スマホは4列×2段 */}
+      <nav className="home-nav" aria-label="ページ内メニュー">
+        {NAV.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            aria-current={activeSection === item.href.slice(1) ? 'location' : undefined}
+          >
+            {item.label.split(' ').map((phrase) => (
+              <span key={phrase} className="home-nav__phrase">
+                {phrase}
+              </span>
+            ))}
+          </a>
+        ))}
+      </nav>
 
       <main>
         {/* ファーストビュー */}
@@ -74,7 +104,7 @@ export function HomePage() {
                 <span className="text-primary">責任をもって</span>担当します。
               </h1>
               <p className="hero__lead">
-                個人事業主さまから店舗、中小企業さままで、ホームページ制作をお受けしています。これまでの開発では役割を分担し、フロントエンド(React)は私が、バックエンド(Python<wbr />/FastAPI)は東京大学卒業のエンジニアが担当しました。私はフロントエンドの開発で実績を積んできました。見た目だけでなく、お問い合わせフォームや管理画面など動きのある機能もご相談いただけます。
+                個人事業主さま・飲食店やサロンなどの店舗・中小企業さまのホームページを制作しています。スマホで見やすく、お問い合わせやご予約につながるページを、わかりやすい言葉でご提案します。予約フォームや問い合わせの管理など、動きのある機能もご相談ください。
               </p>
               <div className="hero__actions">
                 <a className="btn btn--primary" href="#contact">
@@ -393,6 +423,14 @@ export function HomePage() {
               <span className="pill">対応時間</span>
               <strong>{business.hours}</strong>
               <span className="hours__suffix">など</span>
+            </p>
+            <p className="hours hours--area">
+              <span className="icon-circle icon-circle--md" aria-hidden="true">
+                <MdPlace />
+              </span>
+              <span className="pill">対応エリア</span>
+              <strong>{SERVICE_AREA.main}</strong>
+              <span className="hours__suffix">（{SERVICE_AREA.note}）</span>
             </p>
             <p className="contact-note">ご相談の内容によっては、お受けできない場合もあります。あらかじめご了承ください。</p>
           </div>

@@ -40,7 +40,7 @@ type LogoProps = {
 export function Logo({ variant = 'inline', subtitle = BRAND.tagline, to = '/' }: LogoProps) {
   return (
     <Link to={to} className={`logo logo--${variant}`} aria-label={`${BRAND.brand} ${subtitle}`}>
-      <LogoMark size={variant === 'stacked' ? 44 : 32} />
+      <LogoMark size={variant === 'stacked' ? 36 : 32} />
       <span className="logo__text">
         <span className="logo__brand">{BRAND.brand}</span>
         <span className="logo__sub">{subtitle}</span>

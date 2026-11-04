@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>02 画面設計（公開サイト）｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">02 画面設計（公開サイト）</h1>
+<h2 id="sec-2">1. 画面一覧</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>概要</th>
+<th>使う API</th>
+<th>ソース</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P-01</td>
+<td>トップページ</td>
+<td><code>/</code></td>
+<td>事業の紹介・料金・制作実績・よくある質問・ご相談の入口</td>
+<td>API-04、API-05（画像）</td>
+<td><code>pages/HomePage.tsx</code></td>
+</tr>
+<tr>
+<td>P-02</td>
+<td>お問い合わせフォーム</td>
+<td><code>/contact</code></td>
+<td>お問い合わせの入力と送信</td>
+<td>API-03</td>
+<td><code>pages/ContactPage.tsx</code></td>
+</tr>
+<tr>
+<td>P-03</td>
+<td>送信完了</td>
+<td><code>/contact/complete</code></td>
+<td>受け付けたことを伝える</td>
+<td>なし</td>
+<td><code>pages/ContactCompletePage.tsx</code></td>
+</tr>
+<tr>
+<td>P-04</td>
+<td>LINE でのご相談</td>
+<td><code>/line</code></td>
+<td>LINE の友だち追加（QR コード・ボタン）</td>
+<td>なし</td>
+<td><code>pages/LinePage.tsx</code></td>
+</tr>
+<tr>
+<td>P-05</td>
+<td>事業者情報・お取引について</td>
+<td><code>/tokushoho</code></td>
+<td>特定商取引法に基づく表記と、お金・契約のルール</td>
+<td>なし</td>
+<td><code>pages/TokushohoPage.tsx</code></td>
+</tr>
+<tr>
+<td>P-06</td>
+<td>ページが見つかりません</td>
+<td>上記以外の URL（<code>/admin</code> 以下を除く）</td>
+<td>404 の案内</td>
+<td>なし</td>
+<td><code>pages/NotFoundPage.tsx</code></td>
+</tr>
+</tbody></table></div>
+<p>API-04（テーマ色とサイト内容）は、どの画面を開いても最初に1回だけ呼びます（3.1）。</p>
+<h2 id="sec-3">2. 画面遷移</h2>
+<pre class="mermaid">flowchart LR
+  P01[&quot;P-01 トップページ&quot;]
+  P02[&quot;P-02 お問い合わせフォーム&quot;]
+  P03[&quot;P-03 送信完了&quot;]
+  P04[&quot;P-04 LINE でのご相談&quot;]
+  P05[&quot;P-05 事業者情報・お取引について&quot;]
+  LINE[&quot;LINE アプリ（外部）&quot;]
+  P01 -- &quot;お問い合わせフォーム&quot; --&gt; P02
+  P01 -- &quot;LINEでご相談する&quot; --&gt; P04
+  P01 -- &quot;事業者情報… のリンク&lt;br&gt;フッター&quot; --&gt; P05
+  P01 -- &quot;フッター「個人情報の取扱い」&quot; --&gt; P02
+  P02 -- &quot;送信に成功&quot; --&gt; P03
+  P02 -- &quot;同意欄の「こちら」&quot; --&gt; P05
+  P04 -- &quot;LINEを開く（新しいタブ）&quot; --&gt; LINE
+  P05 -- &quot;トップページ（料金の目安）&quot; --&gt; P01
+  P05 -- &quot;お問い合わせフォームの&lt;br&gt;個人情報の取扱い&quot; --&gt; P02
+  P02 &amp; P03 &amp; P04 &amp; P05 --&gt;|&quot;トップページへ戻る・ロゴ&quot;| P01
+</pre>
+<ul>
+<li>送信完了（P-03）へは、ブラウザの履歴を置き換えて移動します（戻るボタンでフォームに戻らない）。</li>
+<li>フッターの「個人情報の取扱い」は <code>/contact#privacy</code>（フォームの同意欄の位置）を開きます。</li>
+</ul>
+<h2 id="sec-4">3. 共通の仕様</h2>
+<h3 id="sec-5">3.1 サイト内容の読み込み（<code>lib/SiteContext.tsx</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>タイミング</td>
+<td>画面を最初に開いたとき1回（管理画面でサイト内容・テーマ色を保存したときは、もう1回読み込む）</td>
+</tr>
+<tr>
+<td>呼ぶ API</td>
+<td>API-04 <code>GET /api/site</code></td>
+</tr>
+<tr>
+<td>成功したとき</td>
+<td>テーマ色とサイト内容を、受け取った値に置き換える</td>
+</tr>
+<tr>
+<td>失敗したとき</td>
+<td>エラーは表示せず、初期値（<code>shared/site_defaults.json</code>）のまま表示する</td>
+</tr>
+<tr>
+<td>初期表示の色</td>
+<td>前回に受け取ったテーマ色をブラウザ（localStorage の <code>bt-theme-color</code>）に保存しておき、次に開いたときの最初の色に使う（色のちらつきを防ぐ）。保存できない環境でも表示には影響しない</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-6">3.2 テーマ色の反映（<code>components/PublicLayout.tsx</code>・<code>lib/theme.ts</code>）</h3>
+<ul>
+<li>公開サイトの画面だけを <code>public-theme</code> の枠で囲み、テーマ色から作った CSS 変数を上書きします（計算方法は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06 処理設計</a> 19章）。</li>
+<li>テーマ色が初期の青（<code>#1558c0</code>）のときは上書きせず、CSS の元の色をそのまま使います。</li>
+<li>ブラウザのタブのアイコン（ファビコン）と、アドレスバーの色（<code>meta[name=&quot;theme-color&quot;]</code>）もテーマ色に合わせます。</li>
+</ul>
+<h3 id="sec-7">3.3 下層ページの外枠（<code>components/SubPageLayout.tsx</code>）</h3>
+<p>P-02〜P-06 で使います。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ヘッダー</td>
+<td>ロゴ（押すとトップページ）</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>本文の幅は画面ごとに決める。<code>line</code>=560px（P-04）/ <code>form</code>=640px（P-02・P-03・P-06）/ <code>doc</code>=760px（P-05）</td>
+</tr>
+<tr>
+<td>下部</td>
+<td>「トップページへ戻る」ボタン</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-8">3.4 そのほか</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>タブ名</td>
+<td>トップページは <code>HOME_TITLE</code>（「大阪・本町のホームページ制作｜Katachi（個人事業主・店舗・中小企業）」）。ほかの画面は「{画面名} | {屋号}」</td>
+</tr>
+<tr>
+<td>スクロール</td>
+<td>画面を移動したら先頭へ。URL に <code>#</code> が付いていれば、その ID の場所へ（<code>components/ScrollManager.tsx</code>）。トップページでは、画面上部に固定したヘッダーに隠れないよう、ヘッダーの高さの分だけ下の位置で止める</td>
+</tr>
+<tr>
+<td>画面の幅</td>
+<td>トップページは 1140px・960px・760px・420px・360px、下層ページは 640px で、レイアウトを切り替える</td>
+</tr>
+<tr>
+<td>検索・SNS 向けの情報</td>
+<td><code>index.html</code> にタイトル・説明文・OGP（og:type・og:site_name・og:title・og:description・og:locale・twitter:card）を書く。<code>frontend/.env.fastapi</code> の <code>SITE_URL</code> があるときは、ビルド時に og:image（<code>{SITE_URL}/ogp.png</code>・1200×630）を追加する</td>
+</tr>
+<tr>
+<td>アクセス解析</td>
+<td><code>VITE_GA_ID</code> があり、本番用のビルドで、手元（localhost・127.0.0.1）ではなく、<code>/admin</code> 以外の URL で開いたときだけ GA4 を読み込む（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 20章）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-9">4. 各画面</h2>
+<h3 id="sec-10">4.1 P-01 トップページ</h3>
+<h4 id="sec-11">画面の構成</h4>
+<p>上から順に並びます。「出どころ」が「サイト内容」のものは管理画面（A-11）で変えられ、<code>content/home.ts</code> のものはソースを書き換えて変えます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>エリア（ID）</th>
+<th>内容</th>
+<th>出どころ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>ヘッダー</td>
+<td>ロゴ（縦並び）、ページ内メニュー（特長・対応内容・経歴・制作実績・料金・安心のお約束・制作の流れ・よくある質問 → 各エリアへ移動）、ボタン「ご相談はこちら」（→ ご相談エリア）。幅 1140px 以上は 1 行、それより狭いとロゴとボタンの下にメニューを 1 行、760px 以下はメニューを 4 列×2 段のタイルで表示。画面上部に固定する（760px 以下はロゴとボタンの行だけ）。今見ているエリアのメニューは青字＋下線にする。今見ているエリアは、先頭が画面の上から 30% の位置より上に来ているエリアのうち、いちばん下のもの。特長エリアより上とご相談エリアでは、どのメニューも強調しない（<code>lib/useActiveSection.ts</code>）</td>
+<td><code>content/home.ts</code> の <code>NAV</code>・<code>HEADER_CTA</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>ファーストビュー</td>
+<td>キャッチコピー、説明文、ボタン「無料でご相談する」（→ ご相談エリア）・「経歴を見る」（→ 経歴エリア）、「ご相談・お見積りは無料」「見積書の金額以外は請求しません」</td>
+<td>ソースに直接</td>
+</tr>
+<tr>
+<td>3</td>
+<td>制作者のプロフィール</td>
+<td>学歴・職歴の要約、受賞のバッジ（金賞・カプコン賞）、スキル</td>
+<td>ソース / <code>SKILLS</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>実績の数字</td>
+<td>4年間・2回・1年間・1人</td>
+<td><code>STATS</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>特長（<code>#strength</code>）</td>
+<td>3つのカード</td>
+<td><code>STRENGTHS</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>対応内容（<code>#service</code>）</td>
+<td>6つのカード</td>
+<td><code>SERVICES</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td>経歴（<code>#profile</code>）</td>
+<td>年表（IT専門学校 → 就労支援事業所 → Webスクール → IT開発会社 → 現在）。「現在」は強調して表示</td>
+<td><code>CAREER</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>制作実績（<code>#works</code>）</td>
+<td>画像・バッジ・タイトル・説明のカード。0件ならカードの部分を出さない。バッジの色は1件目・2件目…で交互（テーマ色に連動）</td>
+<td>サイト内容 <code>works</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>そのほかの制作物</td>
+<td>チップの一覧。0件なら見出しごと出さない</td>
+<td>サイト内容 <code>other_works</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>お客さまの声</td>
+<td>「公開する」にしたものだけを表示。1件もなければ「お客さまの声は、実際にいただいたものだけを載せます。…」の案内を出す</td>
+<td>サイト内容 <code>testimonials</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td>料金の目安（<code>#price</code>）</td>
+<td>「制作内容」「1ページの相場」の表と、表の下の補足</td>
+<td>サイト内容 <code>prices</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>安心のお約束（<code>#trust</code>）</td>
+<td>5つのカードと、P-05 へのリンク</td>
+<td><code>PROMISES</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>制作の流れ（<code>#flow</code>）</td>
+<td>STEP 1〜5</td>
+<td><code>FLOW</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>よくある質問（<code>#faq</code>）</td>
+<td>質問を押すと回答が開く（<code>details</code>）。0件ならエリアごと出さない</td>
+<td>サイト内容 <code>faq</code></td>
+</tr>
+<tr>
+<td>15</td>
+<td>ご相談（<code>#contact</code>）</td>
+<td>「フォームでご相談」（→ P-02）と「LINEでご相談」（→ P-04）のカード、対応時間（事業者情報の対応時間 +「など」）、対応エリア、「ご相談の内容によっては、お受けできない場合もあります。…」</td>
+<td>サイト内容 <code>business.hours</code> / <code>SERVICE_AREA</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td>フッター</td>
+<td>「事業者情報・お取引について」（→ P-05）、「個人情報の取扱い」（→ <code>/contact#privacy</code>）、「© {今年} {屋号}」</td>
+<td>サイト内容 <code>business.business_name</code></td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-12">画像の読み込み</h4>
+<ul>
+<li>制作実績の画像の URL が <code>/uploads/</code> で始まるときは API サーバーから（<code>{API の URL}/uploads/...</code>）、それ以外（<code>/images/...</code>）は画面側から読み込みます（<code>api/client.ts</code> の <code>assetUrl</code>）。</li>
+<li>画像は <code>loading=&quot;lazy&quot;</code>（画面に近づいてから読み込む）です。</li>
+</ul>
+<h3 id="sec-13">4.2 P-02 お問い合わせフォーム</h3>
+<h4 id="sec-14">画面の構成</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>見出し</td>
+<td>「お問い合わせフォーム」と説明文</td>
+</tr>
+<tr>
+<td>エラーの表示</td>
+<td>フォームの上部（<code>role=&quot;alert&quot;</code>）</td>
+</tr>
+<tr>
+<td>入力欄</td>
+<td>下の項目定義のとおり</td>
+</tr>
+<tr>
+<td>個人情報の取扱い（<code>#privacy</code>）</td>
+<td>全文を枠内に表示し、最後まで読むと「同意する」を押せる</td>
+</tr>
+<tr>
+<td>送信ボタン</td>
+<td>「お問い合わせ送信」と、「「同意する」にチェックを入れると、送信できます。」</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-15">項目定義</h4>
+<p>画面のチェックは、API（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 2.2）と同じルールです。最終的なチェックは API で行います。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>長さ・範囲</th>
+<th>初期値</th>
+<th>画面でのチェックとエラー文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>ご相談内容</td>
+<td>チェックボックス（複数選べる）</td>
+<td>○</td>
+<td>選択肢は <code>contact_options.json</code> の topics（今は「Python(React/FastAPI)」の1つ）</td>
+<td>なし</td>
+<td>1つも選ばない →「ご相談内容を選択してください。」</td>
+</tr>
+<tr>
+<td>2</td>
+<td>お名前</td>
+<td>テキスト（autocomplete=name）</td>
+<td>○</td>
+<td>100文字</td>
+<td>空</td>
+<td>前後の空白を除いて、空 →「お名前を入力してください。」、100文字より長い →「お名前は100文字以内で入力してください。」</td>
+</tr>
+<tr>
+<td>3</td>
+<td>メールアドレス</td>
+<td>メール（inputmode=email）</td>
+<td>○</td>
+<td>254文字</td>
+<td>空</td>
+<td>全角を半角にしてから判定。空 →「メールアドレスを入力してください。」、形式が違う・254文字より長い →「メールアドレスの形式が正しくありません。」</td>
+</tr>
+<tr>
+<td>4</td>
+<td>電話番号</td>
+<td>電話（inputmode=tel）</td>
+<td>○</td>
+<td>入力は20文字まで</td>
+<td>空（プレースホルダー「例:09012345678」）</td>
+<td>全角を半角にし、空白・ハイフン類・長音・かっこを除いて「0で始まる10〜11桁の数字」か。空 →「電話番号を入力してください。」、違う →「電話番号の形式が正しくありません（例:09012345678）。」</td>
+</tr>
+<tr>
+<td>5</td>
+<td>お住まい</td>
+<td>セレクト</td>
+<td>○</td>
+<td>47都道府県</td>
+<td>「選択」</td>
+<td>選ばない →「お住まいを選択してください。」</td>
+</tr>
+<tr>
+<td>6</td>
+<td>ご年齢</td>
+<td>テキスト（inputmode=numeric）</td>
+<td>−</td>
+<td>3文字、1〜120</td>
+<td>空（プレースホルダー「例:30」）</td>
+<td>全角は半角にする。数字以外 →「ご年齢は数字で入力してください。」、範囲外 →「ご年齢は1〜120の範囲で入力してください。」</td>
+</tr>
+<tr>
+<td>7</td>
+<td>初期費用のお支払い方法</td>
+<td>ラジオボタン</td>
+<td>○</td>
+<td>手渡し / クレジットカード</td>
+<td>なし</td>
+<td>選ばない →「初期費用のお支払い方法を選択してください。」</td>
+</tr>
+<tr>
+<td>8</td>
+<td>月額5,000円(税込・保守プラン)のお支払い方法</td>
+<td>ラジオボタン</td>
+<td>○</td>
+<td>クレジットカードの自動決済 / 保守プランなし</td>
+<td>なし</td>
+<td>選ばない →「月額(保守プラン)のお支払い方法を選択してください。」</td>
+</tr>
+<tr>
+<td>9</td>
+<td>個人情報の取扱い（全文）</td>
+<td>スクロールできる枠</td>
+<td>−</td>
+<td>−</td>
+<td>−</td>
+<td>枠の下端から8px以内までスクロールすると、No.10 を押せるようになる</td>
+</tr>
+<tr>
+<td>10</td>
+<td>同意する</td>
+<td>チェックボックス</td>
+<td>○</td>
+<td>−</td>
+<td>オフ（押せない）</td>
+<td>オフ →「「個人情報の取扱い」への同意が必要です。」</td>
+</tr>
+<tr>
+<td>11</td>
+<td>隠し欄（website）</td>
+<td>テキスト。画面に見えず、Tab キーでも移動しない（<code>aria-hidden</code>）</td>
+<td>−</td>
+<td>−</td>
+<td>空</td>
+<td>画面ではチェックしない（API で判定。<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 2.1）</td>
+</tr>
+<tr>
+<td>12</td>
+<td>お問い合わせ送信</td>
+<td>ボタン</td>
+<td>−</td>
+<td>−</td>
+<td>押せない</td>
+<td>No.10 がオンのときだけ押せる。送信中は「送信しています…」になり押せない</td>
+</tr>
+</tbody></table></div>
+<p>入力欄の下の説明:</p>
+<ul>
+<li>電話番号:「ハイフンはあってもなくても大丈夫です。」</li>
+<li>月額のお支払い方法:「保守プランをご希望の方は、「クレジットカードの自動決済」をお選びください。ご不要の方は、「保守プランなし」をお選びください。カード番号などは、このフォームには入力しないでください。決済の手続きは、あらためてご案内します。」</li>
+<li>同意欄:「下の枠内を最後までお読みのうえ、「同意する」にチェックを入れてください。」。枠の下に、スクロール前は「最後までスクロールすると、チェックできます。」、スクロール後は「最後までお読みいただき、ありがとうございます。」</li>
+</ul>
+<p>同意のチェックの下の文:</p>
+<ul>
+<li>現在、日本国内にお住まいで、日本語でやり取りができる方からのご依頼をお受けしています。</li>
+<li>反社会的勢力に当てはまる方や、法令・公序良俗に反するご依頼は、お受けしていません。</li>
+<li>事業者情報やキャンセルについては「こちら」（→ P-05）です。</li>
+</ul>
+<h4 id="sec-16">イベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>イベント</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>画面を開く</td>
+<td>同意欄のスクロール位置を1回判定する（枠の中身が短く、スクロールしなくても最後まで見えている場合のため）</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>入力を変える</td>
+<td>値を更新し、その項目のエラーを消す</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>個人情報の枠をスクロール</td>
+<td>最後まで来たら「同意する」を押せるようにする（一度押せるようになったら、戻しても押せるまま）</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>「お問い合わせ送信」</td>
+<td>1. 送信中なら何もしない（二重送信を防ぐ）<br>2. 画面でチェックする。エラーがあれば、上部に「入力内容をご確認ください。」、各項目の下にエラー文を出し、最初のエラーの入力欄にカーソルを移す（順番: ご相談内容 → お名前 → メール → 電話 → お住まい → ご年齢 → 初期費用 → 月額 → 同意）<br>3. API-03 に送る（<code>agreed</code> と隠し欄の値も含める）<br>4. 成功 → P-03 へ（履歴を置き換え）<br>5. 失敗 → API のメッセージを上部に出す。422 なら各項目にエラー文を出し、最初のエラーの入力欄にカーソルを移す</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-17">API のエラーと表示</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場合</th>
+<th>上部に出る文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入力エラー（422）</td>
+<td>「入力内容をご確認ください。」（各項目の下にもエラー文）</td>
+</tr>
+<tr>
+<td>送信が多すぎる（429）</td>
+<td>「送信回数が多すぎます。しばらくしてからお試しください。」</td>
+</tr>
+<tr>
+<td>通信できない</td>
+<td>「通信に失敗しました。接続を確認して、もう一度お試しください。」</td>
+</tr>
+<tr>
+<td>そのほか</td>
+<td>API のメッセージ、なければ「エラーが発生しました（{コード}）。」</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-18">個人情報の取扱い（<code>components/PrivacyPolicy.tsx</code>）</h4>
+<p>枠の中に、次の見出しで表示します。屋号・運営責任者・メール・対応時間はサイト内容の事業者情報から入れます。</p>
+<ol>
+<li>取得する情報（お名前・メール・電話番号、お住まい、ご年齢（任意）、ご相談内容、お支払い方法の選択。カード番号などは取得しない）</li>
+<li>利用目的（ご返信、お見積り・ご契約・制作・保守のご連絡）</li>
+<li>第三者への提供（法令にもとづく場合を除き、同意なく提供しない）</li>
+<li>管理と削除（適切に管理し、不要になった情報は削除する）</li>
+<li>開示・訂正・削除のご依頼</li>
+<li>アクセス解析について（<code>VITE_GA_ID</code> を設定したときだけ。Google アナリティクスの説明・ポリシーとオプトアウトへのリンク）</li>
+<li>お問い合わせ窓口（アクセス解析がないときは 6）</li>
+</ol>
+<h3 id="sec-19">4.3 P-03 送信完了</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>表示</td>
+<td>チェックのアイコン、「お問い合わせを受け付けました」、「ご相談・ご質問をお送りいただき、ありがとうございます。内容を確認して、ご連絡します。」（<code>role=&quot;status&quot;</code>）</td>
+</tr>
+<tr>
+<td>タブ名</td>
+<td>「送信が完了しました | {屋号}」</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-20">4.4 P-04 LINE でのご相談</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>QR コード</td>
+<td>サイト内容の <code>business.line_url</code> から作る（186px・誤り訂正レベル M・余白なし）</td>
+</tr>
+<tr>
+<td>「LINEを開く」ボタン</td>
+<td><code>line_url</code> を新しいタブで開く（<code>rel=&quot;noopener noreferrer&quot;</code>）</td>
+</tr>
+<tr>
+<td>文言</td>
+<td>「QRコードをスマホのLINEで読み取ると、友だち追加ができます。…」など</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-21">4.5 P-05 事業者情報・お取引について</h3>
+<h4 id="sec-22">事業者情報（特定商取引法に基づく表記）の表</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>表示する内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>屋号 / 運営責任者 / 所在地 / 電話番号 / メールアドレス / 対応時間 / 事業形態</td>
+<td>サイト内容の事業者情報（<code>business</code>）</td>
+</tr>
+<tr>
+<td>サービス内容</td>
+<td>ホームページの企画・制作、システム開発、公開後の保守</td>
+</tr>
+<tr>
+<td>販売価格</td>
+<td>ご相談内容に応じて、お見積書に記載（料金の目安は P-01 の <code>#price</code> へのリンク）。保守プランは月額5,000円〜(税込)</td>
+</tr>
+<tr>
+<td>代金以外の費用</td>
+<td>ドメイン・サーバー等の実費が必要な場合は、お見積書に明記</td>
+</tr>
+<tr>
+<td>お支払い方法</td>
+<td>初期費用: 手渡し、またはクレジットカード / 月額: クレジットカードの自動決済</td>
+</tr>
+<tr>
+<td>お支払い時期</td>
+<td>ご契約時に50%、納品時に50%（お見積書に記載）</td>
+</tr>
+<tr>
+<td>納期</td>
+<td>お見積り時にお伝えします</td>
+</tr>
+<tr>
+<td>キャンセル・返金</td>
+<td>下の「キャンセルと返金について」を参照</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-23">表のあとの文章（ソースに直接書いた固定の文章）</h4>
+<p>お金の流れについて / キャンセルと返金について（<code>#cancel</code>）/ 権利・納品・保守について / 反社会的勢力の排除について / ご依頼いただける方について / お受けできないご依頼 / 個人情報の取扱い（P-02 の <code>#privacy</code> へのリンク）</p>
+<h3 id="sec-24">4.6 P-06 ページが見つかりません</h3>
+<p>「ページが見つかりません」「お探しのページは、移動または削除された可能性があります。」を表示します。管理画面（<code>/admin</code> 以下）の未定義の URL は、管理画面の中で案内します（<a href="03_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E7%AE%A1%E7%90%86%E7%94%BB%E9%9D%A2.html">03</a>）。</p>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/02_画面設計_公開サイト.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>

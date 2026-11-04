@@ -1,6 +1,25 @@
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
+
+/** LINE や SNS で URL を送ったときのプレビュー画像（OGP）のタグを入れます。SITE_URL が空なら何もしません。 */
+function ogImage(siteUrl: string): Plugin {
+  if (siteUrl && !siteUrl.startsWith('https://')) {
+    throw new Error(`.env.fastapi の SITE_URL は https:// から書いてください（今の値: ${siteUrl}）`)
+  }
+  const image = `${siteUrl.replace(/\/+$/, '')}/ogp.png`
+  return {
+    name: 'og-image',
+    transformIndexHtml: () =>
+      siteUrl
+        ? [
+            { tag: 'meta', attrs: { property: 'og:image', content: image }, injectTo: 'head' },
+            { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' }, injectTo: 'head' },
+            { tag: 'meta', attrs: { property: 'og:image:height', content: '630' }, injectTo: 'head' },
+          ]
+        : [],
+  }
+}
 
 // 接続先は .env.fastapi で設定します。
 //   npm run dev:fastapi → .env.fastapi（API: FastAPI 8000 / 画面: 5173）
@@ -11,7 +30,7 @@ export default defineConfig(({ mode }) => {
   const onWindowsDrive = process.cwd().startsWith('/mnt/')
 
   return {
-    plugins: [react()],
+    plugins: [react(), ogImage(env.SITE_URL ?? '')],
     server: {
       host: '127.0.0.1',
       port: devPort,
