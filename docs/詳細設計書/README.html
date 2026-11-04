@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>詳細設計書（Katachi ホームページ制作サイト）</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">詳細設計書（Katachi ホームページ制作サイト）</h1>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>対象システム</td>
+<td>Katachi ホームページ制作サイト（公開サイト・管理画面・API）</td>
+</tr>
+<tr>
+<td>版数</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>作成日</td>
+<td>2026-10-30</td>
+</tr>
+<tr>
+<td>もとにしたソース</td>
+<td><code>main</code> ブランチ（2026-10-30 時点。コミット前の変更を含む）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-2">1. この文書について</h2>
+<h3 id="sec-3">1.1 目的</h3>
+<p>保守や機能追加のときに、画面・API・データベース・処理の決まりを、ソースコードを読まなくても確認できるようにします。</p>
+<h3 id="sec-4">1.2 対象範囲</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>範囲</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>公開サイト</td>
+<td>トップページ、お問い合わせフォーム、LINE でのご相談、事業者情報（特定商取引法に基づく表記）</td>
+</tr>
+<tr>
+<td>管理画面</td>
+<td>お問い合わせの管理、見積書・入金（領収書）・保守契約、サイト内容・デザイン（色）・メールの設定、迷惑送信、履歴、データ管理、アカウント</td>
+</tr>
+<tr>
+<td>API</td>
+<td>FastAPI のバックエンド（公開サイト用・管理画面用）</td>
+</tr>
+<tr>
+<td>データベース</td>
+<td>SQLite（<code>data/app.db</code>）</td>
+</tr>
+<tr>
+<td>スクリプト</td>
+<td>起動（<code>run_backend.sh</code>・<code>scripts/common.sh</code>）、API テスト（<code>tests/</code>）</td>
+</tr>
+</tbody></table></div>
+<p>サーバーの構築手順は対象外です。本番で必要な条件だけを「<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08 設定と運用</a>」に書いています。</p>
+<h3 id="sec-5">1.3 書き方のきまり</h3>
+<ul>
+<li>この設計書に書いた内容を「仕様」とします。今のコードと違うところは「<a href="09_%E8%AA%B2%E9%A1%8C%E4%B8%80%E8%A6%A7.html">09 課題一覧</a>」に載せ、本文には「※課題 No.n」と書きます。</li>
+<li>日時はデータベースに UTC（例: <code>2026-10-26T05:00:00Z</code>）で保存し、画面には日本時間で表示します。発行日・入金日などの「日付だけ」の項目は、日本時間の日付（<code>YYYY-MM-DD</code>）です。</li>
+<li>金額は円の整数です。</li>
+<li>図は Mermaid で書いています。GitHub と、Mermaid の拡張機能を入れた VS Code で図として表示されます。</li>
+<li>ブラウザで読むときは、同じフォルダの <code>README.html</code> を開きます。HTML は md から作ったものなので、md を直したら作り直します（図の表示にはインターネットへの接続が必要です）。</li>
+<li>ID は、公開サイトの画面が P-nn、管理画面の画面が A-nn、API が API-nn です。</li>
+</ul>
+<h2 id="sec-6">2. 目次</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>文書</th>
+<th>主な内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>01</td>
+<td><a href="01_%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E6%A7%8B%E6%88%90.html">システム構成</a></td>
+<td>全体の構成、使用技術、フォルダ構成、モジュールの役割、プロセス</td>
+</tr>
+<tr>
+<td>02</td>
+<td><a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">画面設計（公開サイト）</a></td>
+<td>画面一覧・遷移、共通の動き、各画面の項目と動き</td>
+</tr>
+<tr>
+<td>03</td>
+<td><a href="03_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E7%AE%A1%E7%90%86%E7%94%BB%E9%9D%A2.html">画面設計（管理画面）</a></td>
+<td>画面一覧・遷移、共通の動き、各画面の項目と動き</td>
+</tr>
+<tr>
+<td>04</td>
+<td><a href="04_API%E8%A8%AD%E8%A8%88.html">API 設計</a></td>
+<td>共通の決まり、API 一覧、各 API の入出力と処理</td>
+</tr>
+<tr>
+<td>05</td>
+<td><a href="05_DB%E8%A8%AD%E8%A8%88.html">データベース設計</a></td>
+<td>ER 図、テーブル定義、コード値、settings のキー、マイグレーション</td>
+</tr>
+<tr>
+<td>06</td>
+<td><a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">処理設計</a></td>
+<td>お問い合わせの受付、メール送信、Outlook 連携、自動削除、見積計算などの処理</td>
+</tr>
+<tr>
+<td>07</td>
+<td><a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">セキュリティ設計</a></td>
+<td>認証・セッション、回数制限、入力チェック、秘密情報と個人情報の扱い</td>
+</tr>
+<tr>
+<td>08</td>
+<td><a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">設定と運用</a></td>
+<td>設定値の一覧、起動・テスト・公開の手順、バックアップと復元、運用上の注意</td>
+</tr>
+<tr>
+<td>09</td>
+<td><a href="09_%E8%AA%B2%E9%A1%8C%E4%B8%80%E8%A6%A7.html">課題一覧</a></td>
+<td>仕様と今のコードの違い、決まっていないこと</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-7">3. 用語</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>公開サイト</td>
+<td>お客さまが見るページ（トップページ・お問い合わせフォームなど）</td>
+</tr>
+<tr>
+<td>管理画面</td>
+<td>管理者だけがログインして使うページ（<code>/admin</code> 以下）</td>
+</tr>
+<tr>
+<td>管理者</td>
+<td>事業者本人。<code>.env</code> の <code>ADMIN_EMAIL</code> の1人だけ</td>
+</tr>
+<tr>
+<td>お問い合わせ</td>
+<td>お問い合わせフォームから届いた相談（<code>inquiries</code> 表）</td>
+</tr>
+<tr>
+<td>対応状況</td>
+<td>お問い合わせの状態。未対応・対応中・見積送付済み・契約済み・対応済み・お断り</td>
+</tr>
+<tr>
+<td>迷惑送信</td>
+<td>ブロックしたアドレスから届いたもの、または管理者が迷惑送信にしたお問い合わせ</td>
+</tr>
+<tr>
+<td>ブロックリスト</td>
+<td>迷惑送信として扱うメールアドレス・ドメインの一覧（<code>blocklist</code> 表）</td>
+</tr>
+<tr>
+<td>隠し欄</td>
+<td>お問い合わせフォームの、人には見えない入力欄（ハニーポット）。値が入っていれば機械的な送信とみなす</td>
+</tr>
+<tr>
+<td>送信履歴</td>
+<td>送るメールを1通ずつ記録したもの。送信の結果もここに残す（<code>mail_outbox</code> 表）</td>
+</tr>
+<tr>
+<td>新着通知</td>
+<td>お問い合わせが届いたことを管理者に知らせるメール</td>
+</tr>
+<tr>
+<td>自動返信</td>
+<td>お問い合わせを受け付けたことをお客さまに知らせるメール</td>
+</tr>
+<tr>
+<td>返信テンプレート</td>
+<td>管理画面からお客さまに返信するときに差し込む、件名と本文のひな形</td>
+</tr>
+<tr>
+<td>差し込み項目</td>
+<td><code>{name}</code> のように書くと、送るときにお名前などに置き換わる部分</td>
+</tr>
+<tr>
+<td>保守契約</td>
+<td>公開後のサーバー管理・修正をおまかせいただく月額の保守プランの契約</td>
+</tr>
+<tr>
+<td>サイト内容</td>
+<td>管理画面から変えられる公開サイトの情報。事業者情報・料金の目安・よくある質問・制作実績・そのほかの制作物・お客さまの声</td>
+</tr>
+<tr>
+<td>テーマ色</td>
+<td>公開サイトの基調色（1色）。管理画面の「デザイン（色）」で変える</td>
+</tr>
+<tr>
+<td>自動削除</td>
+<td>対応が終わった古いお問い合わせ（個人情報）を、決めた期間のあとに削除する機能</td>
+</tr>
+<tr>
+<td>操作の記録</td>
+<td>管理画面で行った操作の記録（<code>audit_logs</code> 表）</td>
+</tr>
+<tr>
+<td>デバイスコード</td>
+<td>Outlook にサインインするときに、ブラウザで入力する短いコード（OAuth 2.0 のデバイス認可フロー）</td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>データベースの表・列を、起動時に順番に追加・変更するしくみ</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-8">4. 改訂履歴</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>版数</th>
+<th>日付</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1.0</td>
+<td>2026-10-30</td>
+<td>初版（2026-10-30 時点のソースコードをもとに作成）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/README.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+
+</body>
+</html>

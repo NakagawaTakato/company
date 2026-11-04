@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>01 システム構成｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">01 システム構成</h1>
+<h2 id="sec-2">1. システムの概要</h2>
+<p>ひとりで営むホームページ制作の事業（屋号: Katachi ホームページ制作）の公式サイトです。</p>
+<ul>
+<li><strong>お客さま</strong>は公開サイトで事業の内容・料金・経歴を見て、お問い合わせフォームまたは LINE で相談します。</li>
+<li><strong>管理者</strong>（事業者本人の1人）は管理画面で、お問い合わせへの対応から、見積書・入金（領収書）・保守契約の管理、公開サイトの文章や色の変更までを行います。</li>
+<li>フロントエンド（画面）は React（TypeScript・Vite）、バックエンド（API）は Python の FastAPI で作り、データは SQLite のデータベースに保存しています。</li>
+</ul>
+<h2 id="sec-3">2. 全体の構成</h2>
+<pre class="mermaid">flowchart LR
+  subgraph Browser[&quot;ブラウザ&quot;]
+    Customer[&quot;お客さま&lt;br&gt;公開サイト&quot;]
+    Admin[&quot;管理者&lt;br&gt;管理画面&quot;]
+  end
+  subgraph Web[&quot;画面（React）&quot;]
+    SPA[&quot;開発: Vite 127.0.0.1:5173&lt;br&gt;本番: frontend/dist の静的ファイル&quot;]
+  end
+  subgraph Api[&quot;API（FastAPI）127.0.0.1:8000&quot;]
+    App[&quot;backend/app&quot;]
+  end
+  subgraph Data[&quot;data フォルダ&quot;]
+    DB[(&quot;app.db&lt;br&gt;SQLite&quot;)]
+    Up[&quot;uploads/&lt;br&gt;アップロードした画像&quot;]
+    Tok[&quot;microsoft-oauth.json&lt;br&gt;Outlook のトークン&quot;]
+  end
+  Customer --&gt; SPA
+  Admin --&gt; SPA
+  SPA -- &quot;fetch（JSON・Cookie）&quot; --&gt; App
+  App --&gt; DB
+  App --&gt; Up
+  App --&gt; Tok
+  App -- &quot;メール送信&quot; --&gt; Graph[&quot;Microsoft Graph&lt;br&gt;（Outlook）&quot;]
+  App -- &quot;メール送信&quot; --&gt; Smtp[&quot;SMTP サーバー&quot;]
+  SPA -. &quot;本番のみ&quot; .-&gt; GA[&quot;Google Analytics 4&quot;]
+  SPA -. &quot;リンクのみ&quot; .-&gt; Line[&quot;LINE&quot;]
+</pre>
+<ul>
+<li>画面と API は別のプロセス（別のポート）です。画面は API を <code>fetch</code> で呼び、管理画面のログインは Cookie で保ちます。</li>
+<li>画面の切り替えはブラウザの中で行います（React Router の SPA）。API は画面の HTML を返しません。</li>
+<li>フォームの選択肢・対応状況・都道府県と、サイト内容の初期値は <code>shared/</code> の JSON にあり、画面と API の両方が同じファイルを読みます。</li>
+</ul>
+<h2 id="sec-4">3. 使用技術</h2>
+<p>バージョンの書き方: <code>^19.1.0</code> は互換性のある範囲で新しいもの（19.1.0 以上 20.0.0 未満）、<code>~5.9.2</code> は小さな修正だけ新しいもの（5.9.2 以上 5.10.0 未満）、<code>==0.162.0</code> はその版だけです。「開発環境」は、2026-10-31 時点で開発環境に入っているバージョンです。</p>
+<h3 id="sec-5">3.1 フロントエンド（画面）</h3>
+<h4>実行環境</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>バージョン</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Node.js</td>
+<td>20.19 以上、または 22.12 以上（開発環境は 22.23.4）</td>
+<td>開発サーバーと本番用のビルドを動かす（公開したサイトの表示には使わない）。起動スクリプトがバージョンを確認し、足りなければ Node.js 24 を <code>~/.local/share/bluetab-tools</code> に用意する（<a href="08_設定と運用.html">08 設定と運用</a>）</td>
+</tr>
+<tr>
+<td>ブラウザ</td>
+<td>Chrome・Edge 107 以上、Firefox 104 以上、Safari 16 以上</td>
+<td>公開サイトと管理画面を表示する。範囲は Vite 7 の初期設定のまま（<code>vite.config.ts</code> では変えていない）</td>
+</tr>
+</tbody></table></div>
+<h4><code>frontend/package.json</code> で入れるライブラリ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>バージョンの指定</th>
+<th>開発環境</th>
+<th>用途</th>
+<th>使っているところ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>React（<code>react</code>・<code>react-dom</code>）</td>
+<td><code>^19.1.0</code></td>
+<td>19.3.1</td>
+<td>画面の部品を作り、ブラウザに表示する</td>
+<td>すべての画面（<code>pages/</code>・<code>components/</code>）。表示を始めるのは <code>main.tsx</code></td>
+</tr>
+<tr>
+<td>React Router（<code>react-router</code>）</td>
+<td><code>^7.9.0</code></td>
+<td>7.18.4</td>
+<td>URL ごとの画面の切り替え、リンク、URL のパラメータ</td>
+<td><code>main.tsx</code>・<code>App.tsx</code>・<code>pages/</code>・<code>components/</code></td>
+</tr>
+<tr>
+<td>qrcode.react</td>
+<td><code>^4.2.0</code></td>
+<td>4.2.0</td>
+<td>LINE ページの QR コード</td>
+<td><code>pages/LinePage.tsx</code></td>
+</tr>
+<tr>
+<td>react-icons</td>
+<td><code>^5.5.0</code></td>
+<td>5.7.0</td>
+<td>アイコン（Material Design・Font Awesome）</td>
+<td><code>content/home.ts</code>・<code>pages/</code>・<code>components/</code></td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td><code>~5.9.2</code></td>
+<td>5.9.3</td>
+<td>型チェック（<code>npm run typecheck</code>、本番用のビルドの前）</td>
+<td><code>tsconfig.json</code>・<code>package.json</code> のスクリプト</td>
+</tr>
+<tr>
+<td>Vite</td>
+<td><code>^7.1.0</code></td>
+<td>7.3.7</td>
+<td>開発サーバー、本番用のビルド（<code>frontend/dist/</code> に出力）</td>
+<td><code>vite.config.ts</code>・<code>run_backend.sh</code></td>
+</tr>
+<tr>
+<td>@vitejs/plugin-react</td>
+<td><code>^5.0.0</code></td>
+<td>5.2.0</td>
+<td>Vite で React の JSX を変換し、開発中に保存した変更をすぐ画面に反映する</td>
+<td><code>vite.config.ts</code></td>
+</tr>
+<tr>
+<td>@types/react・@types/react-dom</td>
+<td><code>^19.1.0</code></td>
+<td>19.3.0</td>
+<td>React の型の定義（TypeScript の型チェックに使う）</td>
+<td>TypeScript が自動で読む</td>
+</tr>
+</tbody></table></div>
+<p>TypeScript・Vite・@vitejs/plugin-react・@types は、開発とビルドのときだけ使います（devDependencies）。公開するファイル（<code>frontend/dist/</code>）には含まれません。</p>
+<h3 id="sec-6">3.2 バックエンド（API）</h3>
+<h4>実行環境</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>バージョン</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Python</td>
+<td>3.10 以上（開発環境は 3.14.4）</td>
+<td>API を動かす。起動スクリプトがバージョンを確認し、仮想環境（<code>backend/.venv</code>）を作ってライブラリを入れる</td>
+</tr>
+</tbody></table></div>
+<h4><code>backend/requirements.txt</code> で入れるライブラリ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>バージョンの指定</th>
+<th>開発環境</th>
+<th>用途</th>
+<th>使っているところ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FastAPI</td>
+<td><code>==0.162.0</code>（固定）</td>
+<td>0.162.0</td>
+<td>API の本体。URL ごとの処理（ルーティング）、ログイン確認などの共通処理（<code>Depends</code>）、入力チェックの呼び出し、説明ページ <code>/api/docs</code></td>
+<td><code>main.py</code>・<code>deps.py</code>・<code>routers/*.py</code></td>
+</tr>
+<tr>
+<td>Uvicorn</td>
+<td><code>==0.54.0</code>（固定）</td>
+<td>0.54.0</td>
+<td>API サーバー（API を動かすプログラム）。ソースからは使わず、起動のコマンドで使う</td>
+<td><code>run_backend.sh</code>・<code>tests/run_api_tests.sh</code></td>
+</tr>
+</tbody></table></div>
+<p>どちらも、API を動かすときに使います。</p>
+<h3 id="sec-7">3.3 データベース</h3>
+<p>SQLite（Python 標準の <code>sqlite3</code>）。ファイルは <code>data/app.db</code> です（<a href="05_DB%E8%A8%AD%E8%A8%88.html">05 データベース設計</a>）。</p>
+<h3 id="sec-8">3.4 外部サービス</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>サービス</th>
+<th>用途</th>
+<th>必要か</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Microsoft Graph（Outlook）</td>
+<td>メール送信（標準の方法）</td>
+<td>メールを送るには、Outlook と SMTP のどちらかが必要</td>
+</tr>
+<tr>
+<td>SMTP サーバー</td>
+<td>メール送信（もう1つの方法）</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>Google Analytics 4</td>
+<td>アクセス数の計測</td>
+<td>任意（測定 ID を設定したときだけ）</td>
+</tr>
+<tr>
+<td>LINE</td>
+<td>友だち追加 URL へのリンクと QR コード</td>
+<td>任意（URL を開くだけで、API の連携はしない）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-9">4. 実行環境とポート</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>用途</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>開発環境</td>
+<td>Windows の WSL（Ubuntu）。プロジェクトは <code>C:\Users\document\python\company</code>（WSL では <code>/mnt/c/Users/document/python/company</code>）</td>
+</tr>
+<tr>
+<td>API</td>
+<td><code>127.0.0.1:8000</code>（<code>.env</code> の <code>HOST</code>・<code>BACKEND_PORT</code>）</td>
+</tr>
+<tr>
+<td>画面</td>
+<td><code>127.0.0.1:5173</code>（<code>frontend/.env.fastapi</code> の <code>DEV_PORT</code>）</td>
+</tr>
+<tr>
+<td>API の説明ページ</td>
+<td><code>http://127.0.0.1:8000/api/docs</code>（Swagger UI）、<code>/api/openapi.json</code></td>
+</tr>
+<tr>
+<td>API テスト</td>
+<td>API <code>127.0.0.1:18000</code>、偽の Microsoft サーバー <code>127.0.0.1:18999</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-10">5. フォルダ構成</h2>
+<pre><code>company/                          … プロジェクトのルート（git で管理）
+├── backend/
+│   ├── app/                      … API のソース（6.1）
+│   │   └── routers/              … API の入口（URL ごとの処理）
+│   ├── requirements.txt          … Python パッケージ（バージョン固定）
+│   └── .venv/                    … Python の仮想環境（自動で作成・git 管理外）
+├── frontend/
+│   ├── public/                   … そのまま配信するファイル（favicon.svg・ogp.png・images/）
+│   ├── src/                      … 画面のソース（6.2）
+│   ├── index.html                … HTML のひな形（タイトル・説明文・OGP）
+│   ├── .env.fastapi              … 画面の設定（API の接続先・ポート・公開 URL・GA4）
+│   ├── package.json / package-lock.json
+│   ├── tsconfig.json
+│   └── vite.config.ts            … Vite の設定（OGP 画像のタグ・開発サーバー）
+├── shared/
+│   ├── contact_options.json      … 選択肢・対応状況・都道府県（画面と API で共通）
+│   └── site_defaults.json        … テーマ色とサイト内容の初期値（画面と API で共通）
+├── data/                         … 動かしているときのデータ
+│   ├── app.db                    … SQLite のデータベース（git 管理外）
+│   ├── uploads/                  … 管理画面でアップロードした画像
+│   └── microsoft-oauth.json      … Outlook のトークン（git 管理外）
+├── docs/詳細設計書/               … この設計書
+├── scripts/common.sh             … 起動・テストのスクリプトの共通処理
+├── tests/
+│   ├── run_api_tests.sh          … API テストの実行
+│   └── api_test.py               … API テストの本体
+├── run_backend.sh                … API と画面をまとめて起動
+├── .env.example                  … .env のひな形
+└── .env                          … API の設定（初回の起動時に自動で作成・git 管理外）
+</code></pre>
+<h2 id="sec-11">6. モジュール構成</h2>
+<h3 id="sec-12">6.1 API（backend/app）</h3>
+<pre class="mermaid">flowchart TB
+  main[&quot;main.py&lt;br&gt;アプリ本体・起動時の処理・エラー応答&quot;]
+  subgraph R[&quot;routers（API の入口）&quot;]
+    contact[&quot;contact.py&lt;br&gt;公開サイト&quot;]
+    admin[&quot;admin.py&lt;br&gt;ログイン・お問い合わせ&quot;]
+    manage[&quot;admin_manage.py&lt;br&gt;設定・履歴・データ管理&quot;]
+    billing_r[&quot;admin_billing.py&lt;br&gt;見積書・入金・保守契約&quot;]
+  end
+  subgraph L[&quot;業務の処理&quot;]
+    inquiries[&quot;inquiries.py&quot;]
+    mailer[&quot;mailer.py&quot;]
+    outlook[&quot;outlook.py&quot;]
+    billing[&quot;billing.py&quot;]
+    dashboard[&quot;dashboard.py&quot;]
+    maintenance[&quot;maintenance.py&quot;]
+    settings_store[&quot;settings_store.py&quot;]
+    uploads[&quot;uploads.py&quot;]
+    security[&quot;security.py&quot;]
+    audit[&quot;audit.py&quot;]
+  end
+  subgraph B[&quot;共通・土台&quot;]
+    deps[&quot;deps.py&quot;]
+    schemas[&quot;schemas.py&quot;]
+    config[&quot;config.py&quot;]
+    db[&quot;db.py&quot;]
+  end
+  main --&gt; R
+  R --&gt; L
+  R --&gt; B
+  L --&gt; db
+</pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>main.py</code></td>
+<td>アプリ本体。起動時の処理（DB の準備・管理者の反映・期限切れセッションの削除・自動削除の定期処理の開始）、エラー応答の形、応答ヘッダー、CORS、ルーターの登録、動作確認 API、定義されていないパスの 404</td>
+</tr>
+<tr>
+<td><code>config.py</code></td>
+<td><code>.env</code> と <code>shared/contact_options.json</code> の読み込み（<code>Settings</code>）。OS の環境変数があれば <code>.env</code> より優先</td>
+</tr>
+<tr>
+<td><code>deps.py</code></td>
+<td>ルーター共通の処理。設定・DB 接続（<code>get_conn</code>）・ログイン確認（<code>require_admin</code>）・エラー（<code>ApiError</code>）・試行回数の制限・ID とページ番号の解釈・Outlook の設定</td>
+</tr>
+<tr>
+<td><code>db.py</code></td>
+<td>SQLite の接続、マイグレーション（<code>init_db</code>）、日時の関数、ページ分け（<code>paginate</code>）</td>
+</tr>
+<tr>
+<td><code>schemas.py</code></td>
+<td>API の入出力の型（Pydantic）。管理画面からの入力のチェック</td>
+</tr>
+<tr>
+<td><code>security.py</code></td>
+<td>パスワードのハッシュ、起動時の管理者の反映（<code>sync_admin</code>）、ログイン認証、セッション、ログイン履歴、試行回数の制限（<code>RateLimiter</code>）</td>
+</tr>
+<tr>
+<td><code>inquiries.py</code></td>
+<td>お問い合わせの入力チェックと整形・保存・一覧（絞り込み・並び替え・ページ分け）・メモ・CSV、ブロック判定</td>
+</tr>
+<tr>
+<td><code>mailer.py</code></td>
+<td>メール送信。送信方法の判断、送信履歴への登録・送信・結果の記録、新着通知と自動返信の本文、差し込み項目の置き換え、SMTP 送信</td>
+</tr>
+<tr>
+<td><code>outlook.py</code></td>
+<td>Microsoft Graph。デバイスコードでのサインイン、トークンの保存と更新、送信</td>
+</tr>
+<tr>
+<td><code>outlook_login.py</code></td>
+<td>コマンドで Outlook にサインインする（<code>python -m app.outlook_login</code>）</td>
+</tr>
+<tr>
+<td><code>billing.py</code></td>
+<td>見積書・入金・保守契約。金額の計算、番号の採番、保守契約の状態の判定、解約日の計算</td>
+</tr>
+<tr>
+<td><code>dashboard.py</code></td>
+<td>ダッシュボードの集計</td>
+</tr>
+<tr>
+<td><code>maintenance.py</code></td>
+<td>自動削除（対象の抽出・削除）、バックアップ zip の作成</td>
+</tr>
+<tr>
+<td><code>settings_store.py</code></td>
+<td><code>settings</code> 表の読み書き、設定の初期値、サイト内容（<code>shared/site_defaults.json</code>）</td>
+</tr>
+<tr>
+<td><code>uploads.py</code></td>
+<td>画像の種類の判定・保存・取得</td>
+</tr>
+<tr>
+<td><code>audit.py</code></td>
+<td>操作の記録</td>
+</tr>
+<tr>
+<td><code>routers/contact.py</code></td>
+<td>公開サイト用の API（お問い合わせ受付・サイト内容・画像）</td>
+</tr>
+<tr>
+<td><code>routers/admin.py</code></td>
+<td>ログイン・アカウント・お問い合わせの API</td>
+</tr>
+<tr>
+<td><code>routers/admin_manage.py</code></td>
+<td>ダッシュボード・履歴・データ管理・デザイン・サイト内容・画像のアップロード・メール・返信テンプレート・ブロックリストの API</td>
+</tr>
+<tr>
+<td><code>routers/admin_billing.py</code></td>
+<td>見積書・入金・保守契約の API</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-13">6.2 画面（frontend/src）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>main.tsx</code></td>
+<td>入口。アクセス解析の開始、ルーター（<code>BrowserRouter</code>）、サイト内容の読み込み（<code>SiteProvider</code>）、CSS の読み込み</td>
+</tr>
+<tr>
+<td><code>App.tsx</code></td>
+<td>URL と画面の対応（ルーティング）</td>
+</tr>
+<tr>
+<td><code>api/client.ts</code></td>
+<td>API の呼び出しをまとめたもの。接続先の決定、エラー（<code>ApiError</code>）、ファイルのダウンロード、API の型</td>
+</tr>
+<tr>
+<td><code>lib/SiteContext.tsx</code></td>
+<td>公開サイトの表示内容（テーマ色・サイト内容）を読み込み、各画面に配る</td>
+</tr>
+<tr>
+<td><code>lib/site.ts</code></td>
+<td>サイト内容の型と初期値（<code>shared/site_defaults.json</code>）</td>
+</tr>
+<tr>
+<td><code>lib/options.ts</code></td>
+<td>選択肢（<code>shared/contact_options.json</code> と、画面だけで使う選択肢）</td>
+</tr>
+<tr>
+<td><code>lib/theme.ts</code></td>
+<td>テーマ色の計算（CSS 変数・コントラスト比・読みやすい濃さへの調整・ファビコン）</td>
+</tr>
+<tr>
+<td><code>lib/format.ts</code></td>
+<td>日時・日付・金額の表示</td>
+</tr>
+<tr>
+<td><code>lib/usePageTitle.ts</code></td>
+<td>ブラウザのタブ名</td>
+</tr>
+<tr>
+<td><code>lib/analytics.ts</code></td>
+<td>Google Analytics 4</td>
+</tr>
+<tr>
+<td><code>lib/useActiveSection.ts</code></td>
+<td>トップページで今見ているエリアの判定（ページ上部のメニューの強調に使う）</td>
+</tr>
+<tr>
+<td><code>content/home.ts</code></td>
+<td>トップページの文言のうち、管理画面で変えられない部分。タブ名（<code>HOME_TITLE</code>）、ページ上部のメニューとボタン（<code>NAV</code>・<code>HEADER_CTA</code>）、対応エリア（<code>SERVICE_AREA</code>）</td>
+</tr>
+<tr>
+<td><code>components/PublicLayout.tsx</code></td>
+<td>公開サイトの外枠（テーマ色の反映）</td>
+</tr>
+<tr>
+<td><code>components/SubPageLayout.tsx</code></td>
+<td>下層ページの外枠（ロゴ・本文・トップへ戻るボタン）</td>
+</tr>
+<tr>
+<td><code>components/Logo.tsx</code></td>
+<td>ロゴ（電球と回路のマーク）</td>
+</tr>
+<tr>
+<td><code>components/SectionHeading.tsx</code></td>
+<td>トップページの見出し</td>
+</tr>
+<tr>
+<td><code>components/ScrollManager.tsx</code></td>
+<td>画面を移動したときのスクロール</td>
+</tr>
+<tr>
+<td><code>components/PrivacyPolicy.tsx</code></td>
+<td>個人情報の取扱いの本文</td>
+</tr>
+<tr>
+<td><code>components/admin/ui.tsx</code></td>
+<td>管理画面の共通部品（見出し・カード・お知らせ・ページ送り・入力欄・タブ・読み込みと操作のフック）</td>
+</tr>
+<tr>
+<td><code>components/admin/MonthlyChart.tsx</code></td>
+<td>ダッシュボードの月ごとのグラフ</td>
+</tr>
+<tr>
+<td><code>pages/*.tsx</code></td>
+<td>公開サイトの画面（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a>）</td>
+</tr>
+<tr>
+<td><code>pages/admin/*.tsx</code></td>
+<td>管理画面の画面（<a href="03_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E7%AE%A1%E7%90%86%E7%94%BB%E9%9D%A2.html">03</a>）</td>
+</tr>
+<tr>
+<td><code>styles/base.css</code></td>
+<td>共通のスタイル・色の変数（<code>:root</code>）</td>
+</tr>
+<tr>
+<td><code>styles/home.css</code> / <code>styles/pages.css</code></td>
+<td>トップページ / 下層ページ</td>
+</tr>
+<tr>
+<td><code>styles/admin.css</code></td>
+<td>管理画面・印刷用ページ</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-14">6.3 共通のファイル（shared）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>内容</th>
+<th>読むところ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>contact_options.json</code></td>
+<td>ご相談内容（topics）、初期費用のお支払い方法（initial_payments）、月額のお支払い方法（monthly_payments）、対応状況（statuses）、都道府県（prefectures）</td>
+<td>API: <code>config.py</code>（入力チェック・CSV・メール本文のラベル）/ 画面: <code>lib/options.ts</code></td>
+</tr>
+<tr>
+<td><code>site_defaults.json</code></td>
+<td>テーマ色と、サイト内容6項目の初期値</td>
+<td>API: <code>settings_store.py</code> / 画面: <code>lib/site.ts</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-15">7. プロセスと処理のタイミング</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>処理</th>
+<th>タイミング</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>起動時の準備</td>
+<td>API の起動時</td>
+<td>DB の表を用意（マイグレーション）→ <code>.env</code> の管理者を反映 → 期限切れのセッションを削除 → 自動削除の定期処理を開始。管理者の設定が正しくなければ起動しない</td>
+</tr>
+<tr>
+<td>自動削除</td>
+<td>起動の10秒後、その後は24時間ごと</td>
+<td>設定で有効にしたときだけ、古いお問い合わせを削除する（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 11章）</td>
+</tr>
+<tr>
+<td>メール送信（お問い合わせの受付後）</td>
+<td>お問い合わせの応答を返したあと</td>
+<td>新着通知・自動返信を順番に送る（FastAPI の BackgroundTasks）</td>
+</tr>
+<tr>
+<td>メール送信（返信・テスト・送り直し）</td>
+<td>管理画面で操作したとき</td>
+<td>その場で送り、結果を応答で返す</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>API は1つのプロセスで動かします（ワーカーを増やしません）。試行回数のカウントと、Outlook サインインの途中の情報を、プロセスのメモリに持つためです（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> の運用上の注意）。</li>
+<li>DB への接続は、API のリクエストごとに開いて、終わったら閉じます。</li>
+</ul>
+<h2 id="sec-16">8. 本番の構成（前提）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>画面</td>
+<td><code>npm run build:fastapi</code> で作った <code>frontend/dist/</code> を、静的ファイルとして配信する。どの URL でも <code>index.html</code> を返す設定が必要（<code>/contact</code> などの URL を直接開いたときも、画面側で切り替えるため）</td>
+</tr>
+<tr>
+<td>API</td>
+<td>Uvicorn で起動する（1プロセス）</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>画面と API を同じドメインの配下にする（例: <code>www.example.com</code> と <code>api.example.com</code>）。ログインの Cookie を <code>SameSite=Strict</code> で使うため</td>
+</tr>
+<tr>
+<td>通信</td>
+<td>HTTPS。<code>.env</code> の <code>COOKIE_SECURE=true</code></td>
+</tr>
+<tr>
+<td>接続元の許可</td>
+<td><code>.env</code> の <code>FRONTEND_ORIGINS</code> に、公開する画面の URL を書く</td>
+</tr>
+</tbody></table></div>
+<p>くわしくは「<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08 設定と運用</a>」に書いています。</p>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/01_システム構成.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>

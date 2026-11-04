@@ -1,0 +1,2286 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>04 API 設計｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">04 API 設計</h1>
+<h2 id="sec-2">1. 共通の仕様</h2>
+<h3 id="sec-3">1.1 基本</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>接続先</td>
+<td>開発: <code>http://127.0.0.1:8000</code>。画面は <code>frontend/.env.fastapi</code> の <code>VITE_API_BASE_URL</code> を使う</td>
+</tr>
+<tr>
+<td>形式</td>
+<td>リクエスト・レスポンスとも JSON（UTF-8）。例外は CSV（API-11）、zip（API-21）、画像のアップロード（API-35）、画像の取得（API-05）</td>
+</tr>
+<tr>
+<td>画面からの呼び方</td>
+<td><code>fetch</code> に <code>credentials: &#39;include&#39;</code>（Cookie を送る）。<code>Accept: application/json</code>、本文があれば <code>Content-Type: application/json</code>（<code>api/client.ts</code>）</td>
+</tr>
+<tr>
+<td>説明ページ</td>
+<td><code>/api/docs</code>（Swagger UI）、<code>/api/openapi.json</code>。API-01・API-05 は載せていない</td>
+</tr>
+<tr>
+<td>定義されていないパス</td>
+<td>404 <code>{&quot;message&quot;: &quot;見つかりません。&quot;}</code></td>
+</tr>
+</tbody></table></div>
+<p>画面は、API の接続先が <code>127.0.0.1</code> か <code>localhost</code> で、画面も <code>127.0.0.1</code> か <code>localhost</code> で開いているときは、API のホスト名を画面と同じにそろえます（ブラウザは 127.0.0.1 と localhost を別のサイトとして扱い、ログインの Cookie が送られなくなるため）。</p>
+<h3 id="sec-4">1.2 認証</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>方式</td>
+<td>Cookie <code>bt_admin_session</code>（API-06 のログインで発行）。中身はランダムなトークン（<a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">07</a> 3章）</td>
+</tr>
+<tr>
+<td>ログインが必要な API</td>
+<td><code>/api/admin/</code> で始まる API のうち、API-06（ログイン）と API-07（ログアウト）を除くすべて</td>
+</tr>
+<tr>
+<td>未ログイン・期限切れ</td>
+<td>401 <code>{&quot;message&quot;: &quot;ログインしてください。&quot;}</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-5">1.3 エラーの応答</h3>
+<pre><code class="language-json">{
+  &quot;message&quot;: &quot;入力内容をご確認ください。&quot;,
+  &quot;errors&quot;: { &quot;name&quot;: &quot;お名前を入力してください。&quot; }
+}
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>message</code></td>
+<td>画面にそのまま出せる日本語の文</td>
+</tr>
+<tr>
+<td><code>errors</code></td>
+<td>入力エラーのときだけ。キーは項目名、値はエラー文。入れ子の項目は「.」でつなぐ（例: <code>rows.0.name</code>、<code>items.0.quantity</code>）。本文がリストの API は先頭が行番号（例: <code>0.q</code>）。項目にひもづかないエラー（日付の前後関係など）はキー <code>body</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-6">1.4 ステータスコード</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コード</th>
+<th>意味</th>
+<th>主な場合</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>200</td>
+<td>成功</td>
+<td>取得・変更・削除</td>
+</tr>
+<tr>
+<td>201</td>
+<td>作成した</td>
+<td>お問い合わせの受付、メモ・テンプレート・ブロック・見積書・入金・保守契約の追加、画像のアップロード</td>
+</tr>
+<tr>
+<td>400</td>
+<td>リクエストが正しくない</td>
+<td>本文が JSON のオブジェクトでない、絞り込みの値が正しくない、メールを送れなかった、サインインの期限切れ</td>
+</tr>
+<tr>
+<td>401</td>
+<td>未ログイン</td>
+<td>ログインが必要な API を Cookie なしで呼んだ、ログインに失敗した</td>
+</tr>
+<tr>
+<td>404</td>
+<td>見つからない</td>
+<td>ID が数字でない・存在しない、定義されていないパス</td>
+</tr>
+<tr>
+<td>413</td>
+<td>大きすぎる</td>
+<td>5MB を超える画像</td>
+</tr>
+<tr>
+<td>422</td>
+<td>入力エラー</td>
+<td>入力チェックに合わない</td>
+</tr>
+<tr>
+<td>429</td>
+<td>回数が多すぎる</td>
+<td>ログインの失敗、お問い合わせの送信</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-7">1.5 入力エラーの文</h3>
+<p>管理画面からの入力は Pydantic でチェックし、エラーを次の日本語に置き換えます（<code>main.py</code> の <code>_japanese_message</code>）。お問い合わせ（API-03）とログイン（API-06）は、API の中で個別の文を作ります。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エラーの種類</th>
+<th>文</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>項目がない</td>
+<td>入力してください。</td>
+</tr>
+<tr>
+<td>短すぎる</td>
+<td>入力してください。（最小が1文字のとき）/ {n}文字以上で入力してください。</td>
+</tr>
+<tr>
+<td>長すぎる</td>
+<td>{n}文字以内で入力してください。</td>
+</tr>
+<tr>
+<td>リストの件数が少ない / 多い</td>
+<td>{n}件以上入力してください。/ {n}件以内にしてください。</td>
+</tr>
+<tr>
+<td>数値でない</td>
+<td>数値で入力してください。</td>
+</tr>
+<tr>
+<td>範囲外</td>
+<td>{n}以上で入力してください。/ {n}より大きい値で入力してください。/ {n}以下で入力してください。</td>
+</tr>
+<tr>
+<td>日付の形式</td>
+<td>日付の形式が正しくありません（例: 2026-10-27）。</td>
+</tr>
+<tr>
+<td>選択肢にない</td>
+<td>選択肢から選んでください。</td>
+</tr>
+<tr>
+<td>真偽でない</td>
+<td>はい・いいえで指定してください。</td>
+</tr>
+<tr>
+<td>型が違う</td>
+<td>形式が正しくありません。</td>
+</tr>
+<tr>
+<td>個別のチェック</td>
+<td>チェックで決めた文（例: メールアドレスの形式が正しくありません。）</td>
+</tr>
+<tr>
+<td>そのほか</td>
+<td>入力内容が正しくありません。</td>
+</tr>
+</tbody></table></div>
+<p>本文が JSON として読めないときは、400 <code>{&quot;message&quot;: &quot;リクエストの形式が正しくありません。&quot;}</code> です。入力エラーの <code>message</code> は「入力内容をご確認ください。」です。</p>
+<h3 id="sec-8">1.6 ページ分け</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>パラメータ</td>
+<td><code>?page=</code>。1〜99999 の整数。それ以外（空・文字・0・全角など）は1ページ目として扱う</td>
+</tr>
+<tr>
+<td>1ページの件数</td>
+<td>20件（見積書の一覧だけ <code>?per_page=</code> で1〜100件にできる）</td>
+</tr>
+<tr>
+<td>応答</td>
+<td><code>{&quot;items&quot;: [...], &quot;total&quot;: 全件数, &quot;page&quot;: ページ, &quot;pages&quot;: 全ページ数（最低1）, &quot;per_page&quot;: 件数}</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-9">1.7 そのほかの決まり</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>パスの ID</td>
+<td>12桁以内の半角数字。それ以外は 404</td>
+</tr>
+<tr>
+<td>日時</td>
+<td>UTC の <code>YYYY-MM-DDTHH:MM:SSZ</code></td>
+</tr>
+<tr>
+<td>日付</td>
+<td><code>YYYY-MM-DD</code>（日本時間の日付）</td>
+</tr>
+<tr>
+<td>文字列の前後の空白</td>
+<td>管理画面からの入力は、前後の空白を除いてからチェックする</td>
+</tr>
+<tr>
+<td>応答ヘッダー（すべての応答）</td>
+<td><code>X-Content-Type-Options: nosniff</code>、<code>X-Frame-Options: DENY</code>、<code>Referrer-Policy: strict-origin-when-cross-origin</code></td>
+</tr>
+<tr>
+<td>応答ヘッダー（<code>/api/</code> 以下）</td>
+<td><code>Cache-Control: no-store</code></td>
+</tr>
+<tr>
+<td>CORS</td>
+<td><code>.env</code> の <code>FRONTEND_ORIGINS</code> の接続元だけを許可。Cookie あり、メソッド GET・POST・PUT・PATCH・DELETE、ヘッダー <code>Content-Type</code>・<code>Accept</code>、画面から読めるヘッダー <code>Content-Disposition</code></td>
+</tr>
+<tr>
+<td>操作の記録</td>
+<td>管理画面での変更・ダウンロードは <code>audit_logs</code> に記録する（一覧は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 21章）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-10">2. API 一覧</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>メソッド</th>
+<th>パス</th>
+<th>概要</th>
+<th>ログイン</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API-01</td>
+<td>GET</td>
+<td><code>/</code></td>
+<td>API の案内</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-02</td>
+<td>GET</td>
+<td><code>/api/health</code></td>
+<td>動作確認</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-03</td>
+<td>POST</td>
+<td><code>/api/contact</code></td>
+<td>お問い合わせを送信する</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-04</td>
+<td>GET</td>
+<td><code>/api/site</code></td>
+<td>公開サイトのテーマ色とサイト内容</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-05</td>
+<td>GET</td>
+<td><code>/uploads/{name}</code></td>
+<td>アップロードした画像</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-06</td>
+<td>POST</td>
+<td><code>/api/admin/login</code></td>
+<td>ログインする</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-07</td>
+<td>POST</td>
+<td><code>/api/admin/logout</code></td>
+<td>ログアウトする</td>
+<td>不要</td>
+</tr>
+<tr>
+<td>API-08</td>
+<td>GET</td>
+<td><code>/api/admin/me</code></td>
+<td>ログイン中の管理者</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-09</td>
+<td>POST</td>
+<td><code>/api/admin/password</code></td>
+<td>パスワードを変更する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-10</td>
+<td>GET</td>
+<td><code>/api/admin/inquiries</code></td>
+<td>お問い合わせの一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-11</td>
+<td>GET</td>
+<td><code>/api/admin/inquiries.csv</code></td>
+<td>お問い合わせの CSV</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-12</td>
+<td>GET</td>
+<td><code>/api/admin/inquiries/{id}</code></td>
+<td>お問い合わせの詳細</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-13</td>
+<td>PATCH</td>
+<td><code>/api/admin/inquiries/{id}</code></td>
+<td>対応状況・迷惑送信の印を変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-14</td>
+<td>DELETE</td>
+<td><code>/api/admin/inquiries/{id}</code></td>
+<td>お問い合わせを削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-15</td>
+<td>POST</td>
+<td><code>/api/admin/inquiries/{id}/notes</code></td>
+<td>対応メモを追加する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-16</td>
+<td>DELETE</td>
+<td><code>/api/admin/inquiries/{id}/notes/{note_id}</code></td>
+<td>対応メモを削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-17</td>
+<td>POST</td>
+<td><code>/api/admin/inquiries/{id}/reply</code></td>
+<td>お客さまにメールで返信する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-18</td>
+<td>GET</td>
+<td><code>/api/admin/dashboard</code></td>
+<td>ダッシュボードの集計</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-19</td>
+<td>GET</td>
+<td><code>/api/admin/login-history</code></td>
+<td>ログイン履歴</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-20</td>
+<td>GET</td>
+<td><code>/api/admin/audit-logs</code></td>
+<td>操作の記録</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-21</td>
+<td>GET</td>
+<td><code>/api/admin/backup</code></td>
+<td>バックアップの zip</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-22</td>
+<td>GET</td>
+<td><code>/api/admin/retention</code></td>
+<td>自動削除の設定</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-23</td>
+<td>PUT</td>
+<td><code>/api/admin/retention</code></td>
+<td>自動削除の設定を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-24</td>
+<td>POST</td>
+<td><code>/api/admin/retention/run</code></td>
+<td>自動削除を今すぐ実行する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-25</td>
+<td>GET</td>
+<td><code>/api/admin/theme</code></td>
+<td>テーマ色</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-26</td>
+<td>PUT</td>
+<td><code>/api/admin/theme</code></td>
+<td>テーマ色を変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-27</td>
+<td>GET</td>
+<td><code>/api/admin/content</code></td>
+<td>サイト内容</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-28</td>
+<td>PUT</td>
+<td><code>/api/admin/content/business</code></td>
+<td>事業者情報を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-29</td>
+<td>PUT</td>
+<td><code>/api/admin/content/prices</code></td>
+<td>料金の目安を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-30</td>
+<td>PUT</td>
+<td><code>/api/admin/content/faq</code></td>
+<td>よくある質問を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-31</td>
+<td>PUT</td>
+<td><code>/api/admin/content/works</code></td>
+<td>制作実績を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-32</td>
+<td>PUT</td>
+<td><code>/api/admin/content/other_works</code></td>
+<td>そのほかの制作物を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-33</td>
+<td>PUT</td>
+<td><code>/api/admin/content/testimonials</code></td>
+<td>お客さまの声を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-34</td>
+<td>DELETE</td>
+<td><code>/api/admin/content/{section}</code></td>
+<td>サイト内容を初期値に戻す</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-35</td>
+<td>POST</td>
+<td><code>/api/admin/uploads</code></td>
+<td>画像をアップロードする</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-36</td>
+<td>GET</td>
+<td><code>/api/admin/mail/settings</code></td>
+<td>メールの設定</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-37</td>
+<td>PUT</td>
+<td><code>/api/admin/mail/method</code></td>
+<td>送信方法を切り替える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-38</td>
+<td>POST</td>
+<td><code>/api/admin/mail/outlook/device-code</code></td>
+<td>Outlook のサインイン用コードを発行する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-39</td>
+<td>POST</td>
+<td><code>/api/admin/mail/outlook/poll</code></td>
+<td>Outlook のサインインが終わったか確認する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-40</td>
+<td>POST</td>
+<td><code>/api/admin/mail/outlook/logout</code></td>
+<td>Outlook のサインインを解除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-41</td>
+<td>PUT</td>
+<td><code>/api/admin/mail/smtp</code></td>
+<td>SMTP の設定を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-42</td>
+<td>PUT</td>
+<td><code>/api/admin/mail/notifications</code></td>
+<td>新着通知・自動返信の設定を保存する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-43</td>
+<td>POST</td>
+<td><code>/api/admin/mail/test</code></td>
+<td>テストメールを送る</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-44</td>
+<td>GET</td>
+<td><code>/api/admin/mail/outbox</code></td>
+<td>送信履歴</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-45</td>
+<td>POST</td>
+<td><code>/api/admin/mail/outbox/{id}/retry</code></td>
+<td>送れなかったメールを送り直す</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-46</td>
+<td>DELETE</td>
+<td><code>/api/admin/mail/outbox/{id}</code></td>
+<td>送信履歴の記録を削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-47</td>
+<td>GET</td>
+<td><code>/api/admin/templates</code></td>
+<td>返信テンプレートの一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-48</td>
+<td>POST</td>
+<td><code>/api/admin/templates</code></td>
+<td>返信テンプレートを追加する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-49</td>
+<td>PUT</td>
+<td><code>/api/admin/templates/{id}</code></td>
+<td>返信テンプレートを変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-50</td>
+<td>DELETE</td>
+<td><code>/api/admin/templates/{id}</code></td>
+<td>返信テンプレートを削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-51</td>
+<td>GET</td>
+<td><code>/api/admin/blocklist</code></td>
+<td>ブロックの一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-52</td>
+<td>POST</td>
+<td><code>/api/admin/blocklist</code></td>
+<td>アドレス・ドメインをブロックする</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-53</td>
+<td>DELETE</td>
+<td><code>/api/admin/blocklist/{id}</code></td>
+<td>ブロックを解除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-54</td>
+<td>GET</td>
+<td><code>/api/admin/estimates</code></td>
+<td>見積書の一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-55</td>
+<td>POST</td>
+<td><code>/api/admin/estimates</code></td>
+<td>見積書を作成する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-56</td>
+<td>GET</td>
+<td><code>/api/admin/estimates/{id}</code></td>
+<td>見積書の詳細</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-57</td>
+<td>PUT</td>
+<td><code>/api/admin/estimates/{id}</code></td>
+<td>見積書を変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-58</td>
+<td>DELETE</td>
+<td><code>/api/admin/estimates/{id}</code></td>
+<td>見積書を削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-59</td>
+<td>GET</td>
+<td><code>/api/admin/payments</code></td>
+<td>入金の一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-60</td>
+<td>POST</td>
+<td><code>/api/admin/payments</code></td>
+<td>入金を記録する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-61</td>
+<td>GET</td>
+<td><code>/api/admin/payments/{id}</code></td>
+<td>入金の詳細</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-62</td>
+<td>PUT</td>
+<td><code>/api/admin/payments/{id}</code></td>
+<td>入金の記録を変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-63</td>
+<td>DELETE</td>
+<td><code>/api/admin/payments/{id}</code></td>
+<td>入金の記録を削除する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-64</td>
+<td>GET</td>
+<td><code>/api/admin/contracts</code></td>
+<td>保守契約の一覧</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-65</td>
+<td>POST</td>
+<td><code>/api/admin/contracts</code></td>
+<td>保守契約を登録する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-66</td>
+<td>GET</td>
+<td><code>/api/admin/contracts/{id}</code></td>
+<td>保守契約の詳細（画面からは使っていない）</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-67</td>
+<td>PUT</td>
+<td><code>/api/admin/contracts/{id}</code></td>
+<td>保守契約を変える</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-68</td>
+<td>POST</td>
+<td><code>/api/admin/contracts/{id}/cancel</code></td>
+<td>解約の申し出を登録する</td>
+<td>必要</td>
+</tr>
+<tr>
+<td>API-69</td>
+<td>DELETE</td>
+<td><code>/api/admin/contracts/{id}</code></td>
+<td>保守契約を削除する</td>
+<td>必要</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-11">3. 共通のデータの形</h2>
+<p>応答で使うデータの形です。「日時」は 1.7 の形式です。</p>
+<h3 id="sec-12">Inquiry（お問い合わせ）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>数値</td>
+<td></td>
+</tr>
+<tr>
+<td>topics</td>
+<td>文字列の配列</td>
+<td>ご相談内容の値（例 <code>[&quot;python_react_fastapi&quot;]</code>）</td>
+</tr>
+<tr>
+<td>name / email / prefecture</td>
+<td>文字列</td>
+<td></td>
+</tr>
+<tr>
+<td>phone</td>
+<td>文字列</td>
+<td>数字のみ</td>
+</tr>
+<tr>
+<td>age</td>
+<td>数値 / null</td>
+<td></td>
+</tr>
+<tr>
+<td>initial_payment / monthly_payment</td>
+<td>文字列</td>
+<td>お支払い方法の値</td>
+</tr>
+<tr>
+<td>status</td>
+<td>文字列</td>
+<td>対応状況の値</td>
+</tr>
+<tr>
+<td>is_spam</td>
+<td>真偽</td>
+<td>迷惑送信か</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>日時</td>
+<td>受付日時 / 最終更新</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-13">InquiryDetail（お問い合わせの詳細）</h3>
+<p>Inquiry の項目に、次を加えたものです。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>notes</td>
+<td>Note の配列（新しい順）</td>
+</tr>
+<tr>
+<td>mails</td>
+<td>このお問い合わせの送信履歴（新しい順）。<code>id, kind, to_addr, subject, status, error, created_at, sent_at</code></td>
+</tr>
+<tr>
+<td>estimates</td>
+<td>関連する見積書（発行日の新しい順・50件まで）。<code>id, number, title, total, status, issue_date</code></td>
+</tr>
+<tr>
+<td>contracts</td>
+<td>関連する保守契約（開始日の新しい順）。<code>id, site_name, monthly_fee, status, start_date</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-14">Note（メモ・記録）</h3>
+<p><code>id</code>（数値）、<code>kind</code>（<code>note</code> 手入力のメモ / <code>email</code> 返信したメール / <code>system</code> 自動の記録）、<code>body</code>（文字列）、<code>created_at</code>（日時）</p>
+<h3 id="sec-15">OutboxMail（送信履歴）</h3>
+<p><code>id, inquiry_id（数値 / null）, inquiry_name（お問い合わせのお名前 / null）, kind, to_addr, subject, status, error, created_at, sent_at（日時 / null）</code>。値は <a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> のコード値のとおりです。</p>
+<h3 id="sec-16">Estimate（見積書）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id / number</td>
+<td>数値 / 文字列</td>
+<td>番号は <code>Q-YYYYMM-NNN</code></td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>数値 / null</td>
+<td>関連するお問い合わせ</td>
+</tr>
+<tr>
+<td>customer_name / title / delivery / payment_terms / notes</td>
+<td>文字列</td>
+<td></td>
+</tr>
+<tr>
+<td>issue_date / valid_until</td>
+<td>日付</td>
+<td>発行日 / 有効期限</td>
+</tr>
+<tr>
+<td>tax_rate</td>
+<td>数値</td>
+<td>消費税率（%）</td>
+</tr>
+<tr>
+<td>status</td>
+<td>文字列</td>
+<td><code>draft</code> / <code>sent</code> / <code>accepted</code> / <code>rejected</code></td>
+</tr>
+<tr>
+<td>subtotal / tax / total</td>
+<td>数値</td>
+<td>小計（税抜）/ 消費税 / 合計（税込）</td>
+</tr>
+<tr>
+<td>paid / balance</td>
+<td>数値</td>
+<td>入金済みの合計 / 残額（合計 − 入金済み）</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>日時</td>
+<td></td>
+</tr>
+<tr>
+<td>items</td>
+<td>配列</td>
+<td>詳細のときだけ。<code>description, quantity, unit, unit_price, amount</code>（quantity は整数なら整数で返す。amount は数量 × 単価を四捨五入）</td>
+</tr>
+<tr>
+<td>payments</td>
+<td>Payment の配列</td>
+<td>API-56・API-57 の応答だけ（入金日の新しい順・100件まで）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-17">Payment（入金）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id / receipt_number</td>
+<td>数値 / 文字列</td>
+<td>番号は <code>R-YYYYMM-NNN</code></td>
+</tr>
+<tr>
+<td>estimate_id</td>
+<td>数値 / null</td>
+<td>関連する見積書</td>
+</tr>
+<tr>
+<td>estimate</td>
+<td>オブジェクト / null</td>
+<td><code>{id, number, title}</code></td>
+</tr>
+<tr>
+<td>customer_name / description / note</td>
+<td>文字列</td>
+<td>お客さま名 / 但し書き / メモ</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>数値</td>
+<td>金額（税込）</td>
+</tr>
+<tr>
+<td>method</td>
+<td>文字列</td>
+<td><code>cash</code> / <code>card</code> / <code>bank</code></td>
+</tr>
+<tr>
+<td>paid_on</td>
+<td>日付</td>
+<td>入金日</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-18">Contract（保守契約）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>数値</td>
+<td></td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>数値 / null</td>
+<td>関連するお問い合わせ</td>
+</tr>
+<tr>
+<td>customer_name / email / site_name / site_url / note</td>
+<td>文字列</td>
+<td></td>
+</tr>
+<tr>
+<td>monthly_fee</td>
+<td>数値</td>
+<td>月額（税込）</td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>日付</td>
+<td>開始日</td>
+</tr>
+<tr>
+<td>cancel_requested_on / end_date</td>
+<td>日付 / null</td>
+<td>解約の申し出日 / 終了日</td>
+</tr>
+<tr>
+<td>status</td>
+<td>文字列</td>
+<td><code>active</code> / <code>cancel_requested</code> / <code>ended</code>（保存せず、その日に計算する。<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 15章）</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-19">MailSettings（メールの設定）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>method</td>
+<td>今の送信方法 <code>outlook</code> / <code>smtp</code></td>
+</tr>
+<tr>
+<td>ready / reason</td>
+<td>今の送信方法で送れるか / 送れないときの理由（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.3）</td>
+</tr>
+<tr>
+<td>smtp</td>
+<td><code>host, port, security, username, from_address, from_name</code>、<code>password_set</code>（パスワードが保存されているか）、<code>ready</code>（サーバー名と送信元があるか）。<strong>パスワードそのものは返さない</strong></td>
+</tr>
+<tr>
+<td>outlook</td>
+<td><code>configured</code>（<code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> があるか）、<code>signed_in</code>（トークンのファイルがあるか）、<code>tenant</code>、<code>from_address</code>（<code>.env</code> の <code>MAIL_FROM_ADDRESS</code>、なければ事業者情報のメール）</td>
+</tr>
+<tr>
+<td>notifications</td>
+<td><code>admin_notify, admin_to, auto_reply, auto_reply_subject, auto_reply_body, site_url</code></td>
+</tr>
+<tr>
+<td>business_email</td>
+<td>事業者情報のメール</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-20">Retention（自動削除の設定）</h3>
+<p><code>enabled</code>（真偽）、<code>months</code>（数値）、<code>statuses</code>（対応状況の配列）、<code>spam_days</code>（数値）、<code>targets</code>（今の設定で削除の対象になる件数）、<code>last_run</code>（<code>{&quot;at&quot;: 日時, &quot;deleted&quot;: 件数}</code> / null）</p>
+<h3 id="sec-21">SiteContent（サイト内容）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>business</td>
+<td><code>business_name, owner, address, phone, email, hours, business_form, line_url</code></td>
+</tr>
+<tr>
+<td>prices</td>
+<td><code>{&quot;rows&quot;: [{&quot;name&quot;, &quot;price&quot;}], &quot;notes&quot;: [文字列]}</code></td>
+</tr>
+<tr>
+<td>faq</td>
+<td><code>[{&quot;q&quot;, &quot;a&quot;}]</code></td>
+</tr>
+<tr>
+<td>works</td>
+<td><code>[{&quot;image&quot;, &quot;alt&quot;, &quot;badge&quot;, &quot;title&quot;, &quot;text&quot;}]</code></td>
+</tr>
+<tr>
+<td>other_works</td>
+<td><code>[文字列]</code></td>
+</tr>
+<tr>
+<td>testimonials</td>
+<td><code>[{&quot;name&quot;, &quot;text&quot;, &quot;date&quot;, &quot;published&quot;}]</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-22">そのほか</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>名前</th>
+<th>項目</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Template（返信テンプレート）</td>
+<td><code>id, name, subject, body, created_at, updated_at</code></td>
+</tr>
+<tr>
+<td>Block（ブロック）</td>
+<td><code>id, pattern, note, created_at</code></td>
+</tr>
+<tr>
+<td>LoginRecord（ログイン履歴）</td>
+<td><code>id, email, success（1 / 0）, ip, user_agent, created_at</code></td>
+</tr>
+<tr>
+<td>AuditRecord（操作の記録）</td>
+<td><code>id, action, detail, created_at</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-23">4. 各 API の詳細</h2>
+<h3 id="sec-24">4.1 共通</h3>
+<h4 id="sec-25">API-01 GET <code>/</code>（API の案内）</h4>
+<p>応答 200: <code>{&quot;name&quot;: &quot;Katachi API&quot;, &quot;backend&quot;: &quot;fastapi&quot;, &quot;docs&quot;: &quot;/api/docs&quot;}</code></p>
+<h4 id="sec-26">API-02 GET <code>/api/health</code>（動作確認）</h4>
+<p>応答 200: <code>{&quot;status&quot;: &quot;ok&quot;, &quot;backend&quot;: &quot;fastapi&quot;}</code>。起動スクリプトとテストが、API が起動したかの確認に使います。</p>
+<h3 id="sec-27">4.2 公開サイト</h3>
+<h4 id="sec-28">API-03 POST <code>/api/contact</code>（お問い合わせを送信する）</h4>
+<p>本文（JSON）:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 2.2）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>topics</td>
+<td>文字列の配列</td>
+<td>○</td>
+<td>選択肢にある値が1つ以上（選択肢にない値・重複は捨てる）</td>
+</tr>
+<tr>
+<td>name</td>
+<td>文字列</td>
+<td>○</td>
+<td>前後の空白を除いて1〜100文字</td>
+</tr>
+<tr>
+<td>email</td>
+<td>文字列</td>
+<td>○</td>
+<td>全角を半角にして、メールの形式・254文字まで</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>文字列</td>
+<td>○</td>
+<td>全角を半角にし、記号を除いて「0で始まる10〜11桁」</td>
+</tr>
+<tr>
+<td>prefecture</td>
+<td>文字列</td>
+<td>○</td>
+<td>47都道府県のどれか</td>
+</tr>
+<tr>
+<td>age</td>
+<td>文字列</td>
+<td>−</td>
+<td>空、または1〜120の整数（全角も可）</td>
+</tr>
+<tr>
+<td>initial_payment</td>
+<td>文字列</td>
+<td>○</td>
+<td><code>cash</code> / <code>card</code></td>
+</tr>
+<tr>
+<td>monthly_payment</td>
+<td>文字列</td>
+<td>○</td>
+<td><code>card_auto</code> / <code>none</code></td>
+</tr>
+<tr>
+<td>agreed</td>
+<td>真偽</td>
+<td>○</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>website</td>
+<td>文字列</td>
+<td>−</td>
+<td>隠し欄。通常は空</td>
+</tr>
+</tbody></table></div>
+<p>応答 201: <code>{&quot;ok&quot;: true}</code></p>
+<p>処理:</p>
+<ol>
+<li>接続元の IP が回数の上限（10分に10件）に達していれば 429。</li>
+<li>本文を読む。JSON のオブジェクトでなければ 400。</li>
+<li><code>website</code> に空白以外の文字があれば、<strong>何も保存せずに</strong> 201 <code>{&quot;ok&quot;: true}</code> を返す（回数にも数えない）。</li>
+<li>入力をチェックして整える。エラーがあれば 422（<code>errors</code> にすべての項目のエラー）。</li>
+<li>メールアドレスがブロックリストに当てはまるか調べる。</li>
+<li>お問い合わせを保存する（対応状況 <code>new</code>、迷惑送信の印は 5 の結果）。</li>
+<li>回数に1件数える。</li>
+<li>迷惑送信でなければ、新着通知と自動返信を送信履歴に登録し、応答を返したあとで送る（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.8）。迷惑送信ならメールは送らない。</li>
+</ol>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>コード</th>
+<th>条件</th>
+<th>message</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td>本文が JSON のオブジェクトでない</td>
+<td>リクエストの形式が正しくありません。</td>
+</tr>
+<tr>
+<td>422</td>
+<td>入力エラー</td>
+<td>入力内容をご確認ください。（<code>errors</code> つき）</td>
+</tr>
+<tr>
+<td>429</td>
+<td>回数の上限</td>
+<td>送信回数が多すぎます。しばらくしてからお試しください。</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-29">API-04 GET <code>/api/site</code>（公開サイトのテーマ色とサイト内容）</h4>
+<p>応答 200: <code>{&quot;theme&quot;: {&quot;primary_color&quot;: &quot;#1558c0&quot;}, &quot;content&quot;: SiteContent}</code>。保存していない項目は初期値（<code>shared/site_defaults.json</code>）を返します。</p>
+<h4 id="sec-30">API-05 GET <code>/uploads/{name}</code>（アップロードした画像）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>name</td>
+<td><code>^[0-9a-f]{24}\.(png|jpg|gif|webp)$</code> に合うこと</td>
+</tr>
+<tr>
+<td>応答 200</td>
+<td>画像（Content-Type は拡張子から <code>image/png</code>・<code>image/jpeg</code>・<code>image/gif</code>・<code>image/webp</code>）。<code>Cache-Control: public, max-age=31536000, immutable</code></td>
+</tr>
+<tr>
+<td>404</td>
+<td>名前の形式が違う・ファイルがない（「見つかりません。」）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-31">4.3 ログイン・アカウント</h3>
+<h4 id="sec-32">API-06 POST <code>/api/admin/login</code>（ログインする）</h4>
+<p>本文: <code>{&quot;email&quot;: 文字列, &quot;password&quot;: 文字列}</code></p>
+<p>応答 200: <code>{&quot;email&quot;: &quot;admin@example.com&quot;}</code> と Cookie。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Cookie の属性</th>
+<th>値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>名前</td>
+<td><code>bt_admin_session</code></td>
+</tr>
+<tr>
+<td>Max-Age</td>
+<td>43200（12時間）</td>
+</tr>
+<tr>
+<td>Path</td>
+<td><code>/api</code></td>
+</tr>
+<tr>
+<td>HttpOnly</td>
+<td>あり</td>
+</tr>
+<tr>
+<td>SameSite</td>
+<td>Strict</td>
+</tr>
+<tr>
+<td>Secure</td>
+<td><code>.env</code> の <code>COOKIE_SECURE=true</code> のときあり</td>
+</tr>
+</tbody></table></div>
+<p>処理:</p>
+<ol>
+<li>接続元の IP が、15分に10回の失敗に達していれば 429。</li>
+<li>本文を読む（JSON のオブジェクトでなければ 400）。<code>email</code>・<code>password</code> が文字列でなければ空として扱う。</li>
+<li>どちらかが空なら 422「メールアドレスとパスワードを入力してください。」（<code>errors</code> はなし）。</li>
+<li>認証する（メールは前後の空白を除いて小文字にして比べる。<a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">07</a> 2章）。</li>
+<li>成功・失敗にかかわらず、ログイン履歴に記録する（メール・結果・IP・User-Agent）。</li>
+<li>失敗なら、失敗の回数に1回数えて 401「メールアドレスまたはパスワードが正しくありません。」</li>
+<li>成功なら、その IP の失敗の回数を0に戻し、セッションを作って Cookie を発行する。</li>
+</ol>
+<h4 id="sec-33">API-07 POST <code>/api/admin/logout</code>（ログアウトする）</h4>
+<p>Cookie があれば、そのセッションを削除します。応答 200 <code>{&quot;ok&quot;: true}</code> と、Cookie を削除するヘッダー。ログインしていなくても呼べます。</p>
+<h4 id="sec-34">API-08 GET <code>/api/admin/me</code>（ログイン中の管理者）</h4>
+<p>応答 200: <code>{&quot;email&quot;: &quot;...&quot;}</code>。未ログインは 401。</p>
+<h4 id="sec-35">API-09 POST <code>/api/admin/password</code>（パスワードを変更する）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>current_password</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜128文字</td>
+</tr>
+<tr>
+<td>new_password</td>
+<td>文字列</td>
+<td>○</td>
+<td>8〜128文字。今のパスワードと違うこと（同じなら <code>body</code>「新しいパスワードは、今のパスワードと別のものにしてください。」）</td>
+</tr>
+</tbody></table></div>
+<p>処理: 今のパスワードを確かめる（違えば 422 <code>{&quot;current_password&quot;: &quot;今のパスワードが正しくありません。&quot;}</code>）→ パスワードを変える → <strong>ほかの端末のセッションを削除</strong>（この画面のセッションは残す）→ 操作の記録「パスワードを変更」。応答 200 <code>{&quot;ok&quot;: true}</code>。</p>
+<h3 id="sec-36">4.4 お問い合わせ</h3>
+<h4 id="sec-37">API-10 GET <code>/api/admin/inquiries</code>（お問い合わせの一覧）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>内容</th>
+<th>正しくないとき（400）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>status</td>
+<td>対応状況の値。<code>all</code> または空なら絞り込まない</td>
+<td>対応状況の指定が正しくありません。</td>
+</tr>
+<tr>
+<td>q</td>
+<td>お名前・メール（大文字と小文字を区別しない）・電話番号に含まれる文字</td>
+<td></td>
+</tr>
+<tr>
+<td>from / to</td>
+<td>受付日（日本時間）。<code>from</code> の 0:00 以降、<code>to</code> の翌日 0:00 より前</td>
+<td>開始（終了）の日付の形式が正しくありません（例: 2026-10-27）。</td>
+</tr>
+<tr>
+<td>spam</td>
+<td><code>1</code> か <code>true</code> なら迷惑送信だけ。ほかは迷惑送信以外だけ</td>
+<td></td>
+</tr>
+<tr>
+<td>sort</td>
+<td><code>newest</code>（受付の新しい順・初期）/ <code>oldest</code>（古い順）/ <code>name</code>（名前順）/ <code>updated</code>（更新の新しい順）</td>
+<td>並び順の指定が正しくありません。</td>
+</tr>
+<tr>
+<td>page</td>
+<td>1.6 のとおり</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>応答 200: ページ分けの形に <code>counts</code> を加えたもの。</p>
+<p><code>counts</code>: <code>{&quot;new&quot;: n, &quot;in_progress&quot;: n, &quot;quoted&quot;: n, &quot;contracted&quot;: n, &quot;done&quot;: n, &quot;declined&quot;: n, &quot;all&quot;: 迷惑送信以外の合計, &quot;spam&quot;: 迷惑送信の件数}</code>（絞り込みに関係なく、全体の件数）</p>
+<h4 id="sec-38">API-11 GET <code>/api/admin/inquiries.csv</code>（お問い合わせの CSV）</h4>
+<p>パラメータは API-10 と同じです（<code>page</code> は使わず、条件に合うすべて）。</p>
+<p>応答 200: <code>Content-Type: text/csv; charset=utf-8</code>、<code>Content-Disposition: attachment; filename=&quot;inquiries_YYYYMMDD_HHMMSS.csv&quot;</code>（日時は日本時間）。中身は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 10章。操作の記録「お問い合わせを CSV で出力」（{n} 件）。</p>
+<h4 id="sec-39">API-12 GET <code>/api/admin/inquiries/{id}</code>（お問い合わせの詳細）</h4>
+<p>応答 200: InquiryDetail。見つからないときは 404「お問い合わせが見つかりません。」</p>
+<h4 id="sec-40">API-13 PATCH <code>/api/admin/inquiries/{id}</code>（対応状況・迷惑送信の印を変える）</h4>
+<p>本文: <code>{&quot;status&quot;?: 文字列, &quot;is_spam&quot;?: 真偽}</code>（どちらか、または両方）</p>
+<p>処理:</p>
+<ol>
+<li>お問い合わせがなければ 404。</li>
+<li><code>status</code> が対応状況の値でなければ 422（message「対応状況の指定が正しくありません。」、<code>{&quot;status&quot;: &quot;対応状況を選択してください。&quot;}</code>）。</li>
+<li>指定された項目と最終更新を変える。</li>
+<li>対応状況が変わったら、記録「対応状況を「{前}」から「{後}」に変更」と、操作の記録「対応状況を変更」。</li>
+<li>迷惑送信の印が変わったら、記録「迷惑送信にしました」/「迷惑送信から戻しました」と、同じ文の操作の記録。</li>
+</ol>
+<p>応答 200: InquiryDetail。</p>
+<h4 id="sec-41">API-14 DELETE <code>/api/admin/inquiries/{id}</code>（お問い合わせを削除する）</h4>
+<p>処理: お問い合わせを削除します。<strong>メモ・記録（inquiry_notes）と、このお問い合わせの送信履歴（mail_outbox）も削除します</strong>（※課題 No.1: 今は送信履歴が残り、お問い合わせとのひもづけだけが外れる）。見積書・保守契約は残し、お問い合わせとのひもづけだけを外します。操作の記録「お問い合わせを削除」。</p>
+<p>応答 200: <code>{&quot;ok&quot;: true}</code>。見つからないときは 404。</p>
+<h4 id="sec-42">API-15 POST <code>/api/admin/inquiries/{id}/notes</code>（対応メモを追加する）</h4>
+<p>本文: <code>{&quot;body&quot;: 文字列}</code>（前後の空白を除いて1〜5000文字）</p>
+<p>応答 201: Note。お問い合わせの最終更新も変わります。</p>
+<h4 id="sec-43">API-16 DELETE <code>/api/admin/inquiries/{id}/notes/{note_id}</code>（対応メモを削除する）</h4>
+<p>手入力のメモ（<code>kind = note</code>）だけ削除できます。自動の記録・返信の記録、存在しないメモは 404「メモが見つかりません。」。応答 200: <code>{&quot;ok&quot;: true}</code>。</p>
+<h4 id="sec-44">API-17 POST <code>/api/admin/inquiries/{id}/reply</code>（お客さまにメールで返信する）</h4>
+<p>本文: <code>{&quot;subject&quot;: 1〜200文字, &quot;body&quot;: 1〜20000文字}</code></p>
+<p>処理:</p>
+<ol>
+<li>送信履歴に登録する（種類 <code>reply</code>、宛先はお問い合わせのメールアドレス）。</li>
+<li>その場で送る（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.1）。送れなければ 400（message は送れなかった理由）。送信履歴には「失敗」または「未送信」として残り、送信履歴から送り直せる。</li>
+<li>送れたら、記録（種類 <code>email</code>）「メールで返信しました（改行）件名: {件名}（改行2つ）{本文}」を追加する。</li>
+<li>対応状況が「未対応」なら「対応中」に変え、記録「返信したため、対応状況を「対応中」に変更」を追加する。</li>
+<li>操作の記録「メールで返信」。</li>
+</ol>
+<p>応答 200: InquiryDetail。</p>
+<h3 id="sec-45">4.5 ダッシュボード・履歴</h3>
+<h4 id="sec-46">API-18 GET <code>/api/admin/dashboard</code>（ダッシュボードの集計）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容（計算は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 16章）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>counts</td>
+<td>API-10 の <code>counts</code> と同じ</td>
+</tr>
+<tr>
+<td>this_month / last_month</td>
+<td>今月・先月のお問い合わせの件数</td>
+</tr>
+<tr>
+<td>monthly</td>
+<td>直近12か月の <code>[{&quot;month&quot;: &quot;YYYY-MM&quot;, &quot;count&quot;: n}]</code>（古い月から）</td>
+</tr>
+<tr>
+<td>recent_new</td>
+<td>未対応のお問い合わせ（新しい順・5件）。Inquiry の配列</td>
+</tr>
+<tr>
+<td>contracts_active / contracts_ending</td>
+<td>終了していない保守契約の件数 / そのうち解約予定の件数</td>
+</tr>
+<tr>
+<td>monthly_revenue</td>
+<td>終了していない、開始済みの保守契約の月額の合計</td>
+</tr>
+<tr>
+<td>payments_this_month</td>
+<td>入金日が今月1日以降の入金の合計</td>
+</tr>
+<tr>
+<td>outstanding</td>
+<td>状態が「承諾」の見積書の残額の合計</td>
+</tr>
+<tr>
+<td>estimates_open</td>
+<td>状態が「下書き」「送付済み」の見積書の件数</td>
+</tr>
+<tr>
+<td>mail_problems</td>
+<td>直近30日に登録した送信履歴のうち「失敗」「未送信」の件数</td>
+</tr>
+<tr>
+<td>previous_login</td>
+<td>1つ前の成功したログイン <code>{&quot;ip&quot;, &quot;created_at&quot;}</code> / null</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-47">API-19 GET <code>/api/admin/login-history</code>（ログイン履歴）・API-20 GET <code>/api/admin/audit-logs</code>（操作の記録）</h4>
+<p><code>?page=</code> のページ分け（新しい順）。items は LoginRecord / AuditRecord です。</p>
+<h3 id="sec-48">4.6 データ管理</h3>
+<h4 id="sec-49">API-21 GET <code>/api/admin/backup</code>（バックアップの zip）</h4>
+<p>応答 200: <code>application/zip</code>、ファイル名 <code>katachi-backup-YYYYMMDD-HHMMSS.zip</code>（日本時間）。中身は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 12章。応答を送ったあとで一時フォルダを削除します。操作の記録「バックアップをダウンロード」。</p>
+<h4 id="sec-50">API-22 GET <code>/api/admin/retention</code>（自動削除の設定）</h4>
+<p>応答 200: Retention。保存していなければ初期値（無効・24か月・対応済みとお断り・迷惑送信30日）です。</p>
+<h4 id="sec-51">API-23 PUT <code>/api/admin/retention</code>（自動削除の設定を保存する）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>enabled</td>
+<td>真偽</td>
+<td>○</td>
+<td></td>
+</tr>
+<tr>
+<td>months</td>
+<td>整数</td>
+<td>○</td>
+<td>1〜120</td>
+</tr>
+<tr>
+<td>statuses</td>
+<td>文字列の配列</td>
+<td>○</td>
+<td>10個まで。すべて対応状況の値（違えば 422 <code>{&quot;statuses&quot;: &quot;対応状況を選択してください。&quot;}</code>）</td>
+</tr>
+<tr>
+<td>spam_days</td>
+<td>整数</td>
+<td>○</td>
+<td>1〜3650</td>
+</tr>
+</tbody></table></div>
+<p>応答 200: Retention。操作の記録「自動削除の設定を変更」（「有効 / 24か月 / 迷惑送信 30日」の形）。</p>
+<h4 id="sec-52">API-24 POST <code>/api/admin/retention/run</code>（自動削除を今すぐ実行する）</h4>
+<p>本文: <code>{&quot;dry_run&quot;: 真偽}</code>（省略時 <code>true</code>）。<strong>保存済みの設定</strong>で対象を決めます。</p>
+<ul>
+<li><code>dry_run: true</code> … 件数を数えるだけ。</li>
+<li><code>dry_run: false</code> … 削除し（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 11章）、前回の実行（日時・件数）を保存して、操作の記録「古いお問い合わせを削除（手動）」。設定が「無効」でも実行します。</li>
+</ul>
+<p>応答 200: <code>{&quot;count&quot;: 件数}</code></p>
+<h3 id="sec-53">4.7 デザイン（色）</h3>
+<h4 id="sec-54">API-25 GET <code>/api/admin/theme</code>（テーマ色）</h4>
+<p>応答 200: <code>{&quot;primary_color&quot;: &quot;#1558c0&quot;, &quot;default_color&quot;: &quot;#1558c0&quot;}</code>（<code>default_color</code> は初期の色）</p>
+<h4 id="sec-55">API-26 PUT <code>/api/admin/theme</code>（テーマ色を変える）</h4>
+<p>本文: <code>{&quot;primary_color&quot;: 文字列}</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>チェック</th>
+<th>エラー文（項目 <code>primary_color</code>）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>#</code> と16進数6桁（大文字も可）</td>
+<td>色は #1558c0 のような形式で指定してください。</td>
+</tr>
+<tr>
+<td>白い文字とのコントラスト比が 4.5 以上</td>
+<td>この色は明るすぎて、白い文字が読みにくくなります。もう少し濃い色を選んでください。</td>
+</tr>
+</tbody></table></div>
+<p>小文字にして保存します。応答は API-25 と同じ。操作の記録「テーマ色を変更」（色）。</p>
+<h3 id="sec-56">4.8 サイト内容・画像</h3>
+<h4 id="sec-57">API-27 GET <code>/api/admin/content</code>（サイト内容）</h4>
+<p>応答 200: <code>{&quot;content&quot;: SiteContent, &quot;customized&quot;: {&quot;business&quot;: 真偽, &quot;prices&quot;: 真偽, &quot;faq&quot;: 真偽, &quot;works&quot;: 真偽, &quot;other_works&quot;: 真偽, &quot;testimonials&quot;: 真偽}}</code>（<code>customized</code> は保存したことがあるか）</p>
+<h4 id="sec-58">API-28〜33 PUT <code>/api/admin/content/{項目}</code>（サイト内容を保存する）</h4>
+<p>項目ごとに、本文の全体で置き換えます。応答は API-27 と同じ。操作の記録「サイト内容を変更」（項目名）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>項目</th>
+<th>本文</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API-28</td>
+<td>business（事業者情報）</td>
+<td>オブジェクト</td>
+<td>すべて必須。<code>business_name</code> 1〜60 / <code>owner</code> 1〜40 / <code>address</code> 1〜100 / <code>phone</code> 1〜30 / <code>email</code> 1〜254・形式 / <code>hours</code> 1〜60 / <code>business_form</code> 1〜120 / <code>line_url</code> 1〜300・<code>https://</code> で始まる URL</td>
+</tr>
+<tr>
+<td>API-29</td>
+<td>prices（料金の目安）</td>
+<td><code>{&quot;rows&quot;: [...], &quot;notes&quot;: [...]}</code></td>
+<td><code>rows</code> 1〜30行（<code>name</code> 1〜100・<code>price</code> 1〜40）。<code>notes</code> 10個まで（空は除き、1つ300文字まで。超えると「補足の文章は1つあたり300文字以内にしてください。」）</td>
+</tr>
+<tr>
+<td>API-30</td>
+<td>faq（よくある質問）</td>
+<td><code>[{&quot;q&quot;, &quot;a&quot;}]</code></td>
+<td>50件まで（超えると <code>body</code>「よくある質問は50件以内にしてください。」）。<code>q</code> 1〜200・<code>a</code> 1〜2000</td>
+</tr>
+<tr>
+<td>API-31</td>
+<td>works（制作実績）</td>
+<td><code>[{&quot;image&quot;, &quot;alt&quot;, &quot;badge&quot;, &quot;title&quot;, &quot;text&quot;}]</code></td>
+<td>20件まで（<code>body</code>「制作実績は20件以内にしてください。」）。<code>image</code> は <code>/uploads/{24桁の16進数}.{png・jpg・gif・webp}</code> か <code>/images/{英数字・_・-}.{png・jpg・jpeg・gif・webp・svg}</code>（違えば「画像をアップロードしてください。」）。<code>alt</code> 100まで・<code>badge</code> 20まで・<code>title</code> 1〜60・<code>text</code> 300まで</td>
+</tr>
+<tr>
+<td>API-32</td>
+<td>other_works（そのほかの制作物）</td>
+<td><code>[{&quot;value&quot;}]</code></td>
+<td>40件まで（<code>body</code>「そのほかの制作物は40件以内にしてください。」）。<code>value</code> 1〜60。保存するときは文字列の配列にする</td>
+</tr>
+<tr>
+<td>API-33</td>
+<td>testimonials（お客さまの声）</td>
+<td><code>[{&quot;name&quot;, &quot;text&quot;, &quot;date&quot;, &quot;published&quot;}]</code></td>
+<td>50件まで（<code>body</code>「お客さまの声は50件以内にしてください。」）。<code>name</code> 1〜60・<code>text</code> 1〜1000・<code>date</code> 30まで・<code>published</code> 省略時 <code>true</code></td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-59">API-34 DELETE <code>/api/admin/content/{section}</code>（サイト内容を初期値に戻す）</h4>
+<p><code>section</code> は6つの項目のどれか（違えば 404「見つかりません。」）。保存した内容を消して初期値に戻します。応答は API-27 と同じ。操作の記録「サイト内容を初期値に戻す」（項目名）。</p>
+<h4 id="sec-60">API-35 POST <code>/api/admin/uploads</code>（画像をアップロードする）</h4>
+<p>本文: 画像ファイルそのもの（JSON ではない。<code>Content-Type</code> は画像の種類）</p>
+<p>処理:</p>
+<ol>
+<li><code>Content-Length</code> が 5MB（5×1024×1024 バイト）を超えていれば 413「画像は5MB以下にしてください。」</li>
+<li>本文を読み、5MB を超えていれば 413（同じ文）。</li>
+<li>ファイルの先頭のバイトで種類を判定する（PNG・JPEG・GIF・WebP）。どれでもなければ 422「画像は PNG・JPEG・GIF・WebP のいずれかを選んでください。」</li>
+<li>ランダムな名前（16進数24桁 + 拡張子）で <code>data/uploads/</code> に保存する。</li>
+<li>操作の記録「画像をアップロード」（ファイル名）。</li>
+</ol>
+<p>応答 201: <code>{&quot;url&quot;: &quot;/uploads/{name}&quot;}</code>。サイト内容（制作実績）に保存するまでは、公開サイトには出ません。</p>
+<h3 id="sec-61">4.9 メール</h3>
+<h4 id="sec-62">API-36 GET <code>/api/admin/mail/settings</code>（メールの設定）</h4>
+<p>応答 200: MailSettings</p>
+<h4 id="sec-63">API-37 PUT <code>/api/admin/mail/method</code>（送信方法を切り替える）</h4>
+<p>本文: <code>{&quot;method&quot;: &quot;outlook&quot; | &quot;smtp&quot;}</code>（ほかの値は 422「選択肢から選んでください。」）。応答 200: MailSettings。操作の記録「メールの送信方法を変更」。</p>
+<h4 id="sec-64">API-38 POST <code>/api/admin/mail/outlook/device-code</code>（Outlook のサインイン用コードを発行する）</h4>
+<p>処理（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 5章）:</p>
+<ol>
+<li>Microsoft にサインイン用のコードの発行を依頼する。</li>
+<li>新しい <code>flow_id</code>（ランダム）を作り、Microsoft から受け取った <code>device_code</code> を、期限とともに API のメモリに保存する。期限切れのものは、このときに捨てる。<strong><code>device_code</code> は画面に渡さない。</strong></li>
+</ol>
+<p>応答 200: <code>{&quot;flow_id&quot;, &quot;user_code&quot;, &quot;verification_uri&quot;, &quot;expires_in&quot;（秒・既定900）, &quot;interval&quot;（秒・既定5）}</code></p>
+<p>400: <code>.env</code> の <code>MICROSOFT_CLIENT_ID</code> がない（「.env の MICROSOFT_CLIENT_ID が設定されていません。」）、Microsoft に接続できない、Microsoft がエラーを返した。</p>
+<h4 id="sec-65">API-39 POST <code>/api/admin/mail/outlook/poll</code>（Outlook のサインインが終わったか確認する）</h4>
+<p>本文: <code>{&quot;flow_id&quot;: 1〜100文字}</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>結果</th>
+<th>応答</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>まだ</td>
+<td>200 <code>{&quot;status&quot;: &quot;pending&quot;}</code></td>
+</tr>
+<tr>
+<td>確認の間隔を空けてほしい</td>
+<td>200 <code>{&quot;status&quot;: &quot;slow_down&quot;}</code></td>
+</tr>
+<tr>
+<td>完了（トークンを保存した）</td>
+<td>200 <code>{&quot;status&quot;: &quot;ok&quot;, &quot;settings&quot;: MailSettings}</code>。<code>flow_id</code> を捨て、操作の記録「Outlook にサインイン」</td>
+</tr>
+<tr>
+<td><code>flow_id</code> がない・期限切れ</td>
+<td>400「サインインの有効期限が切れました。もう一度やり直してください。」</td>
+</tr>
+<tr>
+<td>Microsoft の期限切れ・キャンセル・そのほかのエラー</td>
+<td>400（理由）。<code>flow_id</code> を捨てる</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-66">API-40 POST <code>/api/admin/mail/outlook/logout</code>（Outlook のサインインを解除する）</h4>
+<p>トークンのファイル（<code>data/microsoft-oauth.json</code>）を削除します。応答 200: MailSettings。操作の記録「Outlook のサインインを解除」。</p>
+<h4 id="sec-67">API-41 PUT <code>/api/admin/mail/smtp</code>（SMTP の設定を保存する）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>省略したとき</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>host</td>
+<td>文字列</td>
+<td>空</td>
+<td>255文字まで</td>
+</tr>
+<tr>
+<td>port</td>
+<td>整数</td>
+<td>587</td>
+<td>1〜65535</td>
+</tr>
+<tr>
+<td>security</td>
+<td>文字列</td>
+<td><code>starttls</code></td>
+<td><code>starttls</code> / <code>ssl</code> / <code>none</code></td>
+</tr>
+<tr>
+<td>username</td>
+<td>文字列</td>
+<td>空</td>
+<td>255文字まで</td>
+</tr>
+<tr>
+<td>password</td>
+<td>文字列 / null</td>
+<td>null</td>
+<td>255文字まで。<strong>null なら今のパスワードのまま</strong></td>
+</tr>
+<tr>
+<td>from_address</td>
+<td>文字列</td>
+<td>空</td>
+<td>254文字まで。空、またはメールの形式</td>
+</tr>
+<tr>
+<td>from_name</td>
+<td>文字列</td>
+<td>空</td>
+<td>100文字まで</td>
+</tr>
+</tbody></table></div>
+<p>応答 200: MailSettings。操作の記録「メールの送信設定を変更」（「{host}:{port}」）。</p>
+<h4 id="sec-68">API-42 PUT <code>/api/admin/mail/notifications</code>（新着通知・自動返信の設定を保存する）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>admin_notify</td>
+<td>真偽</td>
+<td>新着通知を送るか</td>
+</tr>
+<tr>
+<td>admin_to</td>
+<td>文字列の配列</td>
+<td>5個まで。空は除き、それぞれメールの形式。空なら事業者情報のメールに送る</td>
+</tr>
+<tr>
+<td>auto_reply</td>
+<td>真偽</td>
+<td>自動返信を送るか</td>
+</tr>
+<tr>
+<td>auto_reply_subject</td>
+<td>文字列</td>
+<td>1〜200文字</td>
+</tr>
+<tr>
+<td>auto_reply_body</td>
+<td>文字列</td>
+<td>1〜10000文字</td>
+</tr>
+<tr>
+<td>site_url</td>
+<td>文字列</td>
+<td>1〜300文字。末尾の <code>/</code> を除いて、<code>http://</code> か <code>https://</code> で始まる URL</td>
+</tr>
+</tbody></table></div>
+<p>応答 200: MailSettings。操作の記録「通知・自動返信の設定を変更」。</p>
+<h4 id="sec-69">API-43 POST <code>/api/admin/mail/test</code>（テストメールを送る）</h4>
+<p>本文: <code>{&quot;to&quot;: メールアドレス}</code></p>
+<p>送信履歴に登録して（種類 <code>test</code>、件名「【{屋号}】テストメール」、本文「管理画面からのテストメールです。このメールが届いていれば、送信設定は正しく動いています。」）、その場で送ります。送れなければ 400（理由）。応答 200: <code>{&quot;ok&quot;: true}</code>。操作の記録「テストメールを送信」（宛先）。</p>
+<h4 id="sec-70">API-44 GET <code>/api/admin/mail/outbox</code>（送信履歴）</h4>
+<p><code>?page=</code> のページ分け（新しい順）。items は OutboxMail です（本文は返しません）。</p>
+<h4 id="sec-71">API-45 POST <code>/api/admin/mail/outbox/{id}/retry</code>（送れなかったメールを送り直す）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>応答</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>記録がない</td>
+<td>404「見つかりません。」</td>
+</tr>
+<tr>
+<td>送信済み</td>
+<td>400「このメールは送信済みです。」</td>
+</tr>
+<tr>
+<td>送れなかった</td>
+<td>400（理由）。状態と理由を更新する</td>
+</tr>
+<tr>
+<td>送れた</td>
+<td>200 <code>{&quot;ok&quot;: true}</code>。操作の記録「メールを送り直し」（「送信履歴 #{id}」）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-72">API-46 DELETE <code>/api/admin/mail/outbox/{id}</code>（送信履歴の記録を削除する）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>条件</th>
+<th>応答</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>記録がない</td>
+<td>404「見つかりません。」</td>
+</tr>
+<tr>
+<td>送信中（<code>pending</code>）</td>
+<td>400「送信中のメールは削除できません。少し待ってから、もう一度お試しください。」</td>
+</tr>
+<tr>
+<td>そのほか</td>
+<td>200 <code>{&quot;ok&quot;: true}</code>。操作の記録「送信履歴のメールを削除」（「#{id} {宛先}「{件名}」」）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-73">4.10 返信テンプレート</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>処理</th>
+<th>本文</th>
+<th>応答</th>
+<th>エラー</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API-47</td>
+<td>一覧（ID の順）</td>
+<td>−</td>
+<td>200 Template の配列</td>
+<td></td>
+</tr>
+<tr>
+<td>API-48</td>
+<td>追加</td>
+<td><code>name</code> 1〜60・<code>subject</code> 1〜200・<code>body</code> 1〜20000</td>
+<td>201 Template</td>
+<td>422</td>
+</tr>
+<tr>
+<td>API-49</td>
+<td>変更</td>
+<td>同上</td>
+<td>200 Template</td>
+<td>404「テンプレートが見つかりません。」、422</td>
+</tr>
+<tr>
+<td>API-50</td>
+<td>削除</td>
+<td>−</td>
+<td>200 <code>{&quot;ok&quot;: true}</code></td>
+<td>404「テンプレートが見つかりません。」</td>
+</tr>
+</tbody></table></div>
+<p>追加・変更・削除は、操作の記録「返信テンプレートを追加 / 変更 / 削除」（名前）。</p>
+<h3 id="sec-74">4.11 迷惑送信（ブロックリスト）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>処理</th>
+<th>本文</th>
+<th>応答</th>
+<th>エラー</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API-51</td>
+<td>一覧（新しい順）</td>
+<td>−</td>
+<td>200 Block の配列</td>
+<td></td>
+</tr>
+<tr>
+<td>API-52</td>
+<td>追加</td>
+<td><code>pattern</code> 3〜254文字・<code>note</code> 200文字まで</td>
+<td>201 Block</td>
+<td>422（下の表）</td>
+</tr>
+<tr>
+<td>API-53</td>
+<td>解除</td>
+<td>−</td>
+<td>200 <code>{&quot;ok&quot;: true}</code></td>
+<td>404「見つかりません。」</td>
+</tr>
+</tbody></table></div>
+<p><code>pattern</code> は小文字にしてからチェックします。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>形</th>
+<th>チェック</th>
+<th>エラー文（項目 <code>pattern</code>）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@</code> で始まる（ドメイン）</td>
+<td><code>@{文字}.{文字}</code>（空白・<code>@</code> を含まない）</td>
+<td>ドメインは @example.com のように入力してください。</td>
+</tr>
+<tr>
+<td>それ以外（メールアドレス）</td>
+<td>メールの形式</td>
+<td>メールアドレスの形式が正しくありません。</td>
+</tr>
+<tr>
+<td>すでに同じものがある</td>
+<td></td>
+<td>すでにブロックしています。</td>
+</tr>
+</tbody></table></div>
+<p>追加・解除は、操作の記録「ブロックに追加 / ブロックを解除」（パターン）。</p>
+<h3 id="sec-75">4.12 見積書</h3>
+<h4 id="sec-76">本文（API-55・API-57 共通）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>customer_name</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜100文字</td>
+</tr>
+<tr>
+<td>title</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜120文字</td>
+</tr>
+<tr>
+<td>issue_date / valid_until</td>
+<td>日付</td>
+<td>○</td>
+<td>有効期限は発行日以降（違えば <code>body</code>「有効期限は発行日以降の日付にしてください。」）</td>
+</tr>
+<tr>
+<td>delivery / payment_terms</td>
+<td>文字列</td>
+<td>−</td>
+<td>200文字まで</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>文字列</td>
+<td>−</td>
+<td>2000文字まで</td>
+</tr>
+<tr>
+<td>tax_rate</td>
+<td>整数</td>
+<td>−</td>
+<td>0〜100（省略時 10）</td>
+</tr>
+<tr>
+<td>status</td>
+<td>文字列</td>
+<td>−</td>
+<td><code>draft</code> / <code>sent</code> / <code>accepted</code> / <code>rejected</code>（省略時 <code>draft</code>）</td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>整数 / null</td>
+<td>−</td>
+<td>指定したお問い合わせがあること（なければ 422 <code>{&quot;inquiry_id&quot;: &quot;関連するお問い合わせが見つかりません。&quot;}</code>）</td>
+</tr>
+<tr>
+<td>items</td>
+<td>配列</td>
+<td>○</td>
+<td>1〜50行。各行 <code>description</code> 1〜200・<code>quantity</code> 0より大きく100000以下・<code>unit</code> 10文字まで（省略時「式」）・<code>unit_price</code> 0〜100,000,000 の整数</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-77">API-54 GET <code>/api/admin/estimates</code>（見積書の一覧）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>q</td>
+<td>お客さま名・件名（大文字と小文字を区別しない）・見積番号に含まれる文字</td>
+</tr>
+<tr>
+<td>status</td>
+<td>状態（正しくなければ 400「状態の指定が正しくありません。」）</td>
+</tr>
+<tr>
+<td>page / per_page</td>
+<td>1.6 のとおり（<code>per_page</code> は1〜100・省略時20）</td>
+</tr>
+</tbody></table></div>
+<p>並び順は発行日の新しい順（同じ日は ID の大きい順）。items は Estimate（<code>items</code> なし）です。</p>
+<h4 id="sec-78">API-55 POST <code>/api/admin/estimates</code>（見積書を作成する）</h4>
+<p>見積番号を採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）。応答 201: Estimate（<code>items</code> つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。</p>
+<h4 id="sec-79">API-56 GET <code>/api/admin/estimates/{id}</code>（見積書の詳細）</h4>
+<p>応答 200: Estimate（<code>items</code> と <code>payments</code> つき）。見つからないときは 404「見積書が見つかりません。」</p>
+<h4 id="sec-80">API-57 PUT <code>/api/admin/estimates/{id}</code>（見積書を変える）</h4>
+<p>見積番号は変えません。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」）。</p>
+<h4 id="sec-81">API-58 DELETE <code>/api/admin/estimates/{id}</code>（見積書を削除する）</h4>
+<p>明細も削除します。入金の記録は残し、見積書とのひもづけだけを外します。応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「見積書を削除」。</p>
+<h3 id="sec-82">4.13 入金・領収書</h3>
+<h4 id="sec-83">本文（API-60・API-62 共通）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>customer_name</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜100文字</td>
+</tr>
+<tr>
+<td>description</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜200文字（但し書き）</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>整数</td>
+<td>○</td>
+<td>1〜1,000,000,000</td>
+</tr>
+<tr>
+<td>method</td>
+<td>文字列</td>
+<td>○</td>
+<td><code>cash</code> / <code>card</code> / <code>bank</code>（違えば「選択肢から選んでください。」）</td>
+</tr>
+<tr>
+<td>paid_on</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+</tr>
+<tr>
+<td>note</td>
+<td>文字列</td>
+<td>−</td>
+<td>1000文字まで</td>
+</tr>
+<tr>
+<td>estimate_id</td>
+<td>整数 / null</td>
+<td>−</td>
+<td>指定した見積書があること（なければ 422 <code>{&quot;estimate_id&quot;: &quot;見積書が見つかりません。&quot;}</code>）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-84">API-59 GET <code>/api/admin/payments</code>（入金の一覧）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>q</td>
+<td>お客さま名・但し書き（大文字と小文字を区別しない）・領収書番号に含まれる文字</td>
+</tr>
+<tr>
+<td>page</td>
+<td>1.6 のとおり</td>
+</tr>
+</tbody></table></div>
+<p>並び順は入金日の新しい順。応答はページ分けの形に <code>total_amount</code>（<strong>検索条件に合う入金すべての合計</strong>。ページに関係なく計算）を加えたものです。</p>
+<h4 id="sec-85">API-60 POST <code>/api/admin/payments</code>（入金を記録する）</h4>
+<p>領収書番号を採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。</p>
+<h4 id="sec-86">API-61 GET <code>/api/admin/payments/{id}</code>（入金の詳細）</h4>
+<p>応答 200: Payment。見つからないときは 404「入金の記録が見つかりません。」</p>
+<h4 id="sec-87">API-62 PUT <code>/api/admin/payments/{id}</code>（入金の記録を変える）</h4>
+<p>領収書番号は変えません。応答 200: Payment。操作の記録「入金の記録を変更」。</p>
+<h4 id="sec-88">API-63 DELETE <code>/api/admin/payments/{id}</code>（入金の記録を削除する）</h4>
+<p>応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「入金の記録を削除」。</p>
+<h3 id="sec-89">4.14 保守契約</h3>
+<h4 id="sec-90">本文（API-65・API-67 共通）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>型</th>
+<th>必須</th>
+<th>チェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>customer_name</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜100文字</td>
+</tr>
+<tr>
+<td>email</td>
+<td>文字列</td>
+<td>−</td>
+<td>254文字まで。空、またはメールの形式</td>
+</tr>
+<tr>
+<td>site_name</td>
+<td>文字列</td>
+<td>○</td>
+<td>1〜100文字</td>
+</tr>
+<tr>
+<td>site_url</td>
+<td>文字列</td>
+<td>−</td>
+<td>300文字まで。空、または <code>http://</code>・<code>https://</code> で始まる URL</td>
+</tr>
+<tr>
+<td>monthly_fee</td>
+<td>整数</td>
+<td>○</td>
+<td>0〜10,000,000</td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+</tr>
+<tr>
+<td>cancel_requested_on</td>
+<td>日付 / null</td>
+<td>−</td>
+<td></td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>日付 / null</td>
+<td>−</td>
+<td>開始日以降（違えば <code>body</code>「終了日は開始日以降の日付にしてください。」）</td>
+</tr>
+<tr>
+<td>note</td>
+<td>文字列</td>
+<td>−</td>
+<td>1000文字まで</td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>整数 / null</td>
+<td>−</td>
+<td>指定したお問い合わせがあること</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-91">API-64 GET <code>/api/admin/contracts</code>（保守契約の一覧）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>status</td>
+<td><code>active</code> / <code>cancel_requested</code> / <code>ended</code>（正しくなければ 400「状態の指定が正しくありません。」）</td>
+</tr>
+<tr>
+<td>q</td>
+<td>お客さま名・サイト名（大文字と小文字を区別しない）に含まれる文字</td>
+</tr>
+</tbody></table></div>
+<p>ページ分けはしません。並び順は開始日の新しい順。</p>
+<p>応答 200: <code>{&quot;items&quot;: Contract の配列, &quot;monthly_revenue&quot;: 終了していない・開始済みの契約の月額の合計, &quot;counts&quot;: {&quot;active&quot;: n, &quot;cancel_requested&quot;: n, &quot;ended&quot;: n}}</code>（<code>monthly_revenue</code> と <code>counts</code> は絞り込みに関係なく全体で計算）</p>
+<h4 id="sec-92">API-65 POST <code>/api/admin/contracts</code>（保守契約を登録する）</h4>
+<p>応答 201: Contract。操作の記録「保守契約を登録」（「{お客さま名} 様 {サイト名} 月額{金額}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「保守契約「{サイト名}」を登録」を追加します。</p>
+<h4 id="sec-93">API-66 GET <code>/api/admin/contracts/{id}</code>・API-67 PUT（詳細・変更）・API-69 DELETE（削除）</h4>
+<p>見つからないときは 404「保守契約が見つかりません。」。変更・削除は操作の記録「保守契約を変更 / 保守契約を削除」。</p>
+<h4 id="sec-94">API-68 POST <code>/api/admin/contracts/{id}/cancel</code>（解約の申し出を登録する）</h4>
+<p>本文: <code>{&quot;requested_on&quot;?: 日付}</code>（省略時は今日・日本時間）</p>
+<p>申し出日を保存し、終了日を<strong>申し出日の翌月末</strong>にします（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 15章）。応答 200: Contract。操作の記録「保守契約の解約申し出を登録」（「{お客さま名} 様 {サイト名}（{終了日} で終了）」）。</p>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/04_API設計.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+
+</body>
+</html>

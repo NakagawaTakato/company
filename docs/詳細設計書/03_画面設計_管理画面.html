@@ -1,0 +1,2148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>03 画面設計（管理画面）｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">03 画面設計（管理画面）</h1>
+<h2 id="sec-2">1. 画面一覧</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>画面名</th>
+<th>URL</th>
+<th>概要</th>
+<th>使う API</th>
+<th>ソース（<code>pages/admin/</code>）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A-01</td>
+<td>管理者ログイン</td>
+<td><code>/admin/login</code></td>
+<td>メールアドレスとパスワードでログイン</td>
+<td>API-06、API-08</td>
+<td><code>AdminLoginPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-02</td>
+<td>ダッシュボード</td>
+<td><code>/admin</code></td>
+<td>件数・金額の集計、月ごとのグラフ、未対応の一覧</td>
+<td>API-18</td>
+<td><code>AdminDashboardPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-03</td>
+<td>お問い合わせ一覧</td>
+<td><code>/admin/inquiries</code></td>
+<td>絞り込み・検索・並び替え・CSV</td>
+<td>API-10、API-11</td>
+<td><code>AdminInquiriesPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-04</td>
+<td>お問い合わせ詳細</td>
+<td><code>/admin/inquiries/:id</code></td>
+<td>内容、対応状況、返信、メモ、迷惑送信、削除</td>
+<td>API-12〜17、API-36、API-47、API-52</td>
+<td><code>AdminInquiryDetailPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-05</td>
+<td>見積書一覧</td>
+<td><code>/admin/estimates</code></td>
+<td>状態の絞り込み・検索</td>
+<td>API-54</td>
+<td><code>AdminEstimatesPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-06</td>
+<td>見積書の作成・編集</td>
+<td><code>/admin/estimates/new</code><br><code>/admin/estimates/:id</code></td>
+<td>基本情報・明細・備考、この見積書の入金</td>
+<td>API-12、API-55〜58</td>
+<td><code>AdminEstimateEditPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-07</td>
+<td>見積書の印刷</td>
+<td><code>/admin/estimates/:id/print</code></td>
+<td>印刷・PDF 用（A4）</td>
+<td>API-56</td>
+<td><code>PrintPages.tsx</code></td>
+</tr>
+<tr>
+<td>A-08</td>
+<td>入金・領収書</td>
+<td><code>/admin/payments</code></td>
+<td>入金の記録・一覧・検索</td>
+<td>API-54、API-59、API-60、API-62、API-63</td>
+<td><code>AdminPaymentsPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-09</td>
+<td>領収書の印刷</td>
+<td><code>/admin/payments/:id/receipt</code></td>
+<td>印刷・PDF 用（A4）</td>
+<td>API-61</td>
+<td><code>PrintPages.tsx</code></td>
+</tr>
+<tr>
+<td>A-10</td>
+<td>保守契約</td>
+<td><code>/admin/contracts</code></td>
+<td>契約の登録・一覧・解約の申し出</td>
+<td>API-12、API-64、API-65、API-67〜69</td>
+<td><code>AdminContractsPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-11</td>
+<td>サイト内容</td>
+<td><code>/admin/content</code></td>
+<td>公開サイトの事業者情報・料金・よくある質問など</td>
+<td>API-27〜35</td>
+<td><code>AdminContentPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-12</td>
+<td>デザイン（色）</td>
+<td><code>/admin/theme</code></td>
+<td>公開サイトのテーマ色</td>
+<td>API-25、API-26</td>
+<td><code>AdminThemePage.tsx</code></td>
+</tr>
+<tr>
+<td>A-13</td>
+<td>メール</td>
+<td><code>/admin/mail</code></td>
+<td>送信設定・通知と自動返信・返信テンプレート・送信履歴</td>
+<td>API-36〜50</td>
+<td><code>AdminMailPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-14</td>
+<td>迷惑送信</td>
+<td><code>/admin/spam</code></td>
+<td>ブロックするアドレス・ドメイン</td>
+<td>API-51〜53</td>
+<td><code>AdminSpamPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-15</td>
+<td>履歴</td>
+<td><code>/admin/logs</code></td>
+<td>操作の記録・ログイン履歴</td>
+<td>API-19、API-20</td>
+<td><code>AdminLogsPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-16</td>
+<td>データ管理</td>
+<td><code>/admin/data</code></td>
+<td>バックアップ・個人情報の自動削除</td>
+<td>API-21〜24</td>
+<td><code>AdminDataPage.tsx</code></td>
+</tr>
+<tr>
+<td>A-17</td>
+<td>アカウント</td>
+<td><code>/admin/account</code></td>
+<td>パスワードの変更</td>
+<td>API-09</td>
+<td><code>AdminAccountPage.tsx</code></td>
+</tr>
+</tbody></table></div>
+<p>上記のほかの <code>/admin/...</code> の URL は、管理画面の中に「ページが見つかりません。左のメニューから選んでください。」と表示します。</p>
+<h2 id="sec-3">2. 画面遷移</h2>
+<pre class="mermaid">flowchart LR
+  A01[&quot;A-01 ログイン&quot;] -- &quot;ログイン成功&quot; --&gt; A02[&quot;A-02 ダッシュボード&quot;]
+  Menu([&quot;左のメニュー&lt;br&gt;（A-02〜A-17 のどれへでも）&quot;])
+  A02 -- &quot;タイル・未対応の一覧&quot; --&gt; A03[&quot;A-03 お問い合わせ一覧&quot;]
+  A03 -- &quot;行を押す&quot; --&gt; A04[&quot;A-04 お問い合わせ詳細&quot;]
+  A04 -- &quot;見積書を作成&quot; --&gt; A06[&quot;A-06 見積書の作成・編集&quot;]
+  A04 -- &quot;保守契約を登録&quot; --&gt; A10[&quot;A-10 保守契約&quot;]
+  A04 -- &quot;テンプレートを編集&quot; --&gt; A13[&quot;A-13 メール&quot;]
+  A05[&quot;A-05 見積書一覧&quot;] -- &quot;行を押す・作成&quot; --&gt; A06
+  A06 -- &quot;印刷・PDF（新しいタブ）&quot; --&gt; A07[&quot;A-07 見積書の印刷&quot;]
+  A06 -- &quot;入金を記録&quot; --&gt; A08[&quot;A-08 入金・領収書&quot;]
+  A08 -- &quot;領収書（新しいタブ）&quot; --&gt; A09[&quot;A-09 領収書の印刷&quot;]
+  A14[&quot;A-14 迷惑送信&quot;] -- &quot;迷惑送信の一覧を見る&quot; --&gt; A03
+  Menu -.-&gt; A02
+  X[&quot;どの画面でも&lt;br&gt;未ログイン・ログイン切れ&quot;] -- &quot;自動で移動&quot; --&gt; A01
+</pre>
+<ul>
+<li>ログアウトすると A-01 に移ります。</li>
+<li>見積書・領収書の印刷（A-07・A-09）は、左のメニューのない画面です。新しいタブで開きます。</li>
+</ul>
+<h2 id="sec-4">3. 共通の仕様</h2>
+<h3 id="sec-5">3.1 外枠（<code>AdminLayout.tsx</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ヘッダー</td>
+<td>ロゴ（「管理画面」・押すとダッシュボード）、「サイトを見る」（公開サイトを新しいタブで）、ログイン中のメールアドレス、「ログアウト」</td>
+</tr>
+<tr>
+<td>左のメニュー</td>
+<td>ダッシュボード / お問い合わせ / 見積書 / 入金・領収書 / 保守契約 / サイト内容 / デザイン（色）/ メール / 迷惑送信 / 履歴 / データ管理 / アカウント（今の画面を強調）</td>
+</tr>
+<tr>
+<td>本文</td>
+<td>各画面</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-6">3.2 ログインの確認</h3>
+<ol>
+<li>外枠を表示したときに API-08（<code>GET /api/admin/me</code>）を呼びます。</li>
+<li>401 なら A-01 に移ります（履歴を置き換え）。それ以外のエラーは本文の上にメッセージを出します。</li>
+<li>ログインが確認できるまで、本文（各画面）は表示しません。</li>
+</ol>
+<h3 id="sec-7">3.3 API のエラーの扱い（<code>handleApiError</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>場合</th>
+<th>動き</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>401（ログイン切れ）</td>
+<td>A-01 に移り、「ログインの有効期限が切れました。もう一度ログインしてください。」を表示する</td>
+</tr>
+<tr>
+<td>そのほか</td>
+<td>API のメッセージを、その画面のお知らせ欄に出す</td>
+</tr>
+<tr>
+<td>入力エラー（422）</td>
+<td>上に加えて、<code>errors</code> の内容を各入力欄の下に出す。キーは項目名。リストの項目は「行番号.項目名」（例: <code>items.0.quantity</code> は明細の1行目の数量）。項目にひもづかないエラーはキー <code>body</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-8">3.4 共通部品（<code>components/admin/ui.tsx</code>）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>部品</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PageHeader</td>
+<td>画面の見出し・説明・右上のボタン</td>
+</tr>
+<tr>
+<td>Card</td>
+<td>見出しつきの枠</td>
+</tr>
+<tr>
+<td>Notice</td>
+<td>お知らせ（info・success・error・warning）。error は <code>role=&quot;alert&quot;</code>、ほかは <code>role=&quot;status&quot;</code>。中身が空なら表示しない</td>
+</tr>
+<tr>
+<td>Pagination</td>
+<td>「前へ」「{n} / {m} ページ」「次へ」。1ページしかないときは表示しない</td>
+</tr>
+<tr>
+<td>Field</td>
+<td>入力欄のラベル・必須の印・説明・エラー文</td>
+</tr>
+<tr>
+<td>Tabs</td>
+<td>タブの切り替え</td>
+</tr>
+<tr>
+<td>Pill</td>
+<td>状態などの小さな印</td>
+</tr>
+<tr>
+<td>Empty</td>
+<td>「読み込み中…」「まだありません」などの表示</td>
+</tr>
+<tr>
+<td>useLoader</td>
+<td>API からの読み込み（読み込み中・エラー・再読み込み）</td>
+</tr>
+<tr>
+<td>useAction</td>
+<td>ボタンの処理（処理中・成功のメッセージ・エラー・項目ごとのエラー）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-9">3.5 そのほか</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>色</td>
+<td>管理画面は、テーマ色を変えても初期の青のまま（ファビコンも青）</td>
+</tr>
+<tr>
+<td>一覧</td>
+<td>20件ごとのページ分け、「全 {n} 件」。お問い合わせ・見積書は行を押すと詳細へ</td>
+</tr>
+<tr>
+<td>確認</td>
+<td>削除・メール送信など元に戻せない操作は、ブラウザの確認ダイアログ（<code>window.confirm</code>）で確認する</td>
+</tr>
+<tr>
+<td>タブ名</td>
+<td>「{画面名} | {屋号}」</td>
+</tr>
+<tr>
+<td>画面の幅</td>
+<td>1100px 以下で2列のレイアウトを1列に、900px 以下で左のメニューを上に、760px 以下で表をカードの形にする（各セルに見出しを表示）。入力欄の2列も1列にする</td>
+</tr>
+<tr>
+<td>状態の保存</td>
+<td>一覧の絞り込み・タブなどは、できるだけ URL のパラメータに持つ（再読み込み・共有しても同じ表示になる）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-10">4. 各画面</h2>
+<h3 id="sec-11">4.1 A-01 管理者ログイン</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>メールアドレス</td>
+<td>メール（autocomplete=username、最初にカーソル）</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>パスワード</td>
+<td>パスワード（autocomplete=current-password）</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>ログイン</td>
+<td>ボタン</td>
+<td>処理中は「ログイン中…」で押せない</td>
+</tr>
+</tbody></table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>イベント</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>画面を開く</td>
+<td>API-08 を呼び、すでにログインしていれば A-02 へ移る。ログイン切れで来たときは、上部に「ログインの有効期限が切れました。もう一度ログインしてください。」</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>ログイン</td>
+<td>1. どちらかが空なら「メールアドレスとパスワードを入力してください。」<br>2. API-06 を呼ぶ<br>3. 成功 → A-02 へ（履歴を置き換え）<br>4. 失敗 → API のメッセージ（「メールアドレスまたはパスワードが正しくありません。」「ログインの試行回数が多すぎます。しばらくしてからお試しください。」など）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-12">4.2 A-02 ダッシュボード</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>表示</th>
+<th>内容</th>
+<th>押したとき</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>前回のログイン</td>
+<td>見出しの下に「前回のログイン: {日時}（{IP}）」。今回の1つ前の成功したログイン。なければ出さない</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>メールの警告</td>
+<td>直近30日に「失敗」「未送信」のメールがあれば「直近30日で、送れていないメールが {n} 件あります。」</td>
+<td>「メールの設定と送信履歴を確認する」→ A-13</td>
+</tr>
+<tr>
+<td>3</td>
+<td>未対応のお問い合わせ</td>
+<td>件数（迷惑送信を除く）</td>
+<td>A-03（未対応で絞り込み）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>今月のお問い合わせ</td>
+<td>件数と「先月と同じ」/「先月より +n 件」</td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td>保守契約（契約中）</td>
+<td>終了していない契約の件数、「月額の合計 {金額}」「・解約予定 {n} 件」</td>
+<td>A-10</td>
+</tr>
+<tr>
+<td>6</td>
+<td>今月の入金</td>
+<td>入金日が今月1日以降の入金の合計</td>
+<td>A-08</td>
+</tr>
+<tr>
+<td>7</td>
+<td>未入金（承諾済みの見積書）</td>
+<td>状態が「承諾」の見積書の残額の合計</td>
+<td>A-05（承諾で絞り込み）</td>
+</tr>
+<tr>
+<td>8</td>
+<td>作成中・送付済みの見積書</td>
+<td>状態が「下書き」「送付済み」の件数</td>
+<td>A-05</td>
+</tr>
+<tr>
+<td>9</td>
+<td>月ごとのお問い合わせ件数（直近12か月）</td>
+<td>縦棒グラフ。最新の月と、マウスを乗せた月に件数を表示。「表で見る」で同じ数字の表</td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td>未対応のお問い合わせ（新しい順）</td>
+<td>5件まで（受付日時・お名前・お住まい）。なければ「未対応のお問い合わせはありません。」</td>
+<td>A-04 /「すべて見る」→ A-03</td>
+</tr>
+</tbody></table></div>
+<p>集計のしかたは <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06 処理設計</a> 16章です。</p>
+<h3 id="sec-13">4.3 A-03 お問い合わせ一覧</h3>
+<h4 id="sec-14">絞り込みの条件（URL のパラメータ）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>パラメータ</th>
+<th>内容</th>
+<th>画面の部品</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>status</code></td>
+<td>対応状況（未指定 = すべて）</td>
+<td>タブ</td>
+</tr>
+<tr>
+<td><code>spam=1</code></td>
+<td>迷惑送信だけ（このとき <code>status</code> は使わない）</td>
+<td>タブ「迷惑送信」</td>
+</tr>
+<tr>
+<td><code>q</code></td>
+<td>キーワード（お名前・メール・電話番号に含まれる）</td>
+<td>検索欄</td>
+</tr>
+<tr>
+<td><code>from</code> / <code>to</code></td>
+<td>受付日の範囲（日本時間の日付）</td>
+<td>日付の入力</td>
+</tr>
+<tr>
+<td><code>sort</code></td>
+<td>並び順（未指定 = 新しい順）</td>
+<td>セレクト</td>
+</tr>
+<tr>
+<td><code>page</code></td>
+<td>ページ番号</td>
+<td>ページ送り</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-15">項目</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>タブ</td>
+<td>すべて / 未対応 / 対応中 / 見積送付済み / 契約済み / 対応済み / お断り / 迷惑送信。それぞれに件数を表示（「すべて」と各状況は迷惑送信を除いた件数）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>キーワード</td>
+<td>プレースホルダー「お名前・メール・電話番号」</td>
+</tr>
+<tr>
+<td>3</td>
+<td>受付日</td>
+<td>「から」「まで」の日付</td>
+</tr>
+<tr>
+<td>4</td>
+<td>検索</td>
+<td>ボタン</td>
+</tr>
+<tr>
+<td>5</td>
+<td>条件をクリア</td>
+<td>キーワード・受付日のどれかが入っているときだけ表示</td>
+</tr>
+<tr>
+<td>6</td>
+<td>並び順</td>
+<td>新しい順 / 古い順 / 更新が新しい順 / 名前順</td>
+</tr>
+<tr>
+<td>7</td>
+<td>CSV ダウンロード</td>
+<td>右上のボタン。処理中は「作成中…」</td>
+</tr>
+<tr>
+<td>8</td>
+<td>一覧の表</td>
+<td>受付日時 / お名前（詳細へのリンク）/ メールアドレス / 電話番号 / お住まい / 対応状況（色つきの印）</td>
+</tr>
+<tr>
+<td>9</td>
+<td>下部</td>
+<td>「全 {n} 件」とページ送り</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-16">イベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>イベント</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>画面を開く・条件が変わる</td>
+<td>URL の条件で API-10 を呼ぶ</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>タブを押す</td>
+<td><code>status</code>（または <code>spam=1</code>）を変え、ページを1に戻す</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>検索</td>
+<td>キーワード（前後の空白を除く）・受付日を URL に入れ、ページを1に戻す</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>条件をクリア</td>
+<td>キーワード・受付日を消す</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>並び順を変える</td>
+<td><code>sort</code> を変える（ページはそのまま）</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>行・お名前を押す</td>
+<td>A-04 へ</td>
+</tr>
+<tr>
+<td>E7</td>
+<td>CSV ダウンロード</td>
+<td>今の条件（ページを除く）で API-11 を呼び、ファイルを保存する</td>
+</tr>
+</tbody></table></div>
+<p>一覧が空のとき: 条件やタブを指定していれば「条件に合うお問い合わせはありません。」、していなければ「お問い合わせはまだありません。」</p>
+<h3 id="sec-17">4.4 A-04 お問い合わせ詳細</h3>
+<h4 id="sec-18">画面の構成</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>上部</td>
+<td>「一覧へ戻る」、見出し（「{お名前} 様」・対応状況の印・迷惑送信の印）、操作ボタン</td>
+</tr>
+<tr>
+<td>左の列</td>
+<td>お問い合わせの内容 / メールで返信 / 対応メモ・履歴</td>
+</tr>
+<tr>
+<td>右の列</td>
+<td>対応状況 / 送信したメール / 見積書・保守契約</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-19">お問い合わせの内容</h4>
+<p>受付日時 / ご相談内容（ラベル）/ お名前 / メールアドレス（<code>mailto:</code> のリンク）/ 電話番号（<code>tel:</code> のリンク）/ お住まい / ご年齢（ないときは「未入力」）/ 初期費用のお支払い方法 / 月額(保守プラン)のお支払い方法 / 最終更新</p>
+<h4 id="sec-20">操作とイベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>操作</th>
+<th>表示する条件</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>画面を開く</td>
+<td></td>
+<td>API-12（詳細）、API-47（返信テンプレート）、API-36（メールの設定）を呼ぶ</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>迷惑送信にする</td>
+<td>迷惑送信でないとき</td>
+<td>API-13（<code>is_spam: true</code>）→「迷惑送信にしました。」</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>迷惑送信から戻す</td>
+<td>迷惑送信のとき</td>
+<td>API-13（<code>is_spam: false</code>）→「迷惑送信から戻しました。」</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>このアドレスをブロック</td>
+<td>迷惑送信でないとき</td>
+<td>確認「「{メール}」からの送信をブロックし、このお問い合わせを迷惑送信にします。よろしいですか？」→ API-52（メモ「#{ID} {お名前} 様のお問い合わせから」。すでにブロック済みのエラーなら続ける）→ API-13（<code>is_spam: true</code>）→「「{メール}」をブロックしました。」</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>@{ドメイン} をブロック</td>
+<td>迷惑送信でないとき</td>
+<td>E4 と同じ（パターンが <code>@ドメイン</code>）</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>削除</td>
+<td>いつも</td>
+<td>確認「{お名前} 様のお問い合わせを削除します。メモや送信履歴も消え、元に戻せません。よろしいですか？」→ API-14 → A-03 へ</td>
+</tr>
+<tr>
+<td>E7</td>
+<td>対応状況のボタン（6つ）</td>
+<td>いつも（今の状況のボタンは何もしない）</td>
+<td>API-13（<code>status</code>）→「対応状況を「{状況}」に変更しました。」</td>
+</tr>
+<tr>
+<td>E8</td>
+<td>テンプレートを選ぶ</td>
+<td></td>
+<td>件名と本文に入れる。差し込み項目 <code>{name}</code>（お名前）・<code>{business_name}</code>・<code>{owner}</code>・<code>{business_email}</code>・<code>{business_phone}</code>・<code>{hours}</code>（事業者情報）を画面で置き換える。知らない項目はそのまま</td>
+</tr>
+<tr>
+<td>E9</td>
+<td>送信する（返信）</td>
+<td>件名と本文が空でないとき押せる</td>
+<td>確認「{メール} にメールを送信します。よろしいですか？」→ API-17 → 成功:「メールを送信しました。」、件名・本文を空にし、表示を更新 / 失敗: 送れなかった理由</td>
+</tr>
+<tr>
+<td>E10</td>
+<td>メモを追加</td>
+<td>メモが空でないとき押せる</td>
+<td>API-15 → 記録の一番上に追加し、入力欄を空にする</td>
+</tr>
+<tr>
+<td>E11</td>
+<td>メモの「削除」</td>
+<td>手入力のメモ（種類「メモ」）だけ</td>
+<td>確認「このメモを削除しますか？」→ API-16</td>
+</tr>
+<tr>
+<td>E12</td>
+<td>見積書を作成</td>
+<td></td>
+<td>A-06（<code>/admin/estimates/new?inquiry={ID}</code>）</td>
+</tr>
+<tr>
+<td>E13</td>
+<td>保守契約を登録</td>
+<td></td>
+<td>A-10（<code>/admin/contracts?new=1&amp;inquiry={ID}</code>）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-21">各エリアの項目</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>項目</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>メールで返信</td>
+<td>メールを送れない状態なら、上に理由と「メールの設定へ」のリンク。テンプレート（セレクト・「テンプレートを編集」→ A-13 の返信テンプレート）、件名（200文字）、本文、「宛先: {メール}」、送信ボタン（処理中は「送信中…」）</td>
+</tr>
+<tr>
+<td>対応メモ・履歴</td>
+<td>メモの入力（5000文字・例「10/28 に電話。ご予算は30万円ほど。」）、「メモを追加」。記録の一覧（新しい順）: 種類（メモ / メール / 記録）・日時・本文。なければ「まだ記録はありません。」</td>
+</tr>
+<tr>
+<td>対応状況</td>
+<td>未対応 / 対応中 / 見積送付済み / 契約済み / 対応済み / お断り のボタン（今の状況を強調）</td>
+</tr>
+<tr>
+<td>送信したメール</td>
+<td>状態（送信済み / 失敗 / 未送信 / 送信中）・種類・件名・宛先・日時・エラー。なければ「まだありません。」</td>
+</tr>
+<tr>
+<td>見積書・保守契約</td>
+<td>見積書（番号のリンク → A-06・件名・合計・状態）と「見積書を作成」、保守契約（サイト名のリンク → A-10 の編集・月額・開始日・状態）と「保守契約を登録」</td>
+</tr>
+</tbody></table></div>
+<p>記録の種類: 「メモ」は管理者が入力したもの、「メール」は返信したメール、「記録」は対応状況の変更などの自動の記録です（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 9章）。</p>
+<h3 id="sec-22">4.5 A-05 見積書一覧</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>見積書を作成</td>
+<td>右上のボタン → A-06（新規）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>タブ（<code>status</code>）</td>
+<td>すべて / 下書き / 送付済み / 承諾 / 不成立</td>
+</tr>
+<tr>
+<td>3</td>
+<td>検索（<code>q</code>）</td>
+<td>お客さま名・件名・見積番号</td>
+</tr>
+<tr>
+<td>4</td>
+<td>一覧の表</td>
+<td>見積番号（リンク）/ 発行日 / お客さま（「{名前} 様」）/ 件名 / 合計（税込）/ 残額（「承諾」のときだけ金額、ほかは「―」）/ 状態</td>
+</tr>
+<tr>
+<td>5</td>
+<td>下部</td>
+<td>「全 {n} 件」とページ送り（<code>page</code>）</td>
+</tr>
+</tbody></table></div>
+<p>一覧が空のときは「見積書はまだありません。」です。</p>
+<h3 id="sec-23">4.6 A-06 見積書の作成・編集</h3>
+<h4 id="sec-24">新規のときの初期値</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>初期値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>お客さま名</td>
+<td><code>?inquiry={ID}</code> で来たときは、そのお問い合わせのお名前（API-12 で取得）。ほかは空</td>
+</tr>
+<tr>
+<td>件名</td>
+<td>ホームページ制作</td>
+</tr>
+<tr>
+<td>発行日</td>
+<td>今日（日本時間）</td>
+</tr>
+<tr>
+<td>有効期限</td>
+<td>今日の30日後</td>
+</tr>
+<tr>
+<td>納期</td>
+<td>空</td>
+</tr>
+<tr>
+<td>お支払い条件</td>
+<td>ご契約時に50%、納品時に50%</td>
+</tr>
+<tr>
+<td>状態</td>
+<td>下書き</td>
+</tr>
+<tr>
+<td>消費税率</td>
+<td>10</td>
+</tr>
+<tr>
+<td>明細</td>
+<td>1行（内容 空・数量 1・単位「式」・単価 0）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-25">項目定義</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>長さ・範囲</th>
+<th>API のチェック</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>お客さま名（様は不要）</td>
+<td>テキスト</td>
+<td>○</td>
+<td>100文字</td>
+<td>1〜100文字</td>
+</tr>
+<tr>
+<td>2</td>
+<td>件名</td>
+<td>テキスト</td>
+<td>○</td>
+<td>120文字</td>
+<td>1〜120文字</td>
+</tr>
+<tr>
+<td>3</td>
+<td>発行日</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+<td>日付の形式</td>
+</tr>
+<tr>
+<td>4</td>
+<td>有効期限</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+<td>日付の形式。発行日以降（違えば「有効期限は発行日以降の日付にしてください。」※課題 No.4）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>納期</td>
+<td>テキスト</td>
+<td>−</td>
+<td>200文字（例: ご契約から1か月）</td>
+<td>200文字まで</td>
+</tr>
+<tr>
+<td>6</td>
+<td>お支払い条件</td>
+<td>テキスト</td>
+<td>−</td>
+<td>200文字</td>
+<td>200文字まで</td>
+</tr>
+<tr>
+<td>7</td>
+<td>状態</td>
+<td>セレクト</td>
+<td>○</td>
+<td>下書き / 送付済み / 承諾 / 不成立</td>
+<td>選択肢のどれか</td>
+</tr>
+<tr>
+<td>8</td>
+<td>消費税率（%）</td>
+<td>数値</td>
+<td>−</td>
+<td>0〜100</td>
+<td>0〜100 の整数</td>
+</tr>
+<tr>
+<td>9</td>
+<td>明細（行）</td>
+<td>表</td>
+<td>○</td>
+<td>1〜50行</td>
+<td>1〜50行</td>
+</tr>
+<tr>
+<td>9-1</td>
+<td>内容</td>
+<td>テキスト</td>
+<td>○</td>
+<td>200文字（例: トップページのデザイン）</td>
+<td>1〜200文字</td>
+</tr>
+<tr>
+<td>9-2</td>
+<td>数量</td>
+<td>数値（0.5 刻み）</td>
+<td>○</td>
+<td></td>
+<td>0 より大きく 100000 以下</td>
+</tr>
+<tr>
+<td>9-3</td>
+<td>単位</td>
+<td>テキスト</td>
+<td>−</td>
+<td>10文字（初期「式」）</td>
+<td>10文字まで</td>
+</tr>
+<tr>
+<td>9-4</td>
+<td>単価（円・税抜）</td>
+<td>数値（1000 刻み）</td>
+<td>○</td>
+<td></td>
+<td>0〜100,000,000 の整数</td>
+</tr>
+<tr>
+<td>9-5</td>
+<td>金額</td>
+<td>表示のみ</td>
+<td></td>
+<td>数量 × 単価 を四捨五入</td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td>小計（税抜）/ 消費税 / 合計（税込）</td>
+<td>表示のみ</td>
+<td></td>
+<td>画面で計算（保存するとサーバーでも同じ計算をする。<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）</td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td>備考（見積書に印刷されます）</td>
+<td>複数行</td>
+<td>−</td>
+<td>2000文字（例: ドメイン・サーバー代は別途実費となります。）</td>
+<td>2000文字まで</td>
+</tr>
+</tbody></table></div>
+<p>明細の操作: 「行を追加」（50行まで）、各行の「上へ」「下へ」「この行を削除」（1行だけのときは削除できない）。</p>
+<h4 id="sec-26">ボタンとイベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>操作</th>
+<th>表示する条件</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>作成する</td>
+<td>新規</td>
+<td>API-55 →「見積書を作成しました。印刷・PDF から保存できます。」→ その見積書の編集画面へ（履歴を置き換え）</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>保存する</td>
+<td>既存</td>
+<td>API-57 →「保存しました。」</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>印刷・PDF</td>
+<td>既存</td>
+<td>A-07 を新しいタブで開く</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>入金を記録</td>
+<td>既存</td>
+<td>A-08（<code>/admin/payments?new=1&amp;estimate={ID}</code>）</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>削除</td>
+<td>既存</td>
+<td>確認「見積書 {番号} を削除します。よろしいですか？」→ API-58 → A-05 へ</td>
+</tr>
+</tbody></table></div>
+<p>画面の下には、合計（税込）と保存ボタンを常に表示します。関連するお問い合わせがあるときは「関連するお問い合わせ: #{ID} {お名前} 様」（→ A-04）を表示します。</p>
+<h4 id="sec-27">この見積書の入金（既存のときだけ）</h4>
+<p>入金日 / 内容 / 方法 / 金額 / 領収書（番号のリンク → A-09 を新しいタブ）と、入金済み・残額。なければ「まだ入金はありません。」</p>
+<h3 id="sec-28">4.7 A-07 見積書の印刷</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ツールバー（印刷されない）</td>
+<td>「見積書 {番号}」、「印刷画面で「PDF に保存」を選ぶと PDF になります。」、「印刷・PDFで保存」ボタン（ブラウザの印刷を開く）</td>
+</tr>
+<tr>
+<td>用紙（A4・余白なし）</td>
+<td>「御見積書」/ 見積番号・発行日 /「{お客さま名} 様」「下記のとおりお見積り申し上げます。」/ 件名・有効期限・納期（あれば）・お支払い条件（あれば）/ 発行者（屋号・運営責任者・所在地・TEL・メール）/ 御見積金額（税込）/ 明細の表（内容・数量・単位・単価・金額）/ 小計・消費税（{税率}%）・合計（税込）/ 備考（あれば）</td>
+</tr>
+</tbody></table></div>
+<p>API-56 で読み込みます。401 なら A-01 へ移ります（ログイン切れの案内つき）。発行者の情報はサイト内容の事業者情報です。</p>
+<h3 id="sec-29">4.8 A-08 入金・領収書</h3>
+<h4 id="sec-30">一覧</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>入金を記録</td>
+<td>右上のボタン（入力欄を開いているときは出さない）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>検索（<code>q</code>）</td>
+<td>お客さま名・但し書き・領収書番号</td>
+</tr>
+<tr>
+<td>3</td>
+<td>一覧の表</td>
+<td>入金日 / 領収書番号 / お客さま（「{名前} 様」と、見積書があれば番号のリンク）/ 但し書き / 方法 / 金額 / 操作（「領収書」→ A-09 を新しいタブ・編集・削除）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>下部</td>
+<td>「全 {n} 件・合計 {金額}」（合計は検索条件に合う入金の合計）とページ送り（<code>page</code>）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-31">入力欄（記録・編集）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>長さ・範囲</th>
+<th>初期値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>見積書（任意）</td>
+<td>セレクト（「見積書と結びつけない」と、見積書を新しい順に100件まで。「{番号} {名前} 様 {合計}（残額 {残額}）」）</td>
+<td>−</td>
+<td>存在する見積書</td>
+<td>結びつけない</td>
+</tr>
+<tr>
+<td>2</td>
+<td>お客さま名（様は不要）</td>
+<td>テキスト</td>
+<td>○</td>
+<td>100文字</td>
+<td>空（見積書を選ぶと、そのお客さま名）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>金額（円・税込）</td>
+<td>数値</td>
+<td>○</td>
+<td>1〜1,000,000,000</td>
+<td>空</td>
+</tr>
+<tr>
+<td>4</td>
+<td>入金日</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+<td>今日</td>
+</tr>
+<tr>
+<td>5</td>
+<td>お支払い方法</td>
+<td>セレクト</td>
+<td>○</td>
+<td>現金（手渡し）/ クレジットカード / 銀行振込</td>
+<td>クレジットカード</td>
+</tr>
+<tr>
+<td>6</td>
+<td>但し書き（領収書に印刷されます）</td>
+<td>テキスト</td>
+<td>○</td>
+<td>200文字</td>
+<td>ホームページ制作費として</td>
+</tr>
+<tr>
+<td>7</td>
+<td>メモ（領収書には印刷されません）</td>
+<td>複数行</td>
+<td>−</td>
+<td>1000文字</td>
+<td>空</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>現金で5万円以上のときは「5万円以上の現金の領収書には、収入印紙が必要です。」を表示します（※課題 No.8）。</li>
+<li>見積書の画面から来たとき（<code>?new=1&amp;estimate={ID}</code>）は、入力欄を開き、見積書・お客さま名を入れます。但し書きは「{件名}費 着手金として」、金額は合計の半分（切り捨て）にします。その見積書にすでに入金があれば、但し書きは「{件名}費 残金として」、金額は残額にします。</li>
+</ul>
+<h4 id="sec-32">イベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>操作</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>入金を記録</td>
+<td>入力欄を初期値で開く</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>編集（鉛筆のアイコン）</td>
+<td>その入金の内容で入力欄を開き、画面の先頭へスクロール</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>記録する / 保存する</td>
+<td>API-60 / API-62 → 「入金を記録しました。領収書を印刷できます。」/「保存しました。」→ 入力欄を閉じて一覧を再読み込み</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>キャンセル</td>
+<td>入力欄を閉じ、URL の <code>new</code>・<code>estimate</code> を消す</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>削除</td>
+<td>確認「{番号}（{名前} 様 {金額}）の記録を削除します。よろしいですか？」→ API-63 →「削除しました。」</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-33">4.9 A-09 領収書の印刷</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ツールバー（印刷されない）</td>
+<td>A-07 と同じ</td>
+</tr>
+<tr>
+<td>注意（印刷されない）</td>
+<td>現金で5万円以上のとき「※ 5万円以上の現金の領収書には、収入印紙が必要です。印刷して印紙を貼り、割印をしてお渡しください。（この注意書きは印刷されません）」（※課題 No.8）</td>
+</tr>
+<tr>
+<td>用紙（A4・余白なし）</td>
+<td>「領収書」/ No.（領収書番号）・発行日 /「{お客さま名} 様」/ 金額（税込）/ 但し書き・お支払い日・お支払い方法・見積番号（あれば）/「上記の金額を、正に領収いたしました。」/ 発行者</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>発行日</strong>: 一度決まったら、印刷し直しても変わらない日付を表示します（決め方は ※課題 No.2。今は印刷画面を開いた日を表示しています）。</li>
+<li>API-61 で読み込みます。401 なら A-01 へ移ります。</li>
+</ul>
+<h3 id="sec-34">4.10 A-10 保守契約</h3>
+<h4 id="sec-35">画面の構成</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>保守契約を登録</td>
+<td>右上のボタン（入力欄を開いているときは出さない）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>集計</td>
+<td>契約中 {n} 件 / 解約予定 {n} 件 / 月額の合計（開始済み・終了前）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>入力欄</td>
+<td>下の項目定義</td>
+</tr>
+<tr>
+<td>4</td>
+<td>タブ</td>
+<td>すべて / 契約中 / 解約予定 / 終了（URL ではなく画面の中で持つ）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>一覧の表</td>
+<td>お客さま（「{名前} 様」とメール）/ サイト（URL があればリンク）/ 月額 / 開始日 / 終了日（なければ「―」）/ 状態 / 操作（「解約の申し出」（契約中のときだけ）・編集・削除）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-36">項目定義</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>長さ・範囲</th>
+<th>初期値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>お客さま名（様は不要）</td>
+<td>テキスト</td>
+<td>○</td>
+<td>100文字</td>
+<td>空（お問い合わせから来たときはお名前）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>メールアドレス</td>
+<td>メール</td>
+<td>−</td>
+<td>254文字・形式</td>
+<td>空（お問い合わせから来たときはメール）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>サイト名</td>
+<td>テキスト</td>
+<td>○</td>
+<td>100文字</td>
+<td>空</td>
+</tr>
+<tr>
+<td>4</td>
+<td>サイトの URL</td>
+<td>テキスト</td>
+<td>−</td>
+<td>300文字・<code>http://</code> か <code>https://</code> で始まる</td>
+<td>空</td>
+</tr>
+<tr>
+<td>5</td>
+<td>月額（円・税込）</td>
+<td>数値（500 刻み）</td>
+<td>○</td>
+<td>0〜10,000,000</td>
+<td>5000</td>
+</tr>
+<tr>
+<td>6</td>
+<td>開始日</td>
+<td>日付</td>
+<td>○</td>
+<td></td>
+<td>今日</td>
+</tr>
+<tr>
+<td>7</td>
+<td>解約の申し出日</td>
+<td>日付</td>
+<td>−</td>
+<td>説明「解約の申し出があったときに入力します。」</td>
+<td>空</td>
+</tr>
+<tr>
+<td>8</td>
+<td>終了日</td>
+<td>日付</td>
+<td>−</td>
+<td>開始日以降。説明「通常は申し出日の翌月末です。」</td>
+<td>空</td>
+</tr>
+<tr>
+<td>9</td>
+<td>メモ</td>
+<td>複数行</td>
+<td>−</td>
+<td>1000文字</td>
+<td>空</td>
+</tr>
+</tbody></table></div>
+<p>終了日が開始日より前のときは「終了日は開始日以降の日付にしてください。」を入力欄の下に表示します。関連するお問い合わせがあるときは「関連するお問い合わせ: #{ID}」（→ A-04）を表示します。</p>
+<h4 id="sec-37">イベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>操作</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>URL が <code>?new=1&amp;inquiry={ID}</code></td>
+<td>API-12 でお問い合わせを読み、お名前・メールを入れて、新規の入力欄を開く</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>URL が <code>?edit={ID}</code></td>
+<td>一覧を読み込んだあと、その契約の編集を開く</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>保守契約を登録 / 編集</td>
+<td>入力欄を開く（編集のときは画面の先頭へスクロール）</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>登録する / 保存する</td>
+<td>API-65 / API-67 →「保守契約を登録しました。」/「保存しました。」→ 入力欄を閉じ、URL のパラメータを消して、一覧を再読み込み</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>解約の申し出</td>
+<td>入力ダイアログ（<code>window.prompt</code>）「{名前} 様「{サイト名}」の解約の申し出日を入力してください（例: {今日}）。終了日は申し出日の翌月末になります。」（初期値は今日）→ API-68 →「解約の申し出を登録しました。」</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>削除</td>
+<td>確認「{名前} 様「{サイト名}」の保守契約を削除します。よろしいですか？」→ API-69 →「削除しました。」</td>
+</tr>
+<tr>
+<td>E7</td>
+<td>タブを押す</td>
+<td>その状態で API-64 を呼ぶ</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-38">4.11 A-11 サイト内容</h3>
+<h4 id="sec-39">画面の構成</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>公開サイトで確認</td>
+<td>右上。今のタブに対応する公開サイトのページを新しいタブで開く（事業者情報 → <code>/tokushoho</code>、料金 → <code>/#price</code>、よくある質問 → <code>/#faq</code>、制作実績・そのほかの制作物・お客さまの声 → <code>/#works</code>）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>タブ（<code>?tab=</code>）</td>
+<td>事業者情報（business）/ 料金の目安（prices）/ よくある質問（faq）/ 制作実績（works）/ そのほかの制作物（other_works）/ お客さまの声（testimonials）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>初期値に戻す</td>
+<td>今のタブの内容を保存したことがあるときだけ表示</td>
+</tr>
+<tr>
+<td>4</td>
+<td>入力欄</td>
+<td>タブごと（下の表）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>下部</td>
+<td>「変更済み」/「初期値のまま」と「保存する」</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-40">タブごとの項目</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>項目（長さ）</th>
+<th>件数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>事業者情報</td>
+<td>すべて必須。屋号（60）/ 運営責任者（40）/ 所在地（100）/ 電話番号（30）/ メールアドレス（254・形式。説明「新着通知の送り先（メール設定で別の宛先を指定しない場合）にも使います。」）/ 対応時間（60）/ 事業形態（120。例: 個人事業主(開業届 提出済み・2026年10月1日 開業)）/ LINE の友だち追加 URL（300・<code>https://</code> で始まる。説明「LINE ページの QR コードもこの URL から作られます。」）</td>
+<td>−</td>
+</tr>
+<tr>
+<td>料金の目安</td>
+<td>料金表の行: 制作内容（必須・100）/ 相場（必須・40・例: 5〜15万円）。表の下の補足: 複数行の入力欄で1行=1段落（空の行は無視・1つ300文字まで）</td>
+<td>行は1〜30、補足は10まで</td>
+</tr>
+<tr>
+<td>よくある質問</td>
+<td>質問（必須・200）/ 回答（必須・2000）</td>
+<td>50件まで</td>
+</tr>
+<tr>
+<td>制作実績</td>
+<td>画像（必須。「画像を選ぶ」でアップロード）/ タイトル（必須・60）/ バッジ（20・例: 金賞）/ 説明（300）/ 画像の説明（読み上げ用・100）</td>
+<td>20件まで</td>
+</tr>
+<tr>
+<td>そのほかの制作物</td>
+<td>制作物（必須・60・例: 飲食店の予約システム(Laravel / PHP)）</td>
+<td>40件まで</td>
+</tr>
+<tr>
+<td>お客さまの声</td>
+<td>お名前（表示名。必須・60・例: 飲食店経営 A 様）/ 時期（30・例: 2026年10月）/ いただいた声（必須・1000）/ 公開する（初期はオン）。上部に「ご本人の許可をいただいたものだけを掲載してください。…」</td>
+<td>50件まで</td>
+</tr>
+</tbody></table></div>
+<p>リストのタブ（料金表・よくある質問・制作実績・そのほかの制作物・お客さまの声）は、各行に番号と「上へ」「下へ」「削除」があり、下に「追加」ボタンがあります（上限の件数で押せなくなる）。</p>
+<h4 id="sec-41">イベント</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>操作</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>画面を開く</td>
+<td>API-27 で全タブの内容と「変更済みか」を読む</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>タブを押す</td>
+<td>URL の <code>tab</code> を変え、メッセージを消す（入力中の内容はタブを変えても残る）</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>画像を選ぶ（制作実績）</td>
+<td>5MB より大きければ「画像は5MB以下にしてください。」。API-35 でアップロード →「画像をアップロードしました。「保存する」で反映されます。」→ その行の画像を差し替える（保存するまで公開サイトには出ない）</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>保存する</td>
+<td>今のタブだけを保存する（API-28〜33）→「保存しました。公開サイトに反映されています。」→ 公開サイトの表示内容（<code>SiteContext</code>）も読み込み直す。ほかのタブで保存していない入力は残す（※課題 No.7: 今は保存した時点の内容に戻る）</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>初期値に戻す</td>
+<td>確認「この項目を初期値に戻します。よろしいですか？」→ API-34 →「初期値に戻しました。」</td>
+</tr>
+</tbody></table></div>
+<p>入力エラーは、行番号つきのキー（例: <code>0.q</code>、<code>rows.0.name</code>）で各入力欄の下に出します。件数の上限を超えたときのエラー（キー <code>body</code>）は、保存ボタンの上に出します。</p>
+<h3 id="sec-42">4.12 A-12 デザイン（色）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>おすすめの色</td>
+<td>ブルー（初期・<code>#1558c0</code>）/ ネイビー <code>#1e3a8a</code> / ティール <code>#0f766e</code> / グリーン <code>#15803d</code> / パープル <code>#6d28d9</code> / ワイン <code>#9f1239</code> / オレンジ <code>#c2410c</code> / ブラウン <code>#7c4a1e</code> / チャコール <code>#374151</code>。選んだ色にチェック</td>
+</tr>
+<tr>
+<td>2</td>
+<td>好きな色を選ぶ</td>
+<td>ブラウザの色の選択</td>
+</tr>
+<tr>
+<td>3</td>
+<td>カラーコード</td>
+<td>テキスト（7文字・例 <code>#1558c0</code>）。形式が違えば「#1558c0 のような形式で入力してください。」</td>
+</tr>
+<tr>
+<td>4</td>
+<td>白い文字との見やすさ</td>
+<td>「{コントラスト比} : 1（4.5 以上が目安）」と「読みやすい色です。」/「明るすぎて、ボタンの白い文字が読みにくくなります。」</td>
+</tr>
+<tr>
+<td>5</td>
+<td>読みやすい濃さに調整</td>
+<td>コントラスト比が 4.5 未満のときだけ表示。黒を少しずつ混ぜて 4.5 以上にする（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 19章）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>初期の青に戻す</td>
+<td>今の保存されている色が初期の青でないときだけ表示。押すと初期の青ですぐに保存する</td>
+</tr>
+<tr>
+<td>7</td>
+<td>この色で保存</td>
+<td>色が変わっていて、読みやすい色のときだけ押せる。API-26 →「保存しました。公開サイトに反映されています。」→ 公開サイトの表示内容も読み込み直す</td>
+</tr>
+<tr>
+<td>8</td>
+<td>見本</td>
+<td>選んでいる色で、ロゴ・見出し・ボタン・バッジ・チップ・帯・カードの見え方を表示（保存前でも変わる）</td>
+</tr>
+<tr>
+<td>9</td>
+<td>公開サイトで確認</td>
+<td>右上。公開サイトを新しいタブで開く</td>
+</tr>
+</tbody></table></div>
+<p>API のエラー（明るすぎる色など）は、項目 <code>primary_color</code> のエラー文を表示します。</p>
+<h3 id="sec-43">4.13 A-13 メール</h3>
+<h4 id="sec-44">タブ（<code>?tab=</code>）</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ</th>
+<th>値</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>送信設定</td>
+<td><code>smtp</code>（初期）</td>
+<td>送信方法、Outlook のサインイン / SMTP の設定、テスト送信</td>
+</tr>
+<tr>
+<td>通知・自動返信</td>
+<td><code>notify</code></td>
+<td>新着通知と自動返信の設定</td>
+</tr>
+<tr>
+<td>返信テンプレート</td>
+<td><code>templates</code></td>
+<td>テンプレートの一覧・追加・編集・削除</td>
+</tr>
+<tr>
+<td>送信履歴</td>
+<td><code>outbox</code></td>
+<td>送ったメールの一覧・送り直し・削除</td>
+</tr>
+</tbody></table></div>
+<p>メールを送れない状態のときは、送信設定以外のタブの上に「まだメールを送信できないため、「未送信」として記録されます。（{理由}）」を出します。画面を開いたときに API-36 を呼びます。</p>
+<h4 id="sec-45">送信設定タブ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>送信方法</td>
+<td>ラジオボタン「Outlook（Microsoft Graph）」/「SMTP」。選ぶとすぐに API-37 で保存し、「Outlook で送るように切り替えました。」/「SMTP で送るように切り替えました。」</td>
+</tr>
+<tr>
+<td>2</td>
+<td>状態</td>
+<td>「送信できます」/「まだ送信できません」と理由</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Outlook のサインイン</td>
+<td>送信方法が Outlook のとき（下の表）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>送信用メールサーバー（SMTP）</td>
+<td>送信方法が SMTP のとき（下の表）</td>
+</tr>
+<tr>
+<td>5</td>
+<td>テスト送信</td>
+<td>宛先（初期: 事業者情報のメール）と「送信」。送れない状態では押せない。API-43 →「{宛先} に送信しました。届いているか確認してください。」</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Gmail を使う場合の入力例</td>
+<td>送信方法が SMTP のとき。サーバー名 smtp.gmail.com / STARTTLS（587）/ Gmail のアドレス / アプリ パスワード</td>
+</tr>
+</tbody></table></div>
+<p>Outlook のサインイン（No.3）の表示:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>状態</th>
+<th>表示と操作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> がない</td>
+<td>警告「.env の MICROSOFT_CLIENT_ID（…）が設定されていません。設定してから、バックエンドを再起動してください。」</td>
+</tr>
+<tr>
+<td>サインイン済み</td>
+<td>「サインイン済み」「送信元: {アドレス}」と「サインインを解除」（確認「Outlook のサインインを解除します。解除すると、もう一度サインインするまでメールは送られません。よろしいですか？」→ API-40 →「サインインを解除しました。」）</td>
+</tr>
+<tr>
+<td>未サインイン</td>
+<td>「未サインイン」と「Outlook にサインイン」（→ API-38）。処理中は「準備中…」</td>
+</tr>
+<tr>
+<td>サインインの途中</td>
+<td>1. 開くページ（<code>verification_uri</code> のリンク）2. 入力するコード（<code>user_code</code>）と「コピー」（コピーすると「コピーしました」）3. 「メールを送る Outlook アカウント（{送信元}）でサインインし、アクセスを許可します。」、「サインインが終わるのを待っています…（この画面は開いたままにしてください。コードの有効期限は {n} 分です）」、「やめる」</td>
+</tr>
+</tbody></table></div>
+<p>サインインの途中は、<code>interval</code> 秒（最低2秒）ごとに API-39 で確認します。<code>slow_down</code> が返ったら間隔を5秒のばします。<code>ok</code> なら「サインインしました。お問い合わせメールを Outlook から送れます。」、エラーならそのメッセージを出して途中の表示を閉じます。</p>
+<p>SMTP の設定（No.4）の項目:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>長さ・範囲</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>サーバー名</td>
+<td>テキスト</td>
+<td>255文字</td>
+<td>例: smtp.gmail.com</td>
+</tr>
+<tr>
+<td>2</td>
+<td>接続方式</td>
+<td>セレクト</td>
+<td>STARTTLS（ポート 587）/ SSL/TLS（ポート 465）/ 暗号化なし（おすすめしません）</td>
+<td>STARTTLS・SSL/TLS を選ぶと、ポートを 587・465 に変える</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ポート</td>
+<td>数値</td>
+<td>1〜65535</td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>ユーザー名</td>
+<td>テキスト</td>
+<td>255文字</td>
+<td>多くの場合、メールアドレス</td>
+</tr>
+<tr>
+<td>5</td>
+<td>パスワード</td>
+<td>パスワード</td>
+<td>255文字</td>
+<td>空欄なら今のパスワードのまま。設定済みなら「設定済みです。変更する場合だけ入力してください。」</td>
+</tr>
+<tr>
+<td>6</td>
+<td>送信元メールアドレス</td>
+<td>メール</td>
+<td>254文字・形式</td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>差出人名</td>
+<td>テキスト</td>
+<td>100文字</td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td>保存する</td>
+<td>ボタン</td>
+<td></td>
+<td>API-41 →「保存しました。」（パスワード欄は空に戻す）</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-46">通知・自動返信タブ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>長さ・範囲</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>お問い合わせが届いたら、メールで知らせる</td>
+<td>チェック</td>
+<td>−</td>
+<td></td>
+<td>新着通知</td>
+</tr>
+<tr>
+<td>2</td>
+<td>通知の送り先</td>
+<td>複数行（1行に1つ。カンマでも区切れる）</td>
+<td>−</td>
+<td>5件まで・形式</td>
+<td>空欄なら事業者情報のメール</td>
+</tr>
+<tr>
+<td>3</td>
+<td>サイトの URL</td>
+<td>テキスト</td>
+<td>○</td>
+<td>300文字・<code>http://</code> か <code>https://</code></td>
+<td>通知メールの管理画面へのリンクに使う。公開したら公開サイトの URL に変える</td>
+</tr>
+<tr>
+<td>4</td>
+<td>お問い合わせを受け付けたことを、お客さまにメールで知らせる</td>
+<td>チェック</td>
+<td>−</td>
+<td></td>
+<td>自動返信</td>
+</tr>
+<tr>
+<td>5</td>
+<td>件名</td>
+<td>テキスト</td>
+<td>○</td>
+<td>200文字</td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td>本文</td>
+<td>複数行</td>
+<td>○</td>
+<td>10000文字</td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>差し込みできる項目</td>
+<td>開閉できる説明</td>
+<td></td>
+<td></td>
+<td><code>{name}</code> <code>{business_name}</code> <code>{owner}</code> <code>{business_email}</code> <code>{business_phone}</code> <code>{hours}</code> <code>{inquiry_summary}</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>保存する</td>
+<td>ボタン</td>
+<td></td>
+<td></td>
+<td>API-42 →「保存しました。」</td>
+</tr>
+</tbody></table></div>
+<h4 id="sec-47">返信テンプレートタブ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>状態</th>
+<th>表示</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一覧</td>
+<td>「お問い合わせの詳細画面で返信するときに、選んで差し込めます。」、テンプレートごとに名前・「件名: {件名}」・編集・削除（確認「テンプレート「{名前}」を削除しますか？」→ API-50）、「追加」</td>
+</tr>
+<tr>
+<td>追加・編集</td>
+<td>テンプレート名（必須・60）/ 件名（必須・200）/ 本文（必須・20000）/ 差し込みできる項目（<code>{inquiry_summary}</code> を除く6つ）/「キャンセル」「保存する」（API-48 / API-49 →「保存しました。」）</td>
+</tr>
+</tbody></table></div>
+<p>追加のときの初期値は、件名「【{business_name}】」、本文「{name} 様（改行2つ）{business_name}の{owner}です。（改行2つ）」です。</p>
+<h4 id="sec-48">送信履歴タブ</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>一覧の表</td>
+<td>日時 / 種類（新着通知・自動返信・返信・テスト。お問い合わせのメールは「{名前} 様」のリンク → A-04）/ 宛先 / 件名（エラーがあれば下に赤で）/ 状態（送信中・送信済み・失敗・未送信）/ 操作</td>
+</tr>
+<tr>
+<td>2</td>
+<td>送り直す</td>
+<td>状態が「失敗」「未送信」のときだけ。API-45 →「送信しました。」</td>
+</tr>
+<tr>
+<td>3</td>
+<td>削除</td>
+<td>状態が「送信中」以外のとき。確認「{宛先} あてのメール「{件名}」の記録を削除します。{送信済みなら「送ったメールが取り消されるわけではありません。」、ほかは「削除すると、送り直せなくなります。」}よろしいですか？」→ API-46 →「削除しました。」。そのページの最後の1件を消したら、前のページに戻る</td>
+</tr>
+<tr>
+<td>4</td>
+<td>下部</td>
+<td>「全 {n} 件」とページ送り（ページは画面の中で持つ）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-49">4.14 A-14 迷惑送信</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>説明</td>
+<td>「ブロックしたメールアドレス・ドメインからのお問い合わせは「迷惑送信」として保存され、通知メールや自動返信は送られません。」と、隠し欄の案内</td>
+</tr>
+<tr>
+<td>2</td>
+<td>迷惑送信の一覧を見る</td>
+<td>右上。A-03（<code>?spam=1</code>）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>メールアドレス、または @ドメイン</td>
+<td>必須・254文字。例「<a href="mailto:spam@example.com">spam@example.com</a> / @example.com（そのドメインのすべてのアドレス）」</td>
+</tr>
+<tr>
+<td>4</td>
+<td>メモ（任意）</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ブロックする</td>
+<td>No.3 が空でないとき押せる。API-52 →「「{パターン}」をブロックしました。」→ 入力欄を空にして一覧を再読み込み</td>
+</tr>
+<tr>
+<td>6</td>
+<td>ブロック中の一覧</td>
+<td>アドレス・ドメイン / メモ（なければ「―」）/ 登録日時 /「解除」（確認「「{パターン}」のブロックを解除しますか？」→ API-53 →「ブロックを解除しました。」）。なければ「ブロックしているものはありません。」</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-50">4.15 A-15 履歴</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>タブ（<code>?tab=</code>）</th>
+<th>表の列</th>
+<th>API</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>操作の記録（初期）</td>
+<td>日時 / 操作 / 内容（なければ「―」）</td>
+<td>API-20</td>
+</tr>
+<tr>
+<td>ログイン履歴（<code>login</code>）</td>
+<td>日時 / 結果（成功・失敗）/ メールアドレス / 接続元（IP）/ ブラウザ</td>
+<td>API-19</td>
+</tr>
+</tbody></table></div>
+<p>どちらも新しい順で、20件ごとのページ送り（ページは画面の中で持つ）です。説明「管理画面での操作と、ログインの記録です。身に覚えのないログインがないか、ときどき確認してください。」を出します。</p>
+<h3 id="sec-51">4.16 A-16 データ管理</h3>
+<h4 id="sec-52">バックアップ</h4>
+<p>「バックアップをダウンロード」（処理中は「作成中…」）→ API-21 でデータベースと画像の zip を保存します。</p>
+<h4 id="sec-53">個人情報の自動削除</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>長さ・範囲</th>
+<th>初期値</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>自動削除を有効にする</td>
+<td>チェック</td>
+<td></td>
+<td>オフ</td>
+</tr>
+<tr>
+<td>2</td>
+<td>対応が終わってから、何か月で削除するか</td>
+<td>数値</td>
+<td>1〜120</td>
+<td>24</td>
+</tr>
+<tr>
+<td>3</td>
+<td>迷惑送信は、何日で削除するか</td>
+<td>数値</td>
+<td>1〜3650</td>
+<td>30</td>
+</tr>
+<tr>
+<td>4</td>
+<td>「対応が終わった」とみなす対応状況</td>
+<td>チェック（6つの対応状況）</td>
+<td>10個まで</td>
+<td>対応済み・お断り</td>
+</tr>
+<tr>
+<td>5</td>
+<td>削除の対象になる件数</td>
+<td>表示</td>
+<td>「今の設定で削除の対象になる件数: {n} 件（前回の実行: {日時}・{n} 件削除）」。保存済みの設定で数える</td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td>保存する</td>
+<td>ボタン</td>
+<td>API-23 →「保存しました。」</td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>今すぐ削除を実行</td>
+<td>ボタン</td>
+<td>下のイベント</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>「今すぐ削除を実行」は、<strong>保存済みの設定</strong>で次のように動きます。</p>
+<ol>
+<li>API-24（<code>dry_run: true</code>）で対象の件数を数える</li>
+<li>0件なら「いま削除の対象になるお問い合わせはありません。」で終わる</li>
+<li>確認「{n} 件のお問い合わせを削除します。元に戻せません。よろしいですか？」</li>
+<li>API-24（<code>dry_run: false</code>）で削除 →「削除しました。」→ API-22 で表示を更新</li>
+</ol>
+<h3 id="sec-54">4.17 A-17 アカウント</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>項目名</th>
+<th>入力欄</th>
+<th>必須</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>ログイン中の管理者</td>
+<td>表示</td>
+<td></td>
+<td>メールアドレスと「メールアドレスは、プロジェクトフォルダの .env の ADMIN_EMAIL で変更できます（変更後はバックエンドを再起動してください）。」</td>
+</tr>
+<tr>
+<td>2</td>
+<td>今のパスワード</td>
+<td>パスワード</td>
+<td>○</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>新しいパスワード（8文字以上）</td>
+<td>パスワード</td>
+<td>○</td>
+<td>128文字まで</td>
+</tr>
+<tr>
+<td>4</td>
+<td>新しいパスワード（確認）</td>
+<td>パスワード</td>
+<td>○</td>
+<td>128文字まで</td>
+</tr>
+<tr>
+<td>5</td>
+<td>変更する</td>
+<td>ボタン</td>
+<td></td>
+<td>No.2〜4 が入っているとき押せる</td>
+</tr>
+<tr>
+<td>6</td>
+<td>忘れたときの案内</td>
+<td>表示</td>
+<td></td>
+<td>「パスワードを忘れたときは、.env の ADMIN_PASSWORD を新しい値に書き換えてバックエンドを再起動すると、その値でログインできるようになります。」</td>
+</tr>
+</tbody></table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>イベント</th>
+<th>処理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>変更する</td>
+<td>1. No.3 と No.4 が違えば「確認用のパスワードが一致しません。」<br>2. API-09 → 成功:「パスワードを変更しました。ほかの端末のログインは解除されました。」、入力欄を空にする / 失敗: 項目のエラー（「今のパスワードが正しくありません。」「8文字以上で入力してください。」）、または「新しいパスワードは、今のパスワードと別のものにしてください。」（キー <code>body</code>）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/03_画面設計_管理画面.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>

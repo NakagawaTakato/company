@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>08 設定と運用｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">08 設定と運用</h1>
+<h2 id="sec-2">1. 設定の置き場所</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>置き場所</th>
+<th>内容</th>
+<th>git</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.env</code></td>
+<td>API の設定（管理者・DB・CORS・Cookie・Outlook）</td>
+<td>管理しない（パスワードを含む）</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td><code>.env</code> のひな形。初回の起動時に、これをもとに <code>.env</code> を作る</td>
+<td>管理する</td>
+</tr>
+<tr>
+<td><code>frontend/.env.fastapi</code></td>
+<td>画面の設定（API の接続先・ポート・公開 URL・GA4）</td>
+<td>管理する</td>
+</tr>
+<tr>
+<td><code>shared/contact_options.json</code></td>
+<td>フォームの選択肢・対応状況・都道府県</td>
+<td>管理する</td>
+</tr>
+<tr>
+<td><code>shared/site_defaults.json</code></td>
+<td>テーマ色とサイト内容の初期値</td>
+<td>管理する</td>
+</tr>
+<tr>
+<td>データベースの <code>settings</code> 表</td>
+<td>管理画面で変える設定（<a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> 7章）</td>
+<td>−</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-3">2. <code>.env</code>（API の設定）</h2>
+<p>値は「OS の環境変数 → <code>.env</code> → 初期値」の順に使います。変えたら API を再起動します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th><code>.env.example</code> の値</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ADMIN_EMAIL</code></td>
+<td><code>admin@example.com</code></td>
+<td>管理者のメールアドレス（小文字にして使う）。<code>@</code> がないと起動しない</td>
+</tr>
+<tr>
+<td><code>ADMIN_PASSWORD</code></td>
+<td><code>__GENERATE__</code></td>
+<td>管理者のパスワード（8〜128文字）。初回の起動時に、起動スクリプトがランダムな値に置き換える。<code>__GENERATE__</code> のままだと起動しない</td>
+</tr>
+<tr>
+<td><code>DATABASE_PATH</code></td>
+<td><code>data/app.db</code></td>
+<td>データベースのファイル。相対パスはプロジェクトのルートから</td>
+</tr>
+<tr>
+<td><code>HOST</code></td>
+<td><code>127.0.0.1</code></td>
+<td>API の待ち受けのアドレス（起動スクリプトが読む）</td>
+</tr>
+<tr>
+<td><code>BACKEND_PORT</code></td>
+<td><code>8000</code></td>
+<td>API のポート（起動スクリプトが読む）</td>
+</tr>
+<tr>
+<td><code>COOKIE_SECURE</code></td>
+<td><code>false</code></td>
+<td><code>true</code>・<code>1</code>・<code>yes</code> なら、ログインの Cookie に Secure を付ける。HTTPS で公開するときは <code>true</code></td>
+</tr>
+<tr>
+<td><code>FRONTEND_ORIGINS</code></td>
+<td><code>http://127.0.0.1:5173,http://localhost:5173</code></td>
+<td>API を呼んでよい画面の URL（CORS）。カンマ区切り。末尾の <code>/</code> は除いて比べる</td>
+</tr>
+<tr>
+<td><code>MICROSOFT_CLIENT_ID</code></td>
+<td>空</td>
+<td>Outlook で送るための Azure のアプリのクライアント ID。あれば、送信方法の初期値が Outlook になる</td>
+</tr>
+<tr>
+<td><code>MICROSOFT_TENANT</code></td>
+<td><code>consumers</code></td>
+<td>Microsoft のテナント（<code>consumers</code> は個人の Microsoft アカウント）</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM_ADDRESS</code></td>
+<td>空</td>
+<td>Outlook で送るときの送信元。空なら事業者情報のメール</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM_NAME</code></td>
+<td>空</td>
+<td>Outlook で送るときの差出人名。空なら屋号</td>
+</tr>
+</tbody></table></div>
+<p>書き方: <code>項目=値</code> を1行に1つ。<code>#</code> で始まる行はコメント。値は <code>&quot;</code> か <code>&#39;</code> で囲んでもよい。文字コードは UTF-8（BOM があってもよい）。</p>
+<h2 id="sec-4">3. <code>frontend/.env.fastapi</code>（画面の設定）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>今の値</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>VITE_API_BASE_URL</code></td>
+<td><code>http://127.0.0.1:8000</code></td>
+<td>API の接続先。ビルドのときに画面のファイルに埋め込む。起動スクリプトは、実際の API の URL で上書きして起動する</td>
+</tr>
+<tr>
+<td><code>DEV_PORT</code></td>
+<td><code>5173</code></td>
+<td>開発サーバーのポート</td>
+</tr>
+<tr>
+<td><code>SITE_URL</code></td>
+<td>空</td>
+<td>公開サイトの URL（<code>https://</code> から）。ビルドのときに og:image（<code>{SITE_URL}/ogp.png</code>）のタグを入れる。<code>https://</code> 以外はビルドがエラーになる。空ならタグを入れない</td>
+</tr>
+<tr>
+<td><code>VITE_GA_ID</code></td>
+<td>空</td>
+<td>Google Analytics 4 の測定 ID（<code>G-</code> で始まる）。空なら計測しない</td>
+</tr>
+</tbody></table></div>
+<p><code>VITE_</code> で始まる値は画面のファイルに埋め込まれ、誰でも見られます。秘密の値は書きません。</p>
+<h2 id="sec-5">4. 起動・テストで使う環境変数</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>環境変数</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>HOST</code> / <code>PORT</code> / <code>WEB_PORT</code></td>
+<td><code>run_backend.sh</code> の API の待ち受け / API のポート / 画面のポート（<code>.env</code>・<code>.env.fastapi</code> より優先）</td>
+</tr>
+<tr>
+<td><code>FRONTEND_ORIGINS</code></td>
+<td>起動スクリプトが、<code>.env</code> の値に画面のポートの URL（127.0.0.1 と localhost）を足して API に渡す</td>
+</tr>
+<tr>
+<td><code>BLUETAB_ROOT</code></td>
+<td>プロジェクトのルート（起動スクリプトが設定する。<code>.env</code>・<code>shared/</code>・<code>data/</code> の場所）</td>
+</tr>
+<tr>
+<td><code>BLUETAB_TOOLS_DIR</code></td>
+<td>起動スクリプトが Node.js を置く場所（初期 <code>~/.local/share/bluetab-tools</code>）</td>
+</tr>
+<tr>
+<td><code>BLUETAB_CONTACT_LIMIT</code></td>
+<td>お問い合わせの回数の上限（10分あたり。初期 10、テストでは 1000）</td>
+</tr>
+<tr>
+<td><code>MICROSOFT_LOGIN_URL</code> / <code>MICROSOFT_GRAPH_URL</code></td>
+<td>Microsoft の接続先（テストで偽のサーバーに向ける）</td>
+</tr>
+<tr>
+<td><code>WATCHFILES_FORCE_POLLING</code></td>
+<td><code>--reload</code> のときに起動スクリプトが <code>true</code> にする（WSL から Windows のフォルダの変更を検知するため）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-6">5. ソースで変える内容</h2>
+<p>管理画面で変えられない内容は、ソースを書き換えます。画面は開発サーバーで動いているので、保存するとブラウザに反映されます（本番はビルドし直す）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変えたいもの</th>
+<th>ファイル</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>トップページの文言（キャッチコピー・特長・対応内容・経歴・安心のお約束・制作の流れ）</td>
+<td><code>frontend/src/content/home.ts</code>・<code>pages/HomePage.tsx</code></td>
+<td>料金・よくある質問・制作実績などは管理画面（A-11）</td>
+</tr>
+<tr>
+<td>検索結果に出るタイトル・説明文</td>
+<td><code>frontend/index.html</code></td>
+<td>タイトルを変えたら <code>content/home.ts</code> の <code>HOME_TITLE</code> も同じにする</td>
+</tr>
+<tr>
+<td>対応エリア</td>
+<td><code>content/home.ts</code> の <code>SERVICE_AREA</code></td>
+<td><code>index.html</code> の説明文の地名もそろえる</td>
+</tr>
+<tr>
+<td>ページ上部のメニュー・「ご相談はこちら」ボタン</td>
+<td><code>content/home.ts</code> の <code>NAV</code>・<code>HEADER_CTA</code></td>
+<td>文言の半角スペースは、スマホで2行に折り返す位置（画面には出ない）。PC の1行の表示（幅 1140px 以上）は今の8個に合わせているので、項目や文字を増やすときは <code>styles/home.css</code> も見直す</td>
+</tr>
+<tr>
+<td>LINE などで URL を送ったときの画像</td>
+<td><code>frontend/public/ogp.png</code>（1200×630）</td>
+<td>テーマ色を変えても、この画像の色は変わらない</td>
+</tr>
+<tr>
+<td>事業者情報ページの固定の文章</td>
+<td><code>pages/TokushohoPage.tsx</code></td>
+<td>表の事業者情報は管理画面（A-11）</td>
+</tr>
+<tr>
+<td>個人情報の取扱い</td>
+<td><code>components/PrivacyPolicy.tsx</code></td>
+<td></td>
+</tr>
+<tr>
+<td>フォームの選択肢・対応状況・都道府県</td>
+<td><code>shared/contact_options.json</code></td>
+<td>値（value）を変えるときは、マイグレーションで保存済みのデータも置き換える（<a href="05_DB%E8%A8%AD%E8%A8%88.html">05</a> 6章）</td>
+</tr>
+<tr>
+<td>サイト内容の初期値</td>
+<td><code>shared/site_defaults.json</code></td>
+<td>管理画面で保存した項目には影響しない</td>
+</tr>
+<tr>
+<td>ロゴの形</td>
+<td><code>components/Logo.tsx</code>・<code>lib/theme.ts</code>（<code>applyBrowserColor</code>）・<code>public/favicon.svg</code></td>
+<td>3か所をそろえる</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-7">6. 起動のしかた（開発）</h2>
+<p>WSL のターミナルで <code>./run_backend.sh</code> を実行します（プロジェクトのルート <code>/mnt/c/Users/document/python/company</code> で）。</p>
+<pre class="mermaid">flowchart TD
+  A[&quot;./run_backend.sh&quot;] --&gt; B[&quot;.env がなければ .env.example から作る&lt;br&gt;（パスワードをランダムに決めて表示）&quot;]
+  B --&gt; C[&quot;API と画面のポートが空いているか確認&lt;br&gt;（使われていればエラーで終わる）&quot;]
+  C --&gt; D[&quot;Python 3.10 以上を確認し、backend/.venv を用意&lt;br&gt;（requirements.txt が変わったときだけ pip install）&quot;]
+  D --&gt; E[&quot;Node.js を用意（なければ Node.js 24 をダウンロードし、SHA256 を確認）&lt;br&gt;（package.json・package-lock.json が変わったときだけ npm ci）&quot;]
+  E --&gt; F[&quot;API を起動し、/api/health が応答するまで待つ（最大180秒）&quot;]
+  F --&gt; G[&quot;画面（Vite）を起動し、応答するまで待つ（最大60秒）&quot;]
+  G --&gt; H[&quot;画面・管理画面・API の URL を表示&quot;]
+  H --&gt; I[&quot;どちらかが止まったら、もう片方も止める&lt;br&gt;（Ctrl+C で両方止まる）&quot;]
+</pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>オプション</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--reload</code></td>
+<td>Python のコードを変えると API を自動で再起動する</td>
+</tr>
+<tr>
+<td><code>-h</code> / <code>--help</code></td>
+<td>使い方を表示する</td>
+</tr>
+<tr>
+<td><code>PORT=9000 ./run_backend.sh</code></td>
+<td>API のポートを変える</td>
+</tr>
+<tr>
+<td><code>WEB_PORT=3000 ./run_backend.sh</code></td>
+<td>画面のポートを変える</td>
+</tr>
+</tbody></table></div>
+<p>ターミナルを2つ使って1つずつ起動する方法は、プロジェクトの <code>README.md</code> にあります。</p>
+<h2 id="sec-8">7. テスト</h2>
+<p><code>tests/run_api_tests.sh</code> を実行します。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>データベース</td>
+<td>一時フォルダのテスト用 DB（<code>data/app.db</code> には書き込まない）</td>
+</tr>
+<tr>
+<td>API</td>
+<td>ポート 18000 で起動する</td>
+</tr>
+<tr>
+<td>メール</td>
+<td>Outlook は偽の Microsoft サーバー（ポート 18999）、SMTP はテスト用の受け口（どちらも <code>api_test.py</code> が起動する）。本物には送らない</td>
+</tr>
+<tr>
+<td>回数の上限</td>
+<td>お問い合わせは 1000件まで（何度も送るため）</td>
+</tr>
+</tbody></table></div>
+<p>API を3回起動して確かめます。</p>
+<ol>
+<li>全体のテスト: 公開サイトの API、ログイン、お問い合わせ（一覧・検索・詳細・メモ）、ページ分け、迷惑送信と削除、メール（SMTP・通知・自動返信・返信・送信履歴・テンプレート）、Outlook（サインイン・トークンの更新・送信）、CSV、テーマ色とサイト内容、見積書・入金・保守契約、データ管理と履歴、アカウント（パスワードの変更・ログアウト）</li>
+<li><code>.env</code> を変えずに再起動して、管理画面で変えたパスワードが残るか</li>
+<li><code>.env</code> のパスワードを変えて再起動して、その値にリセットされるか</li>
+</ol>
+<p>すべて成功すると「すべてのテストに成功しました。」と表示します。画面の型チェックは <code>cd frontend &amp;&amp; npm run typecheck</code> です。</p>
+<h2 id="sec-9">8. 本番に公開するとき</h2>
+<h3 id="sec-10">8.1 画面のビルド</h3>
+<ol>
+<li><code>frontend/.env.fastapi</code> の <code>SITE_URL</code> に公開サイトの URL を書く（例 <code>https://www.example.com</code>）。アクセス数を計測するときは <code>VITE_GA_ID</code> も書く。</li>
+<li>API の公開 URL を指定してビルドする: <code>VITE_API_BASE_URL=https://api.example.com npm run build:fastapi</code></li>
+<li>型チェックのあと、<code>frontend/dist/</code> に出力される。</li>
+</ol>
+<h3 id="sec-11">8.2 配置の前提条件</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>画面</td>
+<td><code>frontend/dist/</code> を静的ファイルとして配信する。<strong>存在しない URL でも <code>index.html</code> を返す</strong>（<code>/contact</code>・<code>/admin</code> などを直接開いたときも、画面側で切り替えるため）。応答ヘッダー（<code>X-Frame-Options</code>・<code>X-Content-Type-Options</code> など）も付ける</td>
+</tr>
+<tr>
+<td>API</td>
+<td><code>backend/requirements.txt</code> を入れた Python で、Uvicorn を1プロセスで起動する（例 <code>uvicorn app.main:app --host 127.0.0.1 --port 8000</code>、<code>backend</code> フォルダで）。プロジェクトのフォルダ構成のまま置く（<code>.env</code>・<code>shared/</code>・<code>data/</code> を読むため）</td>
+</tr>
+<tr>
+<td>ドメイン</td>
+<td>画面と API を同じドメインの配下にする（例 <code>www.example.com</code> と <code>api.example.com</code>）</td>
+</tr>
+<tr>
+<td>HTTPS</td>
+<td>画面・API とも HTTPS。<code>.env</code> を <code>COOKIE_SECURE=true</code> にする</td>
+</tr>
+<tr>
+<td>CORS</td>
+<td><code>.env</code> の <code>FRONTEND_ORIGINS</code> に、公開する画面の URL を書く</td>
+</tr>
+<tr>
+<td><code>data</code> フォルダ</td>
+<td>API から書き込めること（データベース・画像・Outlook のトークン）</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-12">8.3 公開したあとに管理画面で行う設定</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>画面</th>
+<th>設定</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>A-13 メール → 通知・自動返信</td>
+<td>「サイトの URL」を公開サイトの URL にする（初期値は <code>http://127.0.0.1:5173</code> で、新着通知メールの「管理画面で確認する」のリンクが手元の URL になってしまう）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A-13 メール → 送信設定</td>
+<td>Outlook にサインイン（または SMTP を設定）して、テスト送信で届くか確かめる</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A-11 サイト内容 → 事業者情報</td>
+<td>内容を確かめる（初期値の事業形態は、開業日が「2026年10月xx日」のまま）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A-16 データ管理</td>
+<td>個人情報の自動削除を有効にするか決める</td>
+</tr>
+<tr>
+<td>5</td>
+<td>A-17 アカウント</td>
+<td>必要ならパスワードを変える</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-13">8.4 運用上の注意</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>注意</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API は1プロセスで動かす</td>
+<td>試行回数のカウントと、Outlook のサインインの途中の情報を、プロセスのメモリに持つため。ワーカーを増やすと、サインインの確認が別のプロセスに届いて「有効期限が切れました」になり、回数の制限もプロセスごとになる。自動削除の定期処理もプロセスごとに動く</td>
+</tr>
+<tr>
+<td>リバースプロキシの後ろで動かすとき</td>
+<td>API から見た接続元が、プロキシの IP になる。そのままだと全員が同じ IP として数えられ（お問い合わせ・ログインの回数の上限にすぐ達する）、ログイン履歴の IP もすべて同じになる。プロキシに <code>X-Forwarded-For</code> を付けさせ、Uvicorn がそれを信用するようにする（Uvicorn は <code>--forwarded-allow-ips</code> に書いた IP からのヘッダーを信用する。初期値は <code>127.0.0.1</code> なので、同じサーバーのプロキシならそのまま、別のサーバーならその IP を指定する）</td>
+</tr>
+<tr>
+<td>API を再起動すると消えるもの</td>
+<td>試行回数のカウント、Outlook のサインインの途中の情報（途中だったら、サインインをやり直す）</td>
+</tr>
+<tr>
+<td>「送信中」のまま残ったメール</td>
+<td>送信の途中で API が止まると、送信履歴が「送信中」のまま残る（※課題 No.5）</td>
+</tr>
+<tr>
+<td>バックアップは自動ではない</td>
+<td>定期的に A-16 からダウンロードして保管する（9章）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-14">9. バックアップと復元</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>取り方</td>
+<td>A-16「バックアップをダウンロード」</td>
+</tr>
+<tr>
+<td>zip の中身</td>
+<td><code>data/app.db</code>（データベースの写し）、<code>data/uploads/</code>（画像）、<code>README.txt</code>（戻し方）</td>
+</tr>
+<tr>
+<td>zip に入らないもの</td>
+<td><code>.env</code>（別に保管する）、<code>data/microsoft-oauth.json</code>（戻したあとで Outlook にサインインし直す）</td>
+</tr>
+<tr>
+<td>戻し方</td>
+<td>1. API を止める 2. zip の <code>data/app.db</code> と <code>data/uploads/</code> を、プロジェクトの <code>data</code> フォルダに上書きする 3. API を起動する</td>
+</tr>
+<tr>
+<td>保管</td>
+<td>zip には個人情報・管理者のパスワードのハッシュ・SMTP のパスワードが入る。他人に渡さず、不要になったら削除する</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-15">10. 管理者のアカウント</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>したいこと</th>
+<th>手順</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>パスワードを変える</td>
+<td>A-17 で変える（ほかの端末はログアウトされる）</td>
+</tr>
+<tr>
+<td>パスワードを忘れた</td>
+<td><code>.env</code> の <code>ADMIN_PASSWORD</code> を新しい値（8文字以上）に書き換えて、API を再起動する。その値でログインできる</td>
+</tr>
+<tr>
+<td>メールアドレスを変える</td>
+<td><code>.env</code> の <code>ADMIN_EMAIL</code> を書き換えて、API を再起動する。新しいメールアドレスの管理者が作られ（パスワードは <code>.env</code> の値）、古い管理者は削除される</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-16">11. メールの設定</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>手順</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Outlook（標準）</td>
+<td>1. <code>.env</code> に <code>MICROSOFT_CLIENT_ID</code>（と必要なら <code>MAIL_FROM_ADDRESS</code>・<code>MAIL_FROM_NAME</code>）を書き、API を再起動する 2. A-13 の送信設定で「Outlook にサインイン」し、表示されたページでコードを入力して、送信に使う Outlook アカウントでサインインする（コマンド <code>cd backend &amp;&amp; .venv/bin/python -m app.outlook_login</code> でもできる） 3. テスト送信で確かめる。トークンは自動で更新する。更新できなくなったら、もう一度サインインする</td>
+</tr>
+<tr>
+<td>SMTP</td>
+<td>1. A-13 の送信設定で送信方法を「SMTP」にする 2. サーバー名・接続方式・ポート・ユーザー名・パスワード・送信元を保存する（Gmail はアプリ パスワード） 3. テスト送信で確かめる</td>
+</tr>
+</tbody></table></div>
+<p>送れなかったメールは、A-13 の送信履歴に理由と一緒に残ります。原因を直してから「送り直す」を押します。</p>
+<h2 id="sec-17">12. よくあるトラブル</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因と対処</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ログインしても、すぐにログイン画面に戻る</td>
+<td>画面と API の URL の、ホスト名・ドメインが合っていない（Cookie が送られない）。開発では 127.0.0.1 と localhost を混ぜない（画面は自動でそろえる）。本番では画面と API を同じドメインの配下にし、HTTPS で開く（<code>COOKIE_SECURE=true</code> のときは HTTP では送られない）</td>
+</tr>
+<tr>
+<td>画面に「通信に失敗しました」と出る</td>
+<td>API が動いていない、<code>VITE_API_BASE_URL</code> が違う、<code>FRONTEND_ORIGINS</code> に画面の URL がない（CORS で止められる）</td>
+</tr>
+<tr>
+<td>「ポート 8000 は既に使われています」</td>
+<td>別の起動コマンドが動いている。止めるか、<code>PORT=番号</code> を付けて起動する</td>
+</tr>
+<tr>
+<td>手で起動したときに <code>npm</code> が見つからない</td>
+<td>ターミナルで <code>export PATH=&quot;$HOME/.local/share/bluetab-tools/node/bin:$PATH&quot;</code> を実行する（ターミナルを開くたびに必要）</td>
+</tr>
+<tr>
+<td>起動時に「.env の ADMIN_PASSWORD は 8〜128 文字で設定してください。」</td>
+<td><code>.env</code> の <code>ADMIN_PASSWORD</code> を直す</td>
+</tr>
+<tr>
+<td>メールが届かない</td>
+<td>A-13 の状態と送信履歴の理由を見る（未設定・未サインイン・認証のエラーなど）。直してから「送り直す」</td>
+</tr>
+<tr>
+<td>新着通知メールのリンクが 127.0.0.1 になる</td>
+<td>A-13 の通知・自動返信の「サイトの URL」を、公開サイトの URL にする</td>
+</tr>
+<tr>
+<td>LINE などで URL を送っても画像が出ない</td>
+<td><code>SITE_URL</code> を書いて、ビルドし直す</td>
+</tr>
+<tr>
+<td>本番で <code>/contact</code> などを直接開くと 404</td>
+<td>静的ファイルの配信で、存在しない URL に <code>index.html</code> を返す設定がない（8.2）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/08_設定と運用.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>
