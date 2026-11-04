@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>05 データベース設計｜詳細設計書</title>
+<style>
+:root {
+  --text: #1f2937;
+  --muted: #5b6475;
+  --line: #d9dee7;
+  --bg: #ffffff;
+  --bg-soft: #f5f7fb;
+  --accent: #1558c0;
+  --accent-soft: #e8f0fc;
+  --code-bg: #f2f4f8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+a { color: var(--accent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.site-header { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+.site-header__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+}
+.site-title { display: flex; flex-direction: column; color: var(--text); font-weight: 700; line-height: 1.35; text-decoration: none; }
+.site-title span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.doc-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-nav a {
+  padding: 2px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.doc-nav a:hover { border-color: var(--accent); color: var(--accent); }
+.doc-nav a[aria-current="page"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.layout {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.layout--single { grid-template-columns: minmax(0, 1fr); }
+
+.toc {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.toc__title { margin: 0 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
+.toc ul { margin: 0; padding: 0; list-style: none; }
+.toc a { display: block; padding: 4px 8px; border-left: 2px solid var(--line); color: var(--text); text-decoration: none; }
+.toc a:hover { border-left-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.toc .toc__h3 a { padding-left: 20px; color: var(--muted); }
+
+.doc { min-width: 0; max-width: 1080px; }
+.doc h1 { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 2px solid var(--text); font-size: 28px; line-height: 1.4; }
+.doc h2 { margin: 48px 0 16px; padding: 3px 0 3px 12px; border-left: 5px solid var(--accent); font-size: 22px; line-height: 1.45; }
+.doc h3 { margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 18px; line-height: 1.5; }
+.doc h4 { margin: 26px 0 8px; font-size: 16px; line-height: 1.5; }
+.doc h2, .doc h3, .doc h4 { scroll-margin-top: 16px; }
+.doc p, .doc ul, .doc ol { margin: 0 0 14px; }
+.doc ul, .doc ol { padding-left: 1.6em; }
+.doc li + li { margin-top: 4px; }
+.doc strong { font-weight: 700; }
+.doc code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "BIZ UDGothic", "MS Gothic", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--code-bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+.doc pre code { padding: 0; background: none; font-size: 13px; overflow-wrap: normal; }
+.doc pre.mermaid { background: #fff; font-size: 13px; }
+.doc pre.mermaid[data-processed="true"] { padding: 20px 12px; text-align: center; }
+.doc pre.mermaid svg { max-width: 100%; height: auto; }
+
+.table-wrap { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.doc th, .doc td { padding: 8px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.doc th:last-child, .doc td:last-child { border-right: 0; }
+.doc tbody tr:last-child td { border-bottom: 0; }
+.doc thead th { background: var(--bg-soft); font-weight: 700; white-space: nowrap; }
+.doc tbody tr:nth-child(even) td { background: #fafbfd; }
+
+.doc-footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+@media (max-width: 1000px) {
+  .site-header__inner { padding: 12px 16px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px 56px; }
+  .toc { position: static; max-height: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .doc h1 { font-size: 24px; }
+  .doc h2 { font-size: 20px; }
+}
+
+@page { size: A4; margin: 14mm; }
+@media print {
+  .site-header, .toc { display: none; }
+  .layout { display: block; padding: 0; }
+  .doc { max-width: none; }
+  .table-wrap { border: 0; overflow: visible; }
+  .doc h2, .doc h3, .doc h4 { break-after: avoid; }
+  .doc tr, .doc pre { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="layout layout--single">
+
+<main class="doc">
+<h1 id="sec-1">05 データベース設計</h1>
+<h2 id="sec-2">1. 概要</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>種類</td>
+<td>SQLite（Python 標準の <code>sqlite3</code>）</td>
+</tr>
+<tr>
+<td>ファイル</td>
+<td><code>data/app.db</code>（<code>.env</code> の <code>DATABASE_PATH</code> で変更できる。相対パスはプロジェクトのルートから）</td>
+</tr>
+<tr>
+<td>接続</td>
+<td>API のリクエストごとに開いて閉じる。待ち時間 10秒、外部キーの制約を有効（<code>PRAGMA foreign_keys = ON</code>）、行は列名で読める形（<code>sqlite3.Row</code>）</td>
+</tr>
+<tr>
+<td>表の作成・変更</td>
+<td>API の起動時に、足りない表・列を順番に追加する（8章）</td>
+</tr>
+<tr>
+<td>入力の長さ</td>
+<td>表の定義では長さを決めず、API の入力チェックで制限する（下の表の「API の制限」）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-3">2. ER 図</h2>
+<pre class="mermaid">erDiagram
+  admins ||--o{ admin_sessions : &quot;ログイン中のセッション&quot;
+  inquiries ||--o{ inquiry_notes : &quot;メモ・記録&quot;
+  inquiries |o--o{ mail_outbox : &quot;送ったメール&quot;
+  inquiries |o--o{ estimates : &quot;見積書&quot;
+  inquiries |o--o{ contracts : &quot;保守契約&quot;
+  estimates ||--|{ estimate_items : &quot;明細&quot;
+  estimates |o--o{ payments : &quot;入金&quot;
+
+  admins {
+    INTEGER id PK
+    TEXT email UK
+    TEXT password_hash
+  }
+  admin_sessions {
+    TEXT token_hash PK
+    INTEGER admin_id FK
+    INTEGER expires_at
+  }
+  inquiries {
+    INTEGER id PK
+    TEXT name
+    TEXT email
+    TEXT status
+    INTEGER is_spam
+    TEXT created_at
+  }
+  inquiry_notes {
+    INTEGER id PK
+    INTEGER inquiry_id FK
+    TEXT kind
+    TEXT body
+  }
+  mail_outbox {
+    INTEGER id PK
+    INTEGER inquiry_id FK
+    TEXT kind
+    TEXT to_addr
+    TEXT status
+  }
+  estimates {
+    INTEGER id PK
+    TEXT number UK
+    INTEGER inquiry_id FK
+    TEXT customer_name
+    TEXT status
+  }
+  estimate_items {
+    INTEGER id PK
+    INTEGER estimate_id FK
+    REAL quantity
+    INTEGER unit_price
+  }
+  payments {
+    INTEGER id PK
+    TEXT receipt_number UK
+    INTEGER estimate_id FK
+    INTEGER amount
+  }
+  contracts {
+    INTEGER id PK
+    INTEGER inquiry_id FK
+    TEXT site_name
+    INTEGER monthly_fee
+  }
+  settings {
+    TEXT key PK
+    TEXT value
+  }
+  login_history {
+    INTEGER id PK
+    TEXT email
+    INTEGER success
+  }
+  audit_logs {
+    INTEGER id PK
+    TEXT action
+  }
+  reply_templates {
+    INTEGER id PK
+    TEXT name
+  }
+  blocklist {
+    INTEGER id PK
+    TEXT pattern UK
+  }
+</pre>
+<p><code>settings</code>・<code>login_history</code>・<code>audit_logs</code>・<code>reply_templates</code>・<code>blocklist</code> は、ほかの表とつながりません。</p>
+<h2 id="sec-4">3. テーブル一覧</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No.</th>
+<th>テーブル</th>
+<th>内容</th>
+<th>追加した版（8章）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>inquiries</code></td>
+<td>お問い合わせ</td>
+<td>1（<code>is_spam</code> は 2）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>admins</code></td>
+<td>管理者（1人だけ）</td>
+<td>1</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>admin_sessions</code></td>
+<td>ログイン中のセッション</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>inquiry_notes</code></td>
+<td>お問い合わせのメモ・記録（タイムライン）</td>
+<td>2</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>settings</code></td>
+<td>管理画面から変える設定（値は JSON）</td>
+<td>2</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>login_history</code></td>
+<td>ログイン履歴</td>
+<td>2</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>audit_logs</code></td>
+<td>操作の記録</td>
+<td>2</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>mail_outbox</code></td>
+<td>送信履歴</td>
+<td>2（<code>reply_to</code> は 3）</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>reply_templates</code></td>
+<td>返信テンプレート</td>
+<td>2</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>blocklist</code></td>
+<td>ブロックリスト</td>
+<td>2</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>estimates</code></td>
+<td>見積書</td>
+<td>2</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>estimate_items</code></td>
+<td>見積書の明細</td>
+<td>2</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>payments</code></td>
+<td>入金（領収書）</td>
+<td>2</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>contracts</code></td>
+<td>保守契約</td>
+<td>2</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-5">4. テーブル定義</h2>
+<p>列の「NULL」は、○ が NULL を入れられる列です。<code>id</code> はすべて <code>INTEGER PRIMARY KEY AUTOINCREMENT</code>（自動の連番）です。日時（<code>*_at</code>）は UTC の <code>YYYY-MM-DDTHH:MM:SSZ</code>、日付は <code>YYYY-MM-DD</code> の文字列です。</p>
+<h3 id="sec-6">4.1 inquiries（お問い合わせ）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限・備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>topics</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>ご相談内容の値の JSON 配列（例 <code>[&quot;python_react_fastapi&quot;]</code>）</td>
+<td>選択肢の値だけ・1つ以上</td>
+</tr>
+<tr>
+<td>name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>お名前</td>
+<td>100文字</td>
+</tr>
+<tr>
+<td>email</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>メールアドレス</td>
+<td>254文字・半角</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>電話番号（数字のみ・ハイフンなし）</td>
+<td>10〜11桁</td>
+</tr>
+<tr>
+<td>prefecture</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>お住まい（都道府県名）</td>
+<td></td>
+</tr>
+<tr>
+<td>age</td>
+<td>INTEGER</td>
+<td>○</td>
+<td></td>
+<td>ご年齢</td>
+<td>1〜120</td>
+</tr>
+<tr>
+<td>initial_payment</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>初期費用のお支払い方法の値</td>
+<td></td>
+</tr>
+<tr>
+<td>monthly_payment</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>月額のお支払い方法の値</td>
+<td></td>
+</tr>
+<tr>
+<td>status</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;new&#39;</code></td>
+<td>対応状況の値</td>
+<td></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>受付日時</td>
+<td></td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>最終更新（対応状況・迷惑送信の変更、メモ・記録の追加で更新）</td>
+<td>自動削除の期間の数え始め</td>
+</tr>
+<tr>
+<td>is_spam</td>
+<td>INTEGER</td>
+<td></td>
+<td><code>0</code></td>
+<td>迷惑送信なら 1</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>インデックス: <code>idx_inquiries_created_at</code>（created_at）、<code>idx_inquiries_status</code>（is_spam, status）</p>
+<h3 id="sec-7">4.2 admins（管理者）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>email</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>メールアドレス（小文字）</td>
+<td>一意。<code>.env</code> の <code>ADMIN_EMAIL</code></td>
+</tr>
+<tr>
+<td>password_hash</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>パスワードのハッシュ（<code>pbkdf2_sha256$回数$ソルト$ハッシュ</code>）</td>
+<td><a href="07_%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E8%A8%AD%E8%A8%88.html">07</a> 2章</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時 / 更新日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>起動時に、<code>.env</code> の管理者以外の行は削除します（いつも1行だけ）。</p>
+<h3 id="sec-8">4.3 admin_sessions（ログイン中のセッション）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>token_hash</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>Cookie のトークンの SHA-256（16進数）</td>
+<td>主キー。トークンそのものは保存しない</td>
+</tr>
+<tr>
+<td>admin_id</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>管理者の ID</td>
+<td>外部キー → admins（削除時 CASCADE）</td>
+</tr>
+<tr>
+<td>expires_at</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>有効期限（UNIX 秒）</td>
+<td>作成から12時間</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-9">4.4 inquiry_notes（メモ・記録）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>お問い合わせの ID</td>
+<td>外部キー → inquiries（削除時 CASCADE）</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;note&#39;</code></td>
+<td><code>note</code> 手入力のメモ / <code>email</code> 返信したメール / <code>system</code> 自動の記録</td>
+<td></td>
+</tr>
+<tr>
+<td>body</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>本文</td>
+<td>メモは5000文字</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>インデックス: <code>idx_inquiry_notes_inquiry</code>（inquiry_id）</p>
+<h3 id="sec-10">4.5 settings（設定）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>key</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>設定のキー（主キー。7章）</td>
+</tr>
+<tr>
+<td>value</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>値（JSON。日本語はそのまま）</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>更新日時</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-11">4.6 login_history（ログイン履歴）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>email</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>入力されたメールアドレス（小文字）</td>
+<td>254文字で切る</td>
+</tr>
+<tr>
+<td>success</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>成功なら 1、失敗なら 0</td>
+<td></td>
+</tr>
+<tr>
+<td>ip</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>接続元の IP アドレス</td>
+<td>64文字で切る</td>
+</tr>
+<tr>
+<td>user_agent</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>ブラウザの情報</td>
+<td>300文字で切る</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-12">4.7 audit_logs（操作の記録）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>action</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>操作（例「対応状況を変更」）</td>
+<td><a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 21章</td>
+</tr>
+<tr>
+<td>detail</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>内容</td>
+<td>1000文字で切る</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-13">4.8 mail_outbox（送信履歴）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>INTEGER</td>
+<td>○</td>
+<td></td>
+<td>関係するお問い合わせの ID（テストメールは NULL）</td>
+<td>外部キー → inquiries。仕様: お問い合わせを削除したら、この行も削除する（※課題 No.1: 今は削除時 SET NULL で行が残る）</td>
+</tr>
+<tr>
+<td>kind</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td><code>admin_notify</code> 新着通知 / <code>auto_reply</code> 自動返信 / <code>reply</code> 返信 / <code>test</code> テスト</td>
+<td></td>
+</tr>
+<tr>
+<td>to_addr</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>宛先</td>
+<td></td>
+</tr>
+<tr>
+<td>subject</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>件名</td>
+<td></td>
+</tr>
+<tr>
+<td>body</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>本文</td>
+<td>新着通知・自動返信には、お問い合わせの内容が入る</td>
+</tr>
+<tr>
+<td>status</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td><code>pending</code> 送信中 / <code>sent</code> 送信済み / <code>failed</code> 失敗 / <code>skipped</code> 未送信</td>
+<td>状態の変わり方は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.1</td>
+</tr>
+<tr>
+<td>error</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>送れなかった理由</td>
+<td></td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>登録日時</td>
+<td></td>
+</tr>
+<tr>
+<td>sent_at</td>
+<td>TEXT</td>
+<td>○</td>
+<td></td>
+<td>送信した日時（送信済みのときだけ）</td>
+<td></td>
+</tr>
+<tr>
+<td>reply_to</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>返信先（Reply-To）。新着通知ではお客さまのメールアドレス</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-14">4.9 reply_templates（返信テンプレート）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>テンプレート名</td>
+<td>60文字</td>
+</tr>
+<tr>
+<td>subject</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>件名（差し込み項目を使える）</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>body</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>本文（差し込み項目を使える）</td>
+<td>20000文字</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時 / 更新日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>初期データ（版 2 で追加）: 「お問い合わせのお礼（ご相談の日程調整）」、「お見積りのご案内」の2件。</p>
+<h3 id="sec-15">4.10 blocklist（ブロックリスト）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>pattern</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>メールアドレス、または <code>@ドメイン</code>（小文字）</td>
+<td>一意・3〜254文字</td>
+</tr>
+<tr>
+<td>note</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>メモ</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>created_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>登録日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-16">4.11 estimates（見積書）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限・備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>number</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>見積番号 <code>Q-YYYYMM-NNN</code></td>
+<td>一意。作成時に採番し、変えない</td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>INTEGER</td>
+<td>○</td>
+<td></td>
+<td>関連するお問い合わせ</td>
+<td>外部キー → inquiries（削除時 SET NULL）</td>
+</tr>
+<tr>
+<td>customer_name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>お客さま名（様は付けない）</td>
+<td>100文字</td>
+</tr>
+<tr>
+<td>title</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>件名</td>
+<td>120文字</td>
+</tr>
+<tr>
+<td>issue_date</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>発行日</td>
+<td></td>
+</tr>
+<tr>
+<td>valid_until</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>有効期限</td>
+<td>発行日以降</td>
+</tr>
+<tr>
+<td>delivery</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>納期</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>payment_terms</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>お支払い条件</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>notes</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>備考</td>
+<td>2000文字</td>
+</tr>
+<tr>
+<td>tax_rate</td>
+<td>INTEGER</td>
+<td></td>
+<td><code>10</code></td>
+<td>消費税率（%）</td>
+<td>0〜100</td>
+</tr>
+<tr>
+<td>status</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;draft&#39;</code></td>
+<td><code>draft</code> 下書き / <code>sent</code> 送付済み / <code>accepted</code> 承諾 / <code>rejected</code> 不成立</td>
+<td></td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時 / 更新日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>小計・消費税・合計・入金済み・残額は保存せず、読むたびに明細と入金から計算します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）。</p>
+<h3 id="sec-17">4.12 estimate_items（見積書の明細）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>estimate_id</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>見積書の ID</td>
+<td>外部キー → estimates（削除時 CASCADE）</td>
+</tr>
+<tr>
+<td>description</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>内容</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>quantity</td>
+<td>REAL</td>
+<td></td>
+<td></td>
+<td>数量</td>
+<td>0 より大きく 100000 以下</td>
+</tr>
+<tr>
+<td>unit</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;式&#39;</code></td>
+<td>単位</td>
+<td>10文字</td>
+</tr>
+<tr>
+<td>unit_price</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>単価（円・税抜）</td>
+<td>0〜100,000,000</td>
+</tr>
+<tr>
+<td>sort_order</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>並び順（0から）</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>見積書を保存するたびに、その見積書の明細をすべて削除して入れ直します。</p>
+<h3 id="sec-18">4.13 payments（入金）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限・備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>receipt_number</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>領収書番号 <code>R-YYYYMM-NNN</code></td>
+<td>一意。作成時に採番し、変えない</td>
+</tr>
+<tr>
+<td>estimate_id</td>
+<td>INTEGER</td>
+<td>○</td>
+<td></td>
+<td>関連する見積書</td>
+<td>外部キー → estimates（削除時 SET NULL）</td>
+</tr>
+<tr>
+<td>customer_name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>お客さま名</td>
+<td>100文字</td>
+</tr>
+<tr>
+<td>description</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>但し書き</td>
+<td>200文字</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>金額（円・税込）</td>
+<td>1〜1,000,000,000</td>
+</tr>
+<tr>
+<td>method</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td><code>cash</code> 現金（手渡し）/ <code>card</code> クレジットカード / <code>bank</code> 銀行振込</td>
+<td></td>
+</tr>
+<tr>
+<td>paid_on</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>入金日</td>
+<td></td>
+</tr>
+<tr>
+<td>note</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>メモ（領収書に印刷しない）</td>
+<td>1000文字</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時 / 更新日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>領収書の発行日は、印刷し直しても変わらないように持ちます（※課題 No.2: 今は列がなく、印刷画面を開いた日を表示している）。</p>
+<h3 id="sec-19">4.14 contracts（保守契約）</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>列</th>
+<th>型</th>
+<th>NULL</th>
+<th>初期値</th>
+<th>内容</th>
+<th>API の制限・備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>INTEGER</td>
+<td></td>
+<td>連番</td>
+<td>主キー</td>
+<td></td>
+</tr>
+<tr>
+<td>inquiry_id</td>
+<td>INTEGER</td>
+<td>○</td>
+<td></td>
+<td>関連するお問い合わせ</td>
+<td>外部キー → inquiries（削除時 SET NULL）</td>
+</tr>
+<tr>
+<td>customer_name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>お客さま名</td>
+<td>100文字</td>
+</tr>
+<tr>
+<td>email</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>メールアドレス</td>
+<td>254文字</td>
+</tr>
+<tr>
+<td>site_name</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>サイト名</td>
+<td>100文字</td>
+</tr>
+<tr>
+<td>site_url</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>サイトの URL</td>
+<td>300文字</td>
+</tr>
+<tr>
+<td>monthly_fee</td>
+<td>INTEGER</td>
+<td></td>
+<td></td>
+<td>月額（円・税込）</td>
+<td>0〜10,000,000</td>
+</tr>
+<tr>
+<td>start_date</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>開始日</td>
+<td></td>
+</tr>
+<tr>
+<td>cancel_requested_on</td>
+<td>TEXT</td>
+<td>○</td>
+<td></td>
+<td>解約の申し出日</td>
+<td></td>
+</tr>
+<tr>
+<td>end_date</td>
+<td>TEXT</td>
+<td>○</td>
+<td></td>
+<td>終了日</td>
+<td>開始日以降</td>
+</tr>
+<tr>
+<td>note</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;&#39;</code></td>
+<td>メモ</td>
+<td>1000文字</td>
+</tr>
+<tr>
+<td>created_at / updated_at</td>
+<td>TEXT</td>
+<td></td>
+<td></td>
+<td>作成日時 / 更新日時</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>状態（契約中・解約予定・終了）は保存せず、読むたびに日付から判定します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 15章）。</p>
+<h2 id="sec-20">5. 外部キーと、削除したときの動き</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>削除するもの</th>
+<th>つながっている表</th>
+<th>動き</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>管理者（admins）</td>
+<td>admin_sessions</td>
+<td>一緒に削除（CASCADE）</td>
+</tr>
+<tr>
+<td>お問い合わせ（inquiries）</td>
+<td>inquiry_notes</td>
+<td>一緒に削除（CASCADE）</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>mail_outbox</td>
+<td><strong>仕様: 一緒に削除</strong>（※課題 No.1: 今は SET NULL で、行が残りひもづけだけ外れる）</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>estimates・contracts</td>
+<td>行は残し、ひもづけだけ外す（SET NULL）。見積書・契約はお金の記録なので残す</td>
+</tr>
+<tr>
+<td>見積書（estimates）</td>
+<td>estimate_items</td>
+<td>一緒に削除（CASCADE）</td>
+</tr>
+<tr>
+<td>〃</td>
+<td>payments</td>
+<td>行は残し、ひもづけだけ外す（SET NULL）</td>
+</tr>
+</tbody></table></div>
+<h2 id="sec-21">6. コード値</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>表.列</th>
+<th>値</th>
+<th>表示</th>
+<th>定義している場所</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>inquiries.status</td>
+<td><code>new</code> / <code>in_progress</code> / <code>quoted</code> / <code>contracted</code> / <code>done</code> / <code>declined</code></td>
+<td>未対応 / 対応中 / 見積送付済み / 契約済み / 対応済み / お断り</td>
+<td><code>shared/contact_options.json</code>（statuses）</td>
+</tr>
+<tr>
+<td>inquiries.topics</td>
+<td><code>python_react_fastapi</code></td>
+<td>Python(React/FastAPI)</td>
+<td>同上（topics）</td>
+</tr>
+<tr>
+<td>inquiries.initial_payment</td>
+<td><code>cash</code> / <code>card</code></td>
+<td>手渡し / クレジットカード</td>
+<td>同上（initial_payments）</td>
+</tr>
+<tr>
+<td>inquiries.monthly_payment</td>
+<td><code>card_auto</code> / <code>none</code></td>
+<td>クレジットカードの自動決済 / 保守プランなし</td>
+<td>同上（monthly_payments）</td>
+</tr>
+<tr>
+<td>inquiries.prefecture</td>
+<td>47都道府県の名前</td>
+<td>そのまま</td>
+<td>同上（prefectures）</td>
+</tr>
+<tr>
+<td>inquiry_notes.kind</td>
+<td><code>note</code> / <code>email</code> / <code>system</code></td>
+<td>メモ / メール / 記録</td>
+<td><code>inquiries.py</code>・画面</td>
+</tr>
+<tr>
+<td>mail_outbox.kind</td>
+<td><code>admin_notify</code> / <code>auto_reply</code> / <code>reply</code> / <code>test</code></td>
+<td>新着通知 / 自動返信 / 返信 / テスト</td>
+<td><code>mailer.py</code>・<code>lib/options.ts</code></td>
+</tr>
+<tr>
+<td>mail_outbox.status</td>
+<td><code>pending</code> / <code>sent</code> / <code>failed</code> / <code>skipped</code></td>
+<td>送信中 / 送信済み / 失敗 / 未送信</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>estimates.status</td>
+<td><code>draft</code> / <code>sent</code> / <code>accepted</code> / <code>rejected</code></td>
+<td>下書き / 送付済み / 承諾 / 不成立</td>
+<td><code>billing.py</code>・<code>lib/options.ts</code></td>
+</tr>
+<tr>
+<td>payments.method</td>
+<td><code>cash</code> / <code>card</code> / <code>bank</code></td>
+<td>現金（手渡し）/ クレジットカード / 銀行振込</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>保守契約の状態（計算）</td>
+<td><code>active</code> / <code>cancel_requested</code> / <code>ended</code></td>
+<td>契約中 / 解約予定 / 終了</td>
+<td>同上</td>
+</tr>
+</tbody></table></div>
+<p><code>shared/contact_options.json</code> の値（value）を変えると、保存済みのデータとラベルが合わなくなります。値を変えるときは、マイグレーションで保存済みのデータも置き換えます（版 4 が例）。</p>
+<h2 id="sec-22">7. settings のキー</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>キー</th>
+<th>値（JSON）</th>
+<th>初期値（保存がないとき）</th>
+<th>変える画面</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme</code></td>
+<td><code>{&quot;primary_color&quot;: &quot;#rrggbb&quot;}</code></td>
+<td><code>shared/site_defaults.json</code> の theme（<code>#1558c0</code>）</td>
+<td>A-12</td>
+</tr>
+<tr>
+<td><code>smtp</code></td>
+<td><code>{&quot;host&quot;, &quot;port&quot;, &quot;security&quot;, &quot;username&quot;, &quot;password&quot;, &quot;from_address&quot;, &quot;from_name&quot;}</code></td>
+<td><code>{&quot;host&quot;: &quot;&quot;, &quot;port&quot;: 587, &quot;security&quot;: &quot;starttls&quot;, &quot;username&quot;: &quot;&quot;, &quot;password&quot;: &quot;&quot;, &quot;from_address&quot;: &quot;&quot;, &quot;from_name&quot;: 初期の屋号}</code></td>
+<td>A-13</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td><code>{&quot;admin_notify&quot;, &quot;admin_to&quot;, &quot;auto_reply&quot;, &quot;auto_reply_subject&quot;, &quot;auto_reply_body&quot;, &quot;site_url&quot;}</code></td>
+<td>新着通知 あり・送り先 空（= 事業者のメール）・自動返信 あり・件名「【{business_name}】お問い合わせを受け付けました」・本文（<code>settings_store.py</code> の <code>DEFAULT_AUTO_REPLY_BODY</code>）・<code>site_url</code> は <code>http://127.0.0.1:5173</code></td>
+<td>A-13</td>
+</tr>
+<tr>
+<td><code>retention</code></td>
+<td><code>{&quot;enabled&quot;, &quot;months&quot;, &quot;statuses&quot;, &quot;spam_days&quot;}</code></td>
+<td><code>{&quot;enabled&quot;: false, &quot;months&quot;: 24, &quot;statuses&quot;: [&quot;done&quot;, &quot;declined&quot;], &quot;spam_days&quot;: 30}</code></td>
+<td>A-16</td>
+</tr>
+<tr>
+<td><code>retention.last_run</code></td>
+<td><code>{&quot;at&quot;: 日時, &quot;deleted&quot;: 件数}</code></td>
+<td>なし</td>
+<td>自動削除の実行時</td>
+</tr>
+<tr>
+<td><code>mail.method</code></td>
+<td><code>&quot;outlook&quot;</code> / <code>&quot;smtp&quot;</code></td>
+<td>なし（<code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> があれば outlook、なければ smtp とみなす）</td>
+<td>A-13</td>
+</tr>
+<tr>
+<td><code>admin.env_password_hash</code></td>
+<td><code>.env</code> のパスワードのハッシュ（文字列）</td>
+<td>なし</td>
+<td>起動時（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 6.5）</td>
+</tr>
+<tr>
+<td><code>content.business</code> など6つ</td>
+<td>サイト内容の各項目（<a href="04_API%E8%A8%AD%E8%A8%88.html">04</a> の SiteContent）</td>
+<td><code>shared/site_defaults.json</code> の同じ項目</td>
+<td>A-11</td>
+</tr>
+</tbody></table></div>
+<p>読み出すときの決まり（<code>settings_store.py</code>）:</p>
+<ul>
+<li><code>theme</code>・<code>smtp</code>・<code>notifications</code>・<code>retention</code> は、初期値に保存した値を上書きして返します。初期値にないキーは捨てます（項目を追加したときも、保存済みの設定がそのまま使えます）。</li>
+<li><code>content.*</code> は、保存した値をそのまま返します。保存がなければ初期値です。「初期値に戻す」は、この行を削除します。</li>
+</ul>
+<h2 id="sec-23">8. マイグレーション（表の作成・変更）</h2>
+<p><code>db.py</code> の <code>MIGRATIONS</code>（SQL のリスト）を、起動時に順番に実行します。どこまで実行したかは <code>PRAGMA user_version</code> に記録し、まだ実行していない版だけを実行します（保存済みのデータは残ります）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>版</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>最初の構成。<code>inquiries</code>、<code>admins</code>、<code>admin_sessions</code>、<code>idx_inquiries_created_at</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>inquiries.is_spam</code> と <code>idx_inquiries_status</code>、<code>inquiry_notes</code>、<code>settings</code>、<code>login_history</code>、<code>audit_logs</code>、<code>mail_outbox</code>、<code>reply_templates</code>（初期データ2件）、<code>blocklist</code>、<code>estimates</code>、<code>estimate_items</code>、<code>payments</code>、<code>contracts</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>mail_outbox.reply_to</code>（新着通知に返信すると、お客さまあてになるように）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ご相談内容の選択肢の値を変更し、保存済みのお問い合わせも新しい値に置き換え</td>
+</tr>
+</tbody></table></div>
+<p>追加するときの決まり:</p>
+<ul>
+<li>リストの<strong>最後に</strong>追加します。順番を変えたり、実行済みの版を書き換えたりしません。</li>
+<li>2つ以上の文があるときは <code>BEGIN;</code> 〜 <code>COMMIT;</code> で囲みます（途中で失敗したときに半分だけ変わらないように）。</li>
+</ul>
+<h2 id="sec-24">9. ファイルに保存するデータ</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>内容</th>
+<th>備考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data/uploads/{16進数24桁}.{png・jpg・gif・webp}</code></td>
+<td>管理画面でアップロードした画像</td>
+<td>名前はランダム。サイト内容から使われなくなっても自動では消さない</td>
+</tr>
+<tr>
+<td><code>data/microsoft-oauth.json</code></td>
+<td>Outlook のトークン <code>{&quot;access_token&quot;, &quot;refresh_token&quot;, &quot;expires_at&quot;（UNIX 秒）}</code></td>
+<td>権限 600。git 管理外。サインインの解除で削除</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td>API の設定（管理者のパスワードなど）</td>
+<td>権限 600（作成時）。git 管理外（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a>）</td>
+</tr>
+</tbody></table></div>
+
+<p class="doc-footer">このページは <code>docs/詳細設計書/05_DB設計.md</code> から作りました（2026-10-30）。内容を直すときは md を直して、HTML を作り直してください。</p>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous"></script>
+<script>
+  // Without the internet the diagram source text stays visible instead of the drawing.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'default', fontFamily: getComputedStyle(document.body).fontFamily })
+    mermaid.run({ querySelector: 'pre.mermaid' })
+  }
+</script>
+</body>
+</html>

@@ -4,12 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1558c0" />
+    <!-- 検索結果に出るタイトルと説明文です。タイトルを変えるときは src/content/home.ts の HOME_TITLE も同じ文言にしてください。 -->
+    <title>大阪・本町のホームページ制作｜Katachi（個人事業主・店舗・中小企業）</title>
     <meta
       name="description"
-      content="Katachi ホームページ制作。最初のご相談から公開まで、ひとりで責任をもって担当します。個人事業主さまから店舗、中小企業さままで、ホームページ制作をお受けしています。"
+      content="大阪・本町のホームページ制作 Katachi。個人事業主さま、飲食店やサロンなどの店舗、中小企業さまのホームページを、ご相談から公開まで私ひとりが担当します。大阪市を中心に、尼崎市・西宮市・伊丹市など（オンラインなら全国）に対応。ご相談・お見積りは無料です。"
     />
+    <!-- LINE や SNS で URL を送ったときの表示（OGP）です。画像（public/ogp.png）のタグは、.env.fastapi の SITE_URL を書くと自動で入ります。 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Katachi ホームページ制作" />
+    <meta property="og:title" content="大阪・本町のホームページ制作｜Katachi" />
+    <meta
+      property="og:description"
+      content="個人事業主さま・店舗・中小企業さまのホームページを、ご相談から公開まで私ひとりが担当します。ご相談・お見積りは無料です。"
+    />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Katachi ホームページ制作</title>
   </head>
   <body>
     <div id="root"></div>

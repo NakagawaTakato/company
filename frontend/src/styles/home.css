@@ -3,31 +3,106 @@
    ------------------------------------------------------------------ */
 
 /* ---------------------------------------------------------------- ヘッダー */
-.home-header {
-  padding-top: 24px;
+/* ヘッダーは画面上部に固定します（PC・タブレットはメニューごと、スマホはロゴとボタンの行だけ）。
+   --bar-h はロゴとボタンの行の高さ、--header-h は固定される部分全体の高さです。
+   メニューで各エリアへ移動したときに、見出しがヘッダーに隠れないよう --header-h の分だけずらします。 */
+.home {
+  --bar-h: 76px;
+  --header-h: 77px;
 }
 
-.home-nav {
+.home section[id] {
+  scroll-margin-top: var(--header-h);
+}
+
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--c-border);
+  background: #fff;
+}
+
+.home-header__inner {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1280px;
+  height: var(--bar-h);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.home-header__cta {
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 15px;
+}
+
+/* ページ内メニュー。PC では、ヘッダーのロゴとボタンの間に重ねて 1 行に見せます。
+   左右の余白（210px / 245px）は「端の余白 40px ＋ ロゴやボタンの幅 ＋ すき間」で、
+   メニューは残りの部分の真ん中に並びます。余白の部分はクリックがヘッダーに届くようにしています。 */
+.home-nav {
+  position: sticky;
+  top: 0;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 1280px;
+  height: calc(var(--bar-h) + 1px);
+  margin: calc(-1 * (var(--bar-h) + 1px)) auto 0;
+  padding: 0 245px 0 210px;
+  pointer-events: none;
 }
 
 .home-nav a {
-  color: var(--c-text);
-  font-size: 15px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  color: var(--c-ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
   text-decoration: none;
+  white-space: nowrap;
+  pointer-events: auto;
+  transition: color 0.15s;
+}
+
+/* スマホで 2 行になるときは「安心の｜お約束」のように、意味の切れ目で折り返します */
+.home-nav__phrase {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .home-nav a:hover {
   color: var(--c-primary);
-  text-decoration: underline;
+}
+
+/* 今見ているエリアのメニュー（青字＋下線） */
+.home-nav a[aria-current='location'] {
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+.home-nav a[aria-current='location']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--c-primary);
 }
 
 /* ---------------------------------------------------------------- ファーストビュー */
 .hero-wrap {
-  padding-top: 26px;
+  padding-top: 32px;
 }
 
 .hero {
@@ -665,6 +740,15 @@
   font-size: 15px;
 }
 
+/* 対応エリア（対応時間のすぐ下に並べます） */
+.hours--area {
+  margin-top: 12px;
+}
+
+.hours--area strong {
+  font-size: 18px;
+}
+
 .contact-note {
   margin-top: 24px;
   color: var(--c-text);
@@ -705,6 +789,33 @@
 }
 
 /* ---------------------------------------------------------------- タブレット・スマホ */
+/* 1 行に収まらない幅では、ロゴとボタンの行の下に、メニューを 1 行で固定します */
+@media (max-width: 1139px) {
+  .home {
+    --bar-h: 64px;
+    --header-h: 114px; /* 64px ＋ 線 1px ＋ メニュー 48px ＋ 線 1px */
+  }
+
+  .home-header__inner {
+    padding: 0 24px;
+  }
+
+  .home-nav {
+    top: calc(var(--bar-h) + 1px);
+    max-width: none;
+    height: 49px;
+    margin: 0;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--c-border);
+    background: #fff;
+    pointer-events: auto;
+  }
+
+  .home-nav a {
+    align-self: stretch;
+  }
+}
+
 @media (max-width: 960px) {
   .hero {
     grid-template-columns: 1fr;
@@ -716,6 +827,64 @@
 }
 
 @media (max-width: 760px) {
+  .home {
+    --bar-h: 60px;
+    --header-h: 61px;
+  }
+
+  .home-header__inner {
+    padding: 0 20px;
+  }
+
+  .home-header__cta {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  /* スマホ: メニューは固定せず、ヘッダーの下に 4 列×2 段のタイルで並べます */
+  .home-nav {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    height: auto;
+    margin: 14px 20px 0;
+    padding: 0;
+    border-bottom: 0;
+    background: none;
+  }
+
+  .home-nav a {
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 4px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .home-nav a:hover,
+  .home-nav a[aria-current='location'] {
+    border-color: var(--c-blue-3);
+    background: var(--c-tint-2);
+  }
+
+  .home-nav a[aria-current='location']::after {
+    display: none;
+  }
+
+  .hero-wrap {
+    padding-top: 20px;
+  }
+
   .hero {
     gap: 36px;
     padding: 40px 24px 36px;
@@ -807,5 +976,20 @@
   .flow-card__icon {
     top: 14px;
     right: 10px;
+  }
+}
+
+/* 幅の狭いスマホでも、ロゴの横にボタンが収まるように、アイコンを外して少し細くします */
+@media (max-width: 359px) {
+  .home-header__inner {
+    gap: 8px;
+  }
+
+  .home-header__cta {
+    padding: 0 14px;
+  }
+
+  .home-header__cta svg {
+    display: none;
   }
 }

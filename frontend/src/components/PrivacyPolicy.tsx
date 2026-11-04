@@ -1,3 +1,4 @@
+import { analyticsEnabled } from '../lib/analytics'
 import { useSite } from '../lib/SiteContext'
 
 /** お問い合わせフォーム内に表示する「個人情報の取扱い」です。 */
@@ -34,7 +35,26 @@ export function PrivacyPolicy() {
       <h4>5. 開示・訂正・削除のご依頼</h4>
       <p>ご本人からのご依頼があれば、ご本人であることを確認のうえ、開示・訂正・削除に対応します。</p>
 
-      <h4>6. お問い合わせ窓口</h4>
+      {/* Google アナリティクスの規約で、使っていることの説明が必要です（測定IDを入れたときだけ表示） */}
+      {analyticsEnabled && (
+        <>
+          <h4>6. アクセス解析について</h4>
+          <p>
+            当サイトでは、サイトの改善のために、Google が提供するアクセス解析ツール「Google アナリティクス」を使っています。Google
+            アナリティクスは Cookie を使って、見られたページやお使いの端末などの情報を集めます。お名前など、個人を特定する情報は含まれません。集めた情報の扱いは、
+            <a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener noreferrer">
+              Google のポリシー
+            </a>
+            をご覧ください。Cookie はブラウザの設定で無効にできるほか、
+            <a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener noreferrer">
+              Google アナリティクス オプトアウト アドオン
+            </a>
+            でも計測を止められます。
+          </p>
+        </>
+      )}
+
+      <h4>{analyticsEnabled ? 7 : 6}. お問い合わせ窓口</h4>
       <p>
         {business.business_name}　{business.owner}
         <br />

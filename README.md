@@ -102,6 +102,9 @@ API の説明ページ（http://127.0.0.1:8000/api/docs）も見られます。h
 | 事業者情報（電話番号、メール、LINE の URL など） | `frontend/src/lib/site.ts` |
 | トップページの文章（経歴、料金、よくある質問など） | `frontend/src/content/home.ts` |
 | フォームの選択肢（ご相談内容、支払い方法、都道府県） | `shared/contact_options.json` |
+| 検索結果に出るタイトル・説明文 | `frontend/index.html`（トップのタブ名は `frontend/src/content/home.ts` の `HOME_TITLE` も同じ文言に） |
+| 対応エリア | `frontend/src/content/home.ts` の `SERVICE_AREA`（`frontend/index.html` の説明文の地名もそろえる） |
+| LINE や SNS で URL を送ったときの画像（OGP） | `frontend/public/ogp.png`（1200×630。管理画面でテーマ色を変えても、この画像の色は変わりません） |
 | 事業者情報ページの文章 | `frontend/src/pages/TokushohoPage.tsx` |
 | 個人情報の取扱いの文章 | `frontend/src/components/PrivacyPolicy.tsx` |
 | API の呼び出し方 | `frontend/src/api/client.ts` |
@@ -121,6 +124,10 @@ tests/run_api_tests.sh
 
 - 画面はビルドして、静的ファイルとして公開します。API の公開 URL を指定してビルドしてください。
   `VITE_API_BASE_URL=https://api.example.com npm run build:fastapi`（出力先は `frontend/dist/`）
+- ビルドの前に、`frontend/.env.fastapi` の `SITE_URL` に公開する画面の URL（例：`https://www.example.com`）を書いてください。
+  LINE や SNS で URL を送ったときに画像（`ogp.png`）が出るようになります。空のままでもサイトは動きます。
+- アクセス数を計測するときは、Google アナリティクス（GA4）の測定ID（`G-` で始まる）を `frontend/.env.fastapi` の `VITE_GA_ID` に書いてからビルドしてください。
+  手元での確認（localhost / 127.0.0.1）と管理画面は計測しません。測定IDを書くと、お問い合わせフォームの「個人情報の取扱い」にアクセス解析の説明が出ます。
 - `.env` の `FRONTEND_ORIGINS` に、公開する画面の URL（例：`https://www.example.com`）を設定してください。
 - ログインの Cookie を使うため、画面と API は同じドメインの配下にしてください（例：`www.example.com` と `api.example.com`）。
 - HTTPS で公開し、`.env` の `COOKIE_SECURE=true` にしてください。

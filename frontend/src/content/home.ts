@@ -18,7 +18,15 @@ import {
   MdSubtitles,
 } from 'react-icons/md'
 
-export type NavItem = { label: string; href?: string; to?: string }
+// トップページのタブ名（検索結果に出るタイトル）です。index.html の <title> と同じ文言にしてください。
+export const HOME_TITLE = '大阪・本町のホームページ制作｜Katachi（個人事業主・店舗・中小企業）'
+
+// 対応エリアです（ページ下の「ご相談」欄に出ます）。index.html の説明文にも地名があるので、変えるときはそちらもそろえてください。
+export const SERVICE_AREA = { main: '大阪市・尼崎市・西宮市・伊丹市など', note: 'オンラインなら全国' }
+
+// ページ上部のメニューです（押すとページ内の各エリアへ移動します）。
+// 半角スペースは、スマホで2行に折り返すときの区切りの位置です（画面には表示されません）。
+export type NavItem = { label: string; href: string }
 
 export const NAV: NavItem[] = [
   { label: '特長', href: '#strength' },
@@ -26,12 +34,13 @@ export const NAV: NavItem[] = [
   { label: '経歴', href: '#profile' },
   { label: '制作実績', href: '#works' },
   { label: '料金', href: '#price' },
-  { label: '安心のお約束', href: '#trust' },
-  { label: '制作の流れ', href: '#flow' },
-  { label: 'よくある質問', href: '#faq' },
-  { label: 'ご相談', href: '#contact' },
-  { label: 'お問い合わせ', to: '/contact' },
+  { label: '安心の お約束', href: '#trust' },
+  { label: '制作の 流れ', href: '#flow' },
+  { label: 'よくある 質問', href: '#faq' },
 ]
+
+// ヘッダー右上のボタンです（押すとページ下の「ご相談」エリアへ移動します）
+export const HEADER_CTA = { label: 'ご相談はこちら', href: '#contact' }
 
 export const SKILLS = ['Python', 'React', 'Laravel / PHP', 'C / C++', 'C# / Unity']
 
@@ -163,7 +172,7 @@ export const CAREER: CareerItem[] = [
       },
       {
         label: '後半6か月',
-        text: 'フロントエンドはReactで開発を担当しました。あわせて、詳細設計書の修正と作成も経験しました。',
+        text: '役割を分担し、フロントエンド(React)は私が、バックエンド(Python/FastAPI)は東京大学卒業のエンジニアが担当しました。あわせて、詳細設計書の修正と作成も経験しました。',
       },
     ],
   },
