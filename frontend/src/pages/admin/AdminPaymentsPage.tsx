@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { MdAdd, MdDelete, MdEdit, MdReceipt, MdSearch } from 'react-icons/md'
+import { MdAdd, MdDelete, MdDownload, MdEdit, MdReceipt, MdSearch } from 'react-icons/md'
 import { Link, useSearchParams } from 'react-router'
 import { api, type Payment, type PaymentInput } from '../../api/client'
 import { Card, Empty, Field, Notice, PageHeader, Pagination, useAction, useLoader } from '../../components/admin/ui'
@@ -25,6 +25,7 @@ export function AdminPaymentsPage() {
   const { data, error, reload } = useLoader(() => api.payments({ q, page }), [q, page])
   const { data: estimates } = useLoader(() => api.estimates({ per_page: 100 }), [])
   const action = useAction()
+  const csv = useAction()
   const [keyword, setKeyword] = useState(q)
   const [editing, setEditing] = useState<Payment | 'new' | null>(params.get('new') ? 'new' : null)
   const [form, setForm] = useState<PaymentInput>(blank)
@@ -102,15 +103,26 @@ export function AdminPaymentsPage() {
         lead="入金を記録すると領収書番号が自動で付き、領収書を印刷・PDFで保存できます。"
         actions={
           !editing && (
-            <button type="button" className="btn btn--primary btn--small" onClick={startNew}>
-              <MdAdd aria-hidden="true" />
-              入金を記録
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn btn--outline btn--small"
+                onClick={() => csv.run(() => api.downloadPaymentsCsv({ q }))}
+                disabled={csv.busy}
+              >
+                <MdDownload aria-hidden="true" />
+                {csv.busy ? '作成中…' : 'CSVダウンロード'}
+              </button>
+              <button type="button" className="btn btn--primary btn--small" onClick={startNew}>
+                <MdAdd aria-hidden="true" />
+                入金を記録
+              </button>
+            </>
           )
         }
       />
       <Notice kind="success">{action.message}</Notice>
-      {!editing && <Notice kind="error">{action.error}</Notice>}
+      {!editing && <Notice kind="error">{action.error || csv.error}</Notice>}
 
       {editing && (
         <Card title={editing === 'new' ? '入金を記録' : `入金の記録を編集（${editing.receipt_number}）`}>

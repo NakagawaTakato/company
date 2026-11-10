@@ -307,6 +307,8 @@ def test_public(c: Client) -> None:
         ("GET", "/api/admin/dashboard"),
         ("PUT", "/api/admin/theme"),
         ("GET", "/api/admin/estimates"),
+        ("GET", "/api/admin/estimates.csv"),
+        ("GET", "/api/admin/payments.csv"),
         ("GET", "/api/admin/backup"),
         ("POST", "/api/admin/uploads"),
     ):
@@ -369,7 +371,7 @@ def test_inquiries(c: Client) -> int:
 
     tid = taro["id"]
     status, body = c.json("GET", f"/api/admin/inquiries/{tid}")
-    check("詳細にメモ・送信メール・見積書・保守契約が付く", status == 200 and {"notes", "mails", "estimates", "contracts"} <= set(body), body)
+    check("詳細にメモ・送信メール・見積書・おまかせ管理プランが付く", status == 200 and {"notes", "mails", "estimates", "contracts"} <= set(body), body)
     check("詳細: ID が数字でなければ 404", c.json("GET", "/api/admin/inquiries/abc")[0] == 404)
     check("詳細: 存在しない ID は 404", c.json("GET", "/api/admin/inquiries/999999")[0] == 404)
     status, body = c.json("PATCH", f"/api/admin/inquiries/{tid}", {"status": "bad"})
@@ -695,7 +697,7 @@ def test_theme_and_content(c: Client) -> None:
     check("初期値に戻す", status == 200 and not any(body["customized"].values()) and len(body["content"]["faq"]) == 8, body.get("customized"))
 
 
-# ------------------------------------------------------------------ 見積書・入金・保守契約
+# ------------------------------------------------------------------ 見積書・入金・おまかせ管理プラン
 
 def test_billing(c: Client, tid: int) -> None:
     print("[見積書]")
@@ -752,7 +754,7 @@ def test_billing(c: Client, tid: int) -> None:
     status, body = c.json("GET", "/api/admin/payments")
     check("入金の一覧と合計", status == 200 and body["total_amount"] >= 35750, body.get("total_amount"))
 
-    print("[保守契約]")
+    print("[おまかせ管理プラン]")
     contract = {
         "customer_name": "テスト 太郎", "email": "taro@example.com", "site_name": "テスト商店", "site_url": "https://example.com",
         "monthly_fee": 5000, "start_date": "2026-10-01", "note": "", "inquiry_id": tid,
@@ -760,7 +762,7 @@ def test_billing(c: Client, tid: int) -> None:
     status, body = c.json("POST", "/api/admin/contracts", {**contract, "site_url": "ftp://x"})
     check("サイトの URL の形式エラーは 422", status == 422 and "site_url" in body.get("errors", {}), body)
     status, created_c = c.json("POST", "/api/admin/contracts", contract)
-    check("保守契約を登録（契約中）", status == 201 and created_c["status"] == "active", created_c)
+    check("おまかせ管理プランを登録（契約中）", status == 201 and created_c["status"] == "active", created_c)
     status, body = c.json("GET", "/api/admin/dashboard")
     check(
         "ダッシュボードの集計",
@@ -771,12 +773,32 @@ def test_billing(c: Client, tid: int) -> None:
     status, body = c.json("POST", f"/api/admin/contracts/{created_c['id']}/cancel", {"requested_on": "2026-12-15"})
     check("解約の申し出 → 翌月末で終了", status == 200 and body["end_date"] == "2027-01-31" and body["status"] == "cancel_requested", body)
     status, body = c.json("GET", "/api/admin/contracts")
-    check("保守契約の一覧（状態ごとの件数）", status == 200 and body["counts"]["cancel_requested"] >= 1, body.get("counts"))
+    check("おまかせ管理プランの一覧（状態ごとの件数）", status == 200 and body["counts"]["cancel_requested"] >= 1, body.get("counts"))
+
+    print("[見積書・入金の CSV]")
+    for path, name, header, expect in (
+        (f"/api/admin/estimates.csv?status=accepted&q={urllib.parse.quote('テスト')}", "estimates_", "見積番号", created["number"]),
+        (f"/api/admin/payments.csv?q={urllib.parse.quote(paid['receipt_number'])}", "payments_", "領収書番号", paid["receipt_number"]),
+    ):
+        status, headers, content = c.request("GET", path)
+        text = content.decode("utf-8", "replace")
+        rows = text.strip().split("\r\n")
+        check(
+            f"{name}CSV を取得（BOM 付き・ファイル名・見出し）",
+            status == 200 and headers.get("content-type", "").startswith("text/csv")
+            and name in headers.get("content-disposition", "") and text.startswith(f'\ufeff"{header}"'),
+            (status, headers.get("content-disposition"), text[:80]),
+        )
+        check(f"{name}CSV は一覧と同じ条件で絞り込める", len(rows) >= 2 and all(expect in r for r in rows[1:]), rows[:3])
+    status, _, content = c.request("GET", "/api/admin/estimates.csv?status=accepted")
+    check("見積書の CSV に明細と入金済み・残額が入る", "デザイン 1.5式 × 10,000円 = 15,000円" in content.decode("utf-8") and '"35750","35750"' in content.decode("utf-8"), "")
+    status, _, _ = c.request("GET", "/api/admin/estimates.csv?status=bad")
+    check("CSV も状態の指定が正しくなければ 400", status == 400, status)
 
     status, body = c.json("DELETE", f"/api/admin/payments/{paid['id']}")
     check("入金の記録を削除", status == 200, body)
     status, body = c.json("DELETE", f"/api/admin/contracts/{created_c['id']}")
-    check("保守契約を削除", status == 200, body)
+    check("おまかせ管理プランを削除", status == 200, body)
     status, body = c.json("DELETE", f"/api/admin/estimates/{eid}")
     check("見積書を削除", status == 200 and c.json("GET", f"/api/admin/estimates/{eid}")[0] == 404, body)
 

@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 接続先 | 開発: `http://127.0.0.1:8000`。画面は `frontend/.env.fastapi` の `VITE_API_BASE_URL` を使う |
-| 形式 | リクエスト・レスポンスとも JSON（UTF-8）。例外は CSV（API-11）、zip（API-21）、画像のアップロード（API-35）、画像の取得（API-05） |
+| 形式 | リクエスト・レスポンスとも JSON（UTF-8）。例外は CSV（API-11・API-70・API-71）、zip（API-21）、画像のアップロード（API-35）、画像の取得（API-05） |
 | 画面からの呼び方 | `fetch` に `credentials: 'include'`（Cookie を送る）。`Accept: application/json`、本文があれば `Content-Type: application/json`（`api/client.ts`） |
 | 説明ページ | `/api/docs`（Swagger UI）、`/api/openapi.json`。API-01・API-05 は載せていない |
 | 定義されていないパス | 404 `{"message": "見つかりません。"}` |
@@ -41,7 +41,7 @@
 | コード | 意味 | 主な場合 |
 | --- | --- | --- |
 | 200 | 成功 | 取得・変更・削除 |
-| 201 | 作成した | お問い合わせの受付、メモ・テンプレート・ブロック・見積書・入金・保守契約の追加、画像のアップロード |
+| 201 | 作成した | お問い合わせの受付、メモ・テンプレート・ブロック・見積書・入金・おまかせ管理プランの追加、画像のアップロード |
 | 400 | リクエストが正しくない | 本文が JSON のオブジェクトでない、絞り込みの値が正しくない、メールを送れなかった、サインインの期限切れ |
 | 401 | 未ログイン | ログインが必要な API を Cookie なしで呼んだ、ログインに失敗した |
 | 404 | 見つからない | ID が数字でない・存在しない、定義されていないパス |
@@ -158,12 +158,14 @@
 | API-61 | GET | `/api/admin/payments/{id}` | 入金の詳細 | 必要 |
 | API-62 | PUT | `/api/admin/payments/{id}` | 入金の記録を変える | 必要 |
 | API-63 | DELETE | `/api/admin/payments/{id}` | 入金の記録を削除する | 必要 |
-| API-64 | GET | `/api/admin/contracts` | 保守契約の一覧 | 必要 |
-| API-65 | POST | `/api/admin/contracts` | 保守契約を登録する | 必要 |
-| API-66 | GET | `/api/admin/contracts/{id}` | 保守契約の詳細（画面からは使っていない） | 必要 |
-| API-67 | PUT | `/api/admin/contracts/{id}` | 保守契約を変える | 必要 |
+| API-64 | GET | `/api/admin/contracts` | おまかせ管理プランの一覧 | 必要 |
+| API-65 | POST | `/api/admin/contracts` | おまかせ管理プランを登録する | 必要 |
+| API-66 | GET | `/api/admin/contracts/{id}` | おまかせ管理プランの詳細（画面からは使っていない） | 必要 |
+| API-67 | PUT | `/api/admin/contracts/{id}` | おまかせ管理プランを変える | 必要 |
 | API-68 | POST | `/api/admin/contracts/{id}/cancel` | 解約の申し出を登録する | 必要 |
-| API-69 | DELETE | `/api/admin/contracts/{id}` | 保守契約を削除する | 必要 |
+| API-69 | DELETE | `/api/admin/contracts/{id}` | おまかせ管理プランを削除する | 必要 |
+| API-70 | GET | `/api/admin/estimates.csv` | 見積書の CSV | 必要 |
+| API-71 | GET | `/api/admin/payments.csv` | 入金の CSV | 必要 |
 
 ## 3. 共通のデータの形
 
@@ -192,7 +194,7 @@ Inquiry の項目に、次を加えたものです。
 | notes | Note の配列（新しい順） |
 | mails | このお問い合わせの送信履歴（新しい順）。`id, kind, to_addr, subject, status, error, created_at, sent_at` |
 | estimates | 関連する見積書（発行日の新しい順・50件まで）。`id, number, title, total, status, issue_date` |
-| contracts | 関連する保守契約（開始日の新しい順）。`id, site_name, monthly_fee, status, start_date` |
+| contracts | 関連するおまかせ管理プラン（開始日の新しい順）。`id, site_name, monthly_fee, status, start_date` |
 
 ### Note（メモ・記録）
 
@@ -231,7 +233,7 @@ Inquiry の項目に、次を加えたものです。
 | paid_on | 日付 | 入金日 |
 | created_at / updated_at | 日時 | |
 
-### Contract（保守契約）
+### Contract（おまかせ管理プラン）
 
 | 項目 | 型 | 内容 |
 | --- | --- | --- |
@@ -428,7 +430,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 #### API-14 DELETE `/api/admin/inquiries/{id}`（お問い合わせを削除する）
 
-処理: お問い合わせを削除します。**メモ・記録（inquiry_notes）と、このお問い合わせの送信履歴（mail_outbox）も削除します**（※課題 No.1: 今は送信履歴が残り、お問い合わせとのひもづけだけが外れる）。見積書・保守契約は残し、お問い合わせとのひもづけだけを外します。操作の記録「お問い合わせを削除」。
+処理: お問い合わせを削除します。**メモ・記録（inquiry_notes）と、このお問い合わせの送信履歴（mail_outbox）も削除します**（※課題 No.1: 今は送信履歴が残り、お問い合わせとのひもづけだけが外れる）。見積書・おまかせ管理プランは残し、お問い合わせとのひもづけだけを外します。操作の記録「お問い合わせを削除」。
 
 応答 200: `{"ok": true}`。見つからないときは 404。
 
@@ -466,8 +468,8 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 | this_month / last_month | 今月・先月のお問い合わせの件数 |
 | monthly | 直近12か月の `[{"month": "YYYY-MM", "count": n}]`（古い月から） |
 | recent_new | 未対応のお問い合わせ（新しい順・5件）。Inquiry の配列 |
-| contracts_active / contracts_ending | 終了していない保守契約の件数 / そのうち解約予定の件数 |
-| monthly_revenue | 終了していない、開始済みの保守契約の月額の合計 |
+| contracts_active / contracts_ending | 終了していないおまかせ管理プランの件数 / そのうち解約予定の件数 |
+| monthly_revenue | 終了していない、開始済みのおまかせ管理プランの月額の合計 |
 | payments_this_month | 入金日が今月1日以降の入金の合計 |
 | outstanding | 状態が「承諾」の見積書の残額の合計 |
 | estimates_open | 状態が「下書き」「送付済み」の見積書の件数 |
@@ -708,6 +710,8 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 並び順は発行日の新しい順（同じ日は ID の大きい順）。items は Estimate（`items` なし）です。
 
+**API-70 GET `/api/admin/estimates.csv`（見積書の CSV）**: パラメータ `q`・`status` は API-54 と同じ（ページ分けなし・明細つき）。応答 200: `Content-Type: text/csv; charset=utf-8`、`Content-Disposition: attachment; filename="estimates_YYYYMMDD_HHMMSS.csv"`（日時は日本時間）。中身は [06](06_処理設計.md) 10章。操作の記録「見積書を CSV で出力」（{n} 件）。
+
 #### API-55 POST `/api/admin/estimates`（見積書を作成する）
 
 見積番号を採番して保存します（[06](06_処理設計.md) 13章）。応答 201: Estimate（`items` つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。
@@ -747,6 +751,8 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 並び順は入金日の新しい順。応答はページ分けの形に `total_amount`（**検索条件に合う入金すべての合計**。ページに関係なく計算）を加えたものです。
 
+**API-71 GET `/api/admin/payments.csv`（入金の CSV）**: パラメータ `q` は API-59 と同じ（ページ分けなし）。応答 200: `Content-Type: text/csv; charset=utf-8`、`Content-Disposition: attachment; filename="payments_YYYYMMDD_HHMMSS.csv"`（日時は日本時間）。中身は [06](06_処理設計.md) 10章。操作の記録「入金の記録を CSV で出力」（{n} 件）。
+
 #### API-60 POST `/api/admin/payments`（入金を記録する）
 
 領収書番号を採番して保存します（[06](06_処理設計.md) 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。
@@ -763,7 +769,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 応答 200 `{"ok": true}`。操作の記録「入金の記録を削除」。
 
-### 4.14 保守契約
+### 4.14 おまかせ管理プラン
 
 #### 本文（API-65・API-67 共通）
 
@@ -780,7 +786,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 | note | 文字列 | − | 1000文字まで |
 | inquiry_id | 整数 / null | − | 指定したお問い合わせがあること |
 
-#### API-64 GET `/api/admin/contracts`（保守契約の一覧）
+#### API-64 GET `/api/admin/contracts`（おまかせ管理プランの一覧）
 
 | パラメータ | 内容 |
 | --- | --- |
@@ -791,16 +797,16 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 応答 200: `{"items": Contract の配列, "monthly_revenue": 終了していない・開始済みの契約の月額の合計, "counts": {"active": n, "cancel_requested": n, "ended": n}}`（`monthly_revenue` と `counts` は絞り込みに関係なく全体で計算）
 
-#### API-65 POST `/api/admin/contracts`（保守契約を登録する）
+#### API-65 POST `/api/admin/contracts`（おまかせ管理プランを登録する）
 
-応答 201: Contract。操作の記録「保守契約を登録」（「{お客さま名} 様 {サイト名} 月額{金額}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「保守契約「{サイト名}」を登録」を追加します。
+応答 201: Contract。操作の記録「おまかせ管理プランを登録」（「{お客さま名} 様 {サイト名} 月額{金額}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「おまかせ管理プラン「{サイト名}」を登録」を追加します。
 
 #### API-66 GET `/api/admin/contracts/{id}`・API-67 PUT（詳細・変更）・API-69 DELETE（削除）
 
-見つからないときは 404「保守契約が見つかりません。」。変更・削除は操作の記録「保守契約を変更 / 保守契約を削除」。
+見つからないときは 404「おまかせ管理プランが見つかりません。」。変更・削除は操作の記録「おまかせ管理プランを変更 / おまかせ管理プランを削除」。
 
 #### API-68 POST `/api/admin/contracts/{id}/cancel`（解約の申し出を登録する）
 
 本文: `{"requested_on"?: 日付}`（省略時は今日・日本時間）
 
-申し出日を保存し、終了日を**申し出日の翌月末**にします（[06](06_処理設計.md) 15章）。応答 200: Contract。操作の記録「保守契約の解約申し出を登録」（「{お客さま名} 様 {サイト名}（{終了日} で終了）」）。
+申し出日を保存し、終了日を**申し出日の翌月末**にします（[06](06_処理設計.md) 15章）。応答 200: Contract。操作の記録「おまかせ管理プランの解約申し出を登録」（「{お客さま名} 様 {サイト名}（{終了日} で終了）」）。

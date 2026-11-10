@@ -78,7 +78,7 @@ function validate(form: FormState, agreed: boolean): Errors {
   }
 
   if (!form.initial_payment) errors.initial_payment = '初期費用のお支払い方法を選択してください。'
-  if (!form.monthly_payment) errors.monthly_payment = '月額(保守プラン)のお支払い方法を選択してください。'
+  if (!form.monthly_payment) errors.monthly_payment = '月額(おまかせ管理プラン)のお支払い方法を選択してください。'
   if (!agreed) errors.agreed = '「個人情報の取扱い」への同意が必要です。'
   return errors
 }
@@ -329,11 +329,11 @@ export function ContactPage() {
 
         <Field
           id="monthly_payment"
-          label="月額5,000円(税込・保守プラン)のお支払い方法"
+          label="月額5,000円(税込・おまかせ管理プラン)のお支払い方法"
           required
           error={errors.monthly_payment}
           group
-          help="保守プランをご希望の方は、「クレジットカードの自動決済」をお選びください。ご不要の方は、「保守プランなし」をお選びください。カード番号などは、このフォームには入力しないでください。決済の手続きは、あらためてご案内します。"
+          help="おまかせ管理プランをご希望の方は、「クレジットカードの自動決済」をお選びください。ご不要の方は、「おまかせ管理プランなし」をお選びください。カード番号などは、このフォームには入力しないでください。決済の手続きは、あらためてご案内します。"
         >
           <div className="choices">
             {MONTHLY_PAYMENTS.map((option, index) => (

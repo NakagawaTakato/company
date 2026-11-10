@@ -151,7 +151,7 @@ a:hover { text-decoration-thickness: 2px; }
 <p>ひとりで営むホームページ制作の事業（屋号: Katachi ホームページ制作）の公式サイトです。</p>
 <ul>
 <li><strong>お客さま</strong>は公開サイトで事業の内容・料金・経歴を見て、お問い合わせフォームまたは LINE で相談します。</li>
-<li><strong>管理者</strong>（事業者本人の1人）は管理画面で、お問い合わせへの対応から、見積書・入金（領収書）・保守契約の管理、公開サイトの文章や色の変更までを行います。</li>
+<li><strong>管理者</strong>（事業者本人の1人）は管理画面で、お問い合わせへの対応から、見積書・入金（領収書）・おまかせ管理プランの管理、公開サイトの文章や色の変更までを行います。</li>
 <li>フロントエンド（画面）は React（TypeScript・Vite）、バックエンド（API）は Python の FastAPI で作り、データは SQLite のデータベースに保存しています。</li>
 </ul>
 <h2 id="sec-3">2. 全体の構成</h2>
@@ -422,13 +422,14 @@ a:hover { text-decoration-thickness: 2px; }
     contact[&quot;contact.py&lt;br&gt;公開サイト&quot;]
     admin[&quot;admin.py&lt;br&gt;ログイン・お問い合わせ&quot;]
     manage[&quot;admin_manage.py&lt;br&gt;設定・履歴・データ管理&quot;]
-    billing_r[&quot;admin_billing.py&lt;br&gt;見積書・入金・保守契約&quot;]
+    billing_r[&quot;admin_billing.py&lt;br&gt;見積書・入金・おまかせ管理プラン&quot;]
   end
   subgraph L[&quot;業務の処理&quot;]
     inquiries[&quot;inquiries.py&quot;]
     mailer[&quot;mailer.py&quot;]
     outlook[&quot;outlook.py&quot;]
     billing[&quot;billing.py&quot;]
+    billing_csv[&quot;billing_csv.py&quot;]
     dashboard[&quot;dashboard.py&quot;]
     maintenance[&quot;maintenance.py&quot;]
     settings_store[&quot;settings_store.py&quot;]
@@ -496,7 +497,11 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>billing.py</code></td>
-<td>見積書・入金・保守契約。金額の計算、番号の採番、保守契約の状態の判定、解約日の計算</td>
+<td>見積書・入金・おまかせ管理プラン。金額の計算、番号の採番、おまかせ管理プランの状態の判定、解約日の計算</td>
+</tr>
+<tr>
+<td><code>billing_csv.py</code></td>
+<td>見積書・入金の CSV 出力（列の並びとラベル）</td>
 </tr>
 <tr>
 <td><code>dashboard.py</code></td>
@@ -532,7 +537,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>routers/admin_billing.py</code></td>
-<td>見積書・入金・保守契約の API</td>
+<td>見積書・入金・おまかせ管理プランの API（見積書・入金の CSV ダウンロードを含む）</td>
 </tr>
 </tbody></table></div>
 <h3 id="sec-13">6.2 画面（frontend/src）</h3>
@@ -609,7 +614,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>components/ScrollManager.tsx</code></td>
-<td>画面を移動したときのスクロール</td>
+<td>画面を移動したときのスクロール、リロード時の位置の復元</td>
 </tr>
 <tr>
 <td><code>components/PrivacyPolicy.tsx</code></td>

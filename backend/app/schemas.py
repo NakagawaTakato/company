@@ -83,7 +83,7 @@ class ContactRequest(BaseModel):
     prefecture: str = Field(description="お住まい（都道府県）", examples=["兵庫県"])
     age: str = Field(default="", description="ご年齢（任意）", examples=["30"])
     initial_payment: str = Field(description="初期費用のお支払い方法", examples=["cash"])
-    monthly_payment: str = Field(description="月額(保守プラン)のお支払い方法", examples=["none"])
+    monthly_payment: str = Field(description="月額(おまかせ管理プラン)のお支払い方法", examples=["none"])
     agreed: bool = Field(description="「個人情報の取扱い」への同意", examples=[True])
     website: str = Field(default="", description="迷惑送信対策の隠し欄（通常は空）")
 
@@ -290,7 +290,7 @@ class Testimonial(Model):
     published: bool = True
 
 
-# ------------------------------------------------------------------ 管理画面: 見積書・入金・保守契約
+# ------------------------------------------------------------------ 管理画面: 見積書・入金・おまかせ管理プラン
 
 class EstimateItemIn(Model):
     description: str = Field(min_length=1, max_length=200)

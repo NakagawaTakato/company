@@ -369,6 +369,8 @@ export const api = {
   createEstimate: (body: EstimateInput) => request<Estimate>('POST', `${admin}/estimates`, body),
   updateEstimate: (id: number, body: EstimateInput) => request<EstimateDetail>('PUT', `${admin}/estimates/${id}`, body),
   deleteEstimate: (id: number) => request<{ ok: boolean }>('DELETE', `${admin}/estimates/${id}`),
+  downloadEstimatesCsv: (filter: { q?: string; status?: string }) =>
+    download(`${admin}/estimates.csv${query(filter)}`, 'estimates.csv'),
 
   // 入金・領収書
   payments: (filter: { q?: string; page?: number }) =>
@@ -377,8 +379,9 @@ export const api = {
   createPayment: (body: PaymentInput) => request<Payment>('POST', `${admin}/payments`, body),
   updatePayment: (id: number, body: PaymentInput) => request<Payment>('PUT', `${admin}/payments/${id}`, body),
   deletePayment: (id: number) => request<{ ok: boolean }>('DELETE', `${admin}/payments/${id}`),
+  downloadPaymentsCsv: (filter: { q?: string }) => download(`${admin}/payments.csv${query(filter)}`, 'payments.csv'),
 
-  // 保守契約
+  // おまかせ管理プラン
   contracts: (filter: { q?: string; status?: string }) =>
     request<{ items: Contract[]; monthly_revenue: number; counts: Record<string, number> }>(
       'GET',

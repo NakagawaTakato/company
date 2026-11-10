@@ -187,7 +187,7 @@ def export_csv(
     )
 
 
-@router.get("/inquiries/{inquiry_id}", responses=schemas.AUTH_RESPONSES, summary="お問い合わせの詳細（メモ・送信メール・関連する見積書と保守契約）")
+@router.get("/inquiries/{inquiry_id}", responses=schemas.AUTH_RESPONSES, summary="お問い合わせの詳細（メモ・送信メール・関連する見積書とおまかせ管理プラン）")
 def get_inquiry(
     inquiry_id: str,
     _: sqlite3.Row = Depends(require_admin),

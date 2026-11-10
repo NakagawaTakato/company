@@ -182,7 +182,7 @@ a:hover { text-decoration-thickness: 2px; }
   inquiries ||--o{ inquiry_notes : &quot;メモ・記録&quot;
   inquiries |o--o{ mail_outbox : &quot;送ったメール&quot;
   inquiries |o--o{ estimates : &quot;見積書&quot;
-  inquiries |o--o{ contracts : &quot;保守契約&quot;
+  inquiries |o--o{ contracts : &quot;おまかせ管理プラン&quot;
   estimates ||--|{ estimate_items : &quot;明細&quot;
   estimates |o--o{ payments : &quot;入金&quot;
 
@@ -356,7 +356,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>14</td>
 <td><code>contracts</code></td>
-<td>保守契約</td>
+<td>おまかせ管理プラン</td>
 <td>2</td>
 </tr>
 </tbody></table></div>
@@ -1246,7 +1246,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>領収書の発行日は、印刷し直しても変わらないように持ちます（※課題 No.2: 今は列がなく、印刷画面を開いた日を表示している）。</p>
-<h3 id="sec-19">4.14 contracts（保守契約）</h3>
+<h3 id="sec-19">4.14 contracts（おまかせ管理プラン）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1427,7 +1427,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>inquiries.monthly_payment</td>
 <td><code>card_auto</code> / <code>none</code></td>
-<td>クレジットカードの自動決済 / 保守プランなし</td>
+<td>クレジットカードの自動決済 / おまかせ管理プランなし</td>
 <td>同上（monthly_payments）</td>
 </tr>
 <tr>
@@ -1467,7 +1467,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>同上</td>
 </tr>
 <tr>
-<td>保守契約の状態（計算）</td>
+<td>おまかせ管理プランの状態（計算）</td>
 <td><code>active</code> / <code>cancel_requested</code> / <code>ended</code></td>
 <td>契約中 / 解約予定 / 終了</td>
 <td>同上</td>

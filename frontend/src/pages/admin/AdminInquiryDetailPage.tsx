@@ -121,7 +121,7 @@ export function AdminInquiryDetailPage() {
     ['お住まい', item.prefecture],
     ['ご年齢', item.age ?? '未入力'],
     ['初期費用のお支払い方法', labelOf(INITIAL_PAYMENTS, item.initial_payment)],
-    ['月額(保守プラン)のお支払い方法', labelOf(MONTHLY_PAYMENTS, item.monthly_payment)],
+    ['月額(おまかせ管理プラン)のお支払い方法', labelOf(MONTHLY_PAYMENTS, item.monthly_payment)],
     ['最終更新', formatDateTime(item.updated_at)],
   ]
 
@@ -305,7 +305,7 @@ export function AdminInquiryDetailPage() {
 
 function RelatedCard({ item }: { item: InquiryDetail }) {
   return (
-    <Card title="見積書・保守契約">
+    <Card title="見積書・おまかせ管理プラン">
       <h3 className="side-heading">見積書</h3>
       {item.estimates.length === 0 ? (
         <p className="field__help">まだありません。</p>
@@ -326,7 +326,7 @@ function RelatedCard({ item }: { item: InquiryDetail }) {
         見積書を作成
       </Link>
 
-      <h3 className="side-heading">保守契約</h3>
+      <h3 className="side-heading">おまかせ管理プラン</h3>
       {item.contracts.length === 0 ? (
         <p className="field__help">まだありません。</p>
       ) : (
@@ -343,7 +343,7 @@ function RelatedCard({ item }: { item: InquiryDetail }) {
       )}
       <Link to={`/admin/contracts?new=1&inquiry=${item.id}`} className="btn btn--outline btn--small">
         <MdAdd aria-hidden="true" />
-        保守契約を登録
+        おまかせ管理プランを登録
       </Link>
     </Card>
   )

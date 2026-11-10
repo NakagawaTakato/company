@@ -1,8 +1,8 @@
-"""見積書・入金（領収書）・保守契約。
+"""見積書・入金（領収書）・おまかせ管理プラン。
 
 - 金額は円（整数）。明細の金額は「数量 × 単価」を四捨五入、消費税は切り捨てです。
 - 見積番号は Q-年月-連番、領収書番号は R-年月-連番 で自動採番します。
-- 保守契約の解約は「前月末までのお申し出」なので、申し出日の翌月末を終了日にします。
+- おまかせ管理プランの解約は「前月末までのお申し出」なので、申し出日の翌月末を終了日にします。
 """
 
 from __future__ import annotations
@@ -124,7 +124,8 @@ def get_estimate(conn: sqlite3.Connection, estimate_id: int) -> dict[str, Any] |
 
 
 def list_estimates(
-    conn: sqlite3.Connection, q: str | None, status: str | None, page: int, per_page: int = 20, inquiry_id: int | None = None
+    conn: sqlite3.Connection, q: str | None, status: str | None, page: int, per_page: int = 20, inquiry_id: int | None = None,
+    with_items: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
     sql = "SELECT * FROM estimates WHERE 1 = 1"
     params: list[Any] = []
@@ -139,7 +140,7 @@ def list_estimates(
         params.append(inquiry_id)
     sql += " ORDER BY issue_date DESC, id DESC"
     rows, total = paginate(conn, sql, params, page, per_page)
-    return [_estimate_dict(conn, r, with_items=False) for r in rows], total
+    return [_estimate_dict(conn, r, with_items=with_items) for r in rows], total
 
 
 def delete_estimate(conn: sqlite3.Connection, estimate_id: int) -> None:
@@ -216,7 +217,7 @@ def delete_payment(conn: sqlite3.Connection, payment_id: int) -> None:
     conn.commit()
 
 
-# ------------------------------------------------------------------ 保守契約
+# ------------------------------------------------------------------ おまかせ管理プラン
 
 def end_of_next_month(day: date) -> date:
     year, month = (day.year + 1, 1) if day.month == 12 else (day.year, day.month + 1)

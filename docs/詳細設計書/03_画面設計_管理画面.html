@@ -195,8 +195,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>A-05</td>
 <td>見積書一覧</td>
 <td><code>/admin/estimates</code></td>
-<td>状態の絞り込み・検索</td>
-<td>API-54</td>
+<td>状態の絞り込み・検索・CSV</td>
+<td>API-54、API-70</td>
 <td><code>AdminEstimatesPage.tsx</code></td>
 </tr>
 <tr>
@@ -219,8 +219,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>A-08</td>
 <td>入金・領収書</td>
 <td><code>/admin/payments</code></td>
-<td>入金の記録・一覧・検索</td>
-<td>API-54、API-59、API-60、API-62、API-63</td>
+<td>入金の記録・一覧・検索・CSV</td>
+<td>API-54、API-59、API-60、API-62、API-63、API-71</td>
 <td><code>AdminPaymentsPage.tsx</code></td>
 </tr>
 <tr>
@@ -233,7 +233,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>A-10</td>
-<td>保守契約</td>
+<td>おまかせ管理プラン</td>
 <td><code>/admin/contracts</code></td>
 <td>契約の登録・一覧・解約の申し出</td>
 <td>API-12、API-64、API-65、API-67〜69</td>
@@ -304,7 +304,7 @@ a:hover { text-decoration-thickness: 2px; }
   A02 -- &quot;タイル・未対応の一覧&quot; --&gt; A03[&quot;A-03 お問い合わせ一覧&quot;]
   A03 -- &quot;行を押す&quot; --&gt; A04[&quot;A-04 お問い合わせ詳細&quot;]
   A04 -- &quot;見積書を作成&quot; --&gt; A06[&quot;A-06 見積書の作成・編集&quot;]
-  A04 -- &quot;保守契約を登録&quot; --&gt; A10[&quot;A-10 保守契約&quot;]
+  A04 -- &quot;おまかせ管理プランを登録&quot; --&gt; A10[&quot;A-10 おまかせ管理プラン&quot;]
   A04 -- &quot;テンプレートを編集&quot; --&gt; A13[&quot;A-13 メール&quot;]
   A05[&quot;A-05 見積書一覧&quot;] -- &quot;行を押す・作成&quot; --&gt; A06
   A06 -- &quot;印刷・PDF（新しいタブ）&quot; --&gt; A07[&quot;A-07 見積書の印刷&quot;]
@@ -333,7 +333,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>左のメニュー</td>
-<td>ダッシュボード / お問い合わせ / 見積書 / 入金・領収書 / 保守契約 / サイト内容 / デザイン（色）/ メール / 迷惑送信 / 履歴 / データ管理 / アカウント（今の画面を強調）</td>
+<td>ダッシュボード / お問い合わせ / 見積書 / 入金・領収書 / おまかせ管理プラン / サイト内容 / デザイン（色）/ メール / 迷惑送信 / 履歴 / データ管理 / アカウント（今の画面を強調）</td>
 </tr>
 <tr>
 <td>本文</td>
@@ -534,7 +534,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>5</td>
-<td>保守契約（契約中）</td>
+<td>おまかせ管理プラン（契約中）</td>
 <td>終了していない契約の件数、「月額の合計 {金額}」「・解約予定 {n} 件」</td>
 <td>A-10</td>
 </tr>
@@ -731,11 +731,11 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>右の列</td>
-<td>対応状況 / 送信したメール / 見積書・保守契約</td>
+<td>対応状況 / 送信したメール / 見積書・おまかせ管理プラン</td>
 </tr>
 </tbody></table></div>
 <h4 id="sec-19">お問い合わせの内容</h4>
-<p>受付日時 / ご相談内容（ラベル）/ お名前 / メールアドレス（<code>mailto:</code> のリンク）/ 電話番号（<code>tel:</code> のリンク）/ お住まい / ご年齢（ないときは「未入力」）/ 初期費用のお支払い方法 / 月額(保守プラン)のお支払い方法 / 最終更新</p>
+<p>受付日時 / ご相談内容（ラベル）/ お名前 / メールアドレス（<code>mailto:</code> のリンク）/ 電話番号（<code>tel:</code> のリンク）/ お住まい / ご年齢（ないときは「未入力」）/ 初期費用のお支払い方法 / 月額(おまかせ管理プラン)のお支払い方法 / 最終更新</p>
 <h4 id="sec-20">操作とイベント</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -820,7 +820,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>E13</td>
-<td>保守契約を登録</td>
+<td>おまかせ管理プランを登録</td>
 <td></td>
 <td>A-10（<code>/admin/contracts?new=1&amp;inquiry={ID}</code>）</td>
 </tr>
@@ -850,8 +850,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>状態（送信済み / 失敗 / 未送信 / 送信中）・種類・件名・宛先・日時・エラー。なければ「まだありません。」</td>
 </tr>
 <tr>
-<td>見積書・保守契約</td>
-<td>見積書（番号のリンク → A-06・件名・合計・状態）と「見積書を作成」、保守契約（サイト名のリンク → A-10 の編集・月額・開始日・状態）と「保守契約を登録」</td>
+<td>見積書・おまかせ管理プラン</td>
+<td>見積書（番号のリンク → A-06・件名・合計・状態）と「見積書を作成」、おまかせ管理プラン（サイト名のリンク → A-10 の編集・月額・開始日・状態）と「おまかせ管理プランを登録」</td>
 </tr>
 </tbody></table></div>
 <p>記録の種類: 「メモ」は管理者が入力したもの、「メール」は返信したメール、「記録」は対応状況の変更などの自動の記録です（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 9章）。</p>
@@ -888,6 +888,11 @@ a:hover { text-decoration-thickness: 2px; }
 <td>5</td>
 <td>下部</td>
 <td>「全 {n} 件」とページ送り（<code>page</code>）</td>
+</tr>
+<tr>
+<td>6</td>
+<td>CSV ダウンロード</td>
+<td>右上のボタン（「見積書を作成」の左）。今のタブと検索の条件（ページを除く）で API-70 を呼び、ファイルを保存する。処理中は「作成中…」</td>
 </tr>
 </tbody></table></div>
 <p>一覧が空のときは「見積書はまだありません。」です。</p>
@@ -1171,6 +1176,11 @@ a:hover { text-decoration-thickness: 2px; }
 <td>下部</td>
 <td>「全 {n} 件・合計 {金額}」（合計は検索条件に合う入金の合計）とページ送り（<code>page</code>）</td>
 </tr>
+<tr>
+<td>5</td>
+<td>CSV ダウンロード</td>
+<td>右上のボタン（入力欄を開いているときは出さない）。今の検索の条件（ページを除く）で API-71 を呼び、ファイルを保存する。処理中は「作成中…」</td>
+</tr>
 </tbody></table></div>
 <h4 id="sec-31">入力欄（記録・編集）</h4>
 <div class="table-wrap"><table>
@@ -1305,7 +1315,7 @@ a:hover { text-decoration-thickness: 2px; }
 <li><strong>発行日</strong>: 一度決まったら、印刷し直しても変わらない日付を表示します（決め方は ※課題 No.2。今は印刷画面を開いた日を表示しています）。</li>
 <li>API-61 で読み込みます。401 なら A-01 へ移ります。</li>
 </ul>
-<h3 id="sec-34">4.10 A-10 保守契約</h3>
+<h3 id="sec-34">4.10 A-10 おまかせ管理プラン</h3>
 <h4 id="sec-35">画面の構成</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1317,7 +1327,7 @@ a:hover { text-decoration-thickness: 2px; }
 </thead>
 <tbody><tr>
 <td>1</td>
-<td>保守契約を登録</td>
+<td>おまかせ管理プランを登録</td>
 <td>右上のボタン（入力欄を開いているときは出さない）</td>
 </tr>
 <tr>
@@ -1448,13 +1458,13 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>E3</td>
-<td>保守契約を登録 / 編集</td>
+<td>おまかせ管理プランを登録 / 編集</td>
 <td>入力欄を開く（編集のときは画面の先頭へスクロール）</td>
 </tr>
 <tr>
 <td>E4</td>
 <td>登録する / 保存する</td>
-<td>API-65 / API-67 →「保守契約を登録しました。」/「保存しました。」→ 入力欄を閉じ、URL のパラメータを消して、一覧を再読み込み</td>
+<td>API-65 / API-67 →「おまかせ管理プランを登録しました。」/「保存しました。」→ 入力欄を閉じ、URL のパラメータを消して、一覧を再読み込み</td>
 </tr>
 <tr>
 <td>E5</td>
@@ -1464,7 +1474,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>E6</td>
 <td>削除</td>
-<td>確認「{名前} 様「{サイト名}」の保守契約を削除します。よろしいですか？」→ API-69 →「削除しました。」</td>
+<td>確認「{名前} 様「{サイト名}」のおまかせ管理プランを削除します。よろしいですか？」→ API-69 →「削除しました。」</td>
 </tr>
 <tr>
 <td>E7</td>

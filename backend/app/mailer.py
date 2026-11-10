@@ -213,7 +213,7 @@ def inquiry_summary(item: dict[str, Any], options: dict[str, Any]) -> str:
         f"お住まい: {item['prefecture']}",
         f"ご年齢: {item['age'] if item.get('age') is not None else '未入力'}",
         f"初期費用のお支払い方法: {_label(options, 'initial_payments', item['initial_payment'])}",
-        f"月額(保守プラン)のお支払い方法: {_label(options, 'monthly_payments', item['monthly_payment'])}",
+        f"月額(おまかせ管理プラン)のお支払い方法: {_label(options, 'monthly_payments', item['monthly_payment'])}",
     ]
     return "\n".join(lines)
 
@@ -235,7 +235,7 @@ def admin_notification(item: dict[str, Any], options: dict[str, Any], site_url: 
         "■ お住まい", item["prefecture"], "",
         "■ ご年齢", str(item["age"]) if item.get("age") is not None else "(未入力)", "",
         "■ 初期費用のお支払い方法", _label(options, "initial_payments", item["initial_payment"]), "",
-        "■ 月額(保守プラン)のお支払い方法", _label(options, "monthly_payments", item["monthly_payment"]), "",
+        "■ 月額(おまかせ管理プラン)のお支払い方法", _label(options, "monthly_payments", item["monthly_payment"]), "",
         "■ 受付日時", f"{received.year}年{received.month}月{received.day}日 {received:%H:%M}", "",
         f"管理画面で確認する: {site_url.rstrip('/')}/admin/inquiries/{item['id']}",
         "",

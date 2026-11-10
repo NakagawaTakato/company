@@ -258,7 +258,7 @@ function BusinessForm({ value, onChange, err }: { value: Business; onChange: (v:
 function PricesForm({ value, onChange, err }: { value: Prices; onChange: (v: Prices) => void; err: (p: string) => string | undefined }) {
   return (
     <>
-      <h3 className="side-heading">料金表（制作内容と1ページの相場）</h3>
+      <h3 className="side-heading">料金表（制作内容と1ページの相場・税抜）</h3>
       <ListEditor
         items={value.rows}
         onChange={(rows) => onChange({ ...value, rows })}

@@ -369,7 +369,8 @@ textarea {
   line-height: 1.6;
 }
 
-.chip:nth-child(3n + 2) {
+.chip:nth-child(3n + 2),
+.chips li:nth-child(3n + 2) > .chip {
   border-color: var(--c-blue-3);
   background: var(--c-tint-2);
 }

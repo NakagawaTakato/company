@@ -117,7 +117,7 @@ def validate_contact(payload: dict[str, Any], options: dict[str, Any]) -> tuple[
 
     monthly_payment = _text(payload, "monthly_payment")
     if monthly_payment not in _values(options, "monthly_payments"):
-        errors["monthly_payment"] = "月額(保守プラン)のお支払い方法を選択してください。"
+        errors["monthly_payment"] = "月額(おまかせ管理プラン)のお支払い方法を選択してください。"
     data["monthly_payment"] = monthly_payment
 
     if payload.get("agreed") is not True:
@@ -340,7 +340,7 @@ def build_csv(items: list[dict[str, Any]], options: dict[str, Any]) -> str:
     writer = csv.writer(buffer, quoting=csv.QUOTE_ALL, lineterminator="\r\n")
     writer.writerow([
         "ID", "受付日時", "対応状況", "ご相談内容", "お名前", "メールアドレス", "電話番号",
-        "お住まい", "ご年齢", "初期費用のお支払い方法", "月額(保守プラン)のお支払い方法", "最終更新",
+        "お住まい", "ご年齢", "初期費用のお支払い方法", "月額(おまかせ管理プラン)のお支払い方法", "最終更新",
     ])
     for item in items:
         writer.writerow([_safe_cell(v) for v in (
