@@ -44,6 +44,13 @@ def _check_inquiry(conn: sqlite3.Connection, inquiry_id: int | None) -> None:
         raise ApiError(422, "入力内容をご確認ください。", {"inquiry_id": "関連するお問い合わせが見つかりません。"})
 
 
+def _check_number(conn: sqlite3.Connection, kind: str, number: str, exclude_id: int | None = None) -> None:
+    """自分で入力した番号が、ほかの見積書（領収書）と重なっていないか確かめます。"""
+    table, column = ("estimates", "number") if kind == "estimate" else ("payments", "receipt_number")
+    if number and billing.number_in_use(conn, table, column, number, exclude_id):
+        raise ApiError(422, "入力内容をご確認ください。", {column: "この番号はすでに使われています。"})
+
+
 def _estimate_or_404(conn: sqlite3.Connection, raw_id: str) -> dict[str, Any]:
     estimate = billing.get_estimate(conn, parse_id(raw_id))
     if estimate is None:
@@ -59,6 +66,14 @@ def _estimate_data(body: schemas.EstimateIn) -> dict[str, Any]:
 
 
 # ------------------------------------------------------------------ 見積書
+
+@router.get("/next-numbers", summary="次に自動で付く見積番号・領収書番号（入力欄の初期値用）")
+def next_numbers(conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, str]:
+    return {
+        "estimate": billing.next_number(conn, "estimates", "number"),
+        "receipt": billing.next_number(conn, "payments", "receipt_number"),
+    }
+
 
 @router.get("/estimates", summary="見積書の一覧")
 def list_estimates(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
@@ -88,6 +103,7 @@ def export_estimates_csv(request: Request, conn: sqlite3.Connection = Depends(ge
 @router.post("/estimates", status_code=201, summary="見積書を作成")
 def create_estimate(body: schemas.EstimateIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     _check_inquiry(conn, body.inquiry_id)
+    _check_number(conn, "estimate", body.number)
     estimate_id = billing.save_estimate(conn, _estimate_data(body))
     estimate = billing.get_estimate(conn, estimate_id)
     audit.log(conn, "見積書を作成", f"{estimate['number']} {body.customer_name} 様 {estimate['total']:,}円")
@@ -107,9 +123,11 @@ def get_estimate(estimate_id: str, conn: sqlite3.Connection = Depends(get_conn))
 def update_estimate(estimate_id: str, body: schemas.EstimateIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     current = _estimate_or_404(conn, estimate_id)
     _check_inquiry(conn, body.inquiry_id)
+    _check_number(conn, "estimate", body.number, current["id"])
     billing.save_estimate(conn, _estimate_data(body), current["id"])
     estimate = billing.get_estimate(conn, current["id"])
-    audit.log(conn, "見積書を変更", f"{estimate['number']}（{ESTIMATE_LABELS[body.status]}） {estimate['total']:,}円")
+    renamed = f"（番号 {current['number']} から変更）" if estimate["number"] != current["number"] else ""
+    audit.log(conn, "見積書を変更", f"{estimate['number']}{renamed}（{ESTIMATE_LABELS[body.status]}） {estimate['total']:,}円")
     return get_estimate(estimate_id, conn)
 
 
@@ -160,8 +178,9 @@ def export_payments_csv(request: Request, conn: sqlite3.Connection = Depends(get
     return _csv_response(conn, "payments", "入金の記録", len(items), billing_csv.payments_csv(items))
 
 
-@router.post("/payments", status_code=201, summary="入金を記録（領収書番号を自動で付けます）")
+@router.post("/payments", status_code=201, summary="入金を記録（領収書番号が空なら自動で付けます）")
 def create_payment(body: schemas.PaymentIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
+    _check_number(conn, "receipt", body.receipt_number)
     payment = billing.get_payment(conn, billing.save_payment(conn, _payment_data(conn, body)))
     audit.log(conn, "入金を記録", f"{payment['receipt_number']} {body.customer_name} 様 {body.amount:,}円")
     return payment
@@ -175,9 +194,12 @@ def get_payment(payment_id: str, conn: sqlite3.Connection = Depends(get_conn)) -
 @router.put("/payments/{payment_id}", summary="入金の記録を変更")
 def update_payment(payment_id: str, body: schemas.PaymentIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     current = _payment_or_404(conn, payment_id)
+    _check_number(conn, "receipt", body.receipt_number, current["id"])
     billing.save_payment(conn, _payment_data(conn, body), current["id"])
-    audit.log(conn, "入金の記録を変更", f"{current['receipt_number']} {body.amount:,}円")
-    return _payment_or_404(conn, payment_id)
+    payment = _payment_or_404(conn, payment_id)
+    renamed = f"（番号 {current['receipt_number']} から変更）" if payment["receipt_number"] != current["receipt_number"] else ""
+    audit.log(conn, "入金の記録を変更", f"{payment['receipt_number']}{renamed} {body.amount:,}円")
+    return payment
 
 
 @router.delete("/payments/{payment_id}", response_model=schemas.OkResponse, summary="入金の記録を削除")

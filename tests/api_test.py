@@ -659,6 +659,11 @@ def test_theme_and_content(c: Client) -> None:
     check("事業者情報を保存", status == 200 and body["customized"]["business"], body.get("customized"))
     status, site = c.json("GET", "/api/site")
     check("公開サイトに事業者情報が反映される", site["content"]["business"]["line_url"] == "https://line.me/ti/p/test", site["content"]["business"])
+    status, body = c.json("PUT", "/api/admin/content/business", {**business, "invoice_number": "T123"})
+    check("登録番号は T + 13桁のみ（違えば 422）", status == 422 and "invoice_number" in body.get("errors", {}), body)
+    status, body = c.json("PUT", "/api/admin/content/business", {**business, "invoice_number": "T1234567890123"})
+    check("登録番号を保存", status == 200 and body["content"]["business"]["invoice_number"] == "T1234567890123", body["content"]["business"])
+    c.json("PUT", "/api/admin/content/business", business)
 
     status, body = c.json("PUT", "/api/admin/content/faq", [{"q": "質問1", "a": "回答1"}, {"q": "", "a": "x"}])
     check("よくある質問: 空の質問は 422（何件目かわかる）", status == 422 and "1.q" in body.get("errors", {}), body)
@@ -719,16 +724,47 @@ def test_billing(c: Client, tid: int) -> None:
     )
     check("数量が数字でなければ 422（何行目かわかる）", status == 422 and "items.0.quantity" in body.get("errors", {}), body)
     status, created = c.json("POST", "/api/admin/estimates", estimate)
-    month = datetime.now(JST).strftime("%Y%m")
-    check("見積書を作成（番号を自動採番）", status == 201 and created["number"].startswith(f"Q-{month}-"), created)
+    today = datetime.now(JST).strftime("%Y-%m%d")
+    check(
+        "見積書を作成（番号は 年-月日-連番-時分）",
+        status == 201 and re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", created["number"]) is not None,
+        created,
+    )
+    check("敬称（初期値は様）", created.get("honorific") == "様", created)
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "honorific": "殿"})
+    check("敬称は様・御中のみ（違えば 422）", status == 422 and "honorific" in body.get("errors", {}), body)
     check(
         "金額の計算（小計65,000・税6,500・合計71,500）",
         (created.get("subtotal"), created.get("tax"), created.get("total")) == (65000, 6500, 71500),
         created,
     )
     eid = created["id"]
-    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted"})
+    status, body = c.json(
+        "PUT", f"/api/admin/estimates/{eid}",
+        {**estimate, "status": "accepted", "honorific": "御中"},
+    )
     check("見積書を変更（承諾）", status == 200 and body["status"] == "accepted" and body["number"] == created["number"], body)
+    check("敬称を変更", body.get("honorific") == "御中", body)
+
+    # 番号は自分で入力できる（空なら自動）
+    status, body = c.json("GET", "/api/admin/next-numbers")
+    check(
+        "次に付く番号を取得（入力欄の初期値）",
+        status == 200 and all(re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", body.get(k, "")) for k in ("estimate", "receipt"))
+        and body["estimate"] != created["number"],
+        body,
+    )
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "number": created["number"]})
+    check("見積番号の重なりは 422", status == 422 and body.get("errors", {}).get("number") == "この番号はすでに使われています。", body)
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "number": "見積 1"})
+    check("見積番号は半角英数字とハイフンのみ（違えば 422）", status == 422 and "半角" in body.get("errors", {}).get("number", ""), body)
+    status, own = c.json("POST", "/api/admin/estimates", {**estimate, "number": "TEST-EST-0001"})
+    check("見積番号を自分で入力して作成", status == 201 and own.get("number") == "TEST-EST-0001", own)
+    c.json("DELETE", f"/api/admin/estimates/{own['id']}")
+    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted", "number": "TEST-EST-0002"})
+    check("見積番号をあとから変更", status == 200 and body.get("number") == "TEST-EST-0002", body)
+    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted", "number": created["number"]})
+    check("見積番号を元に戻す（同じ見積書の番号は重なりとみなさない）", status == 200 and body.get("number") == created["number"], body)
     status, body = c.json("GET", f"/api/admin/inquiries/{tid}")
     check("お問い合わせの詳細に見積書が出る", any(e["id"] == eid for e in body["estimates"]), body["estimates"])
     status, body = c.json("GET", f"/api/admin/estimates?q={urllib.parse.quote('テスト')}")
@@ -746,9 +782,20 @@ def test_billing(c: Client, tid: int) -> None:
     status, paid = c.json("POST", "/api/admin/payments", payment)
     check(
         "入金を記録（領収書番号を自動採番）",
-        status == 201 and paid["receipt_number"].startswith(f"R-{month}-") and paid["estimate"]["id"] == eid,
+        status == 201 and re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", paid["receipt_number"]) is not None
+        and paid["estimate"]["id"] == eid
+        and paid["estimate"]["tax_rate"] == 10,
         paid,
     )
+    status, body = c.json("POST", "/api/admin/payments", {**payment, "receipt_number": paid["receipt_number"]})
+    check(
+        "領収書番号の重なりは 422",
+        status == 422 and body.get("errors", {}).get("receipt_number") == "この番号はすでに使われています。",
+        body,
+    )
+    status, body = c.json("PUT", f"/api/admin/payments/{paid['id']}", {**payment, "receipt_number": "TEST-R-0001"})
+    check("領収書番号をあとから変更", status == 200 and body.get("receipt_number") == "TEST-R-0001", body)
+    c.json("PUT", f"/api/admin/payments/{paid['id']}", {**payment, "receipt_number": paid["receipt_number"]})
     status, body = c.json("GET", f"/api/admin/estimates/{eid}")
     check("見積書に入金済み・残額が出る", body["paid"] == 35750 and body["balance"] == 35750 and len(body["payments"]) == 1, body)
     status, body = c.json("GET", "/api/admin/payments")
@@ -833,9 +880,12 @@ def test_data_and_logs(c: Client) -> None:
         body["items"][:2],
     )
     actions: set[str] = set()
-    for page in (1, 2, 3):
+    page, pages_total = 1, 1
+    while page <= pages_total and page <= 20:  # すべてのページを読む（念のため20ページまで）
         status, body = c.json("GET", f"/api/admin/audit-logs?page={page}")
         actions |= {i["action"] for i in body["items"]}
+        pages_total = body.get("pages", 1)
+        page += 1
     check("操作の記録", {"対応状況を変更", "テーマ色を変更", "見積書を作成", "お問い合わせを削除"} <= actions, sorted(actions))
 
 

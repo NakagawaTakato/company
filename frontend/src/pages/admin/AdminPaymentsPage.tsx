@@ -8,6 +8,7 @@ import { PAYMENT_METHODS, labelOf } from '../../lib/options'
 import { usePageTitle } from '../../lib/usePageTitle'
 
 const blank = (): PaymentInput => ({
+  receipt_number: '',
   customer_name: '',
   description: 'ホームページ制作費として',
   amount: 0,
@@ -46,14 +47,23 @@ export function AdminPaymentsPage() {
     }
   }, [estimateParam, estimates])
 
+  // 新しく記録するとき: 次に自動で付く領収書番号を入れておきます（書き換えられます）
+  useEffect(() => {
+    if (editing !== 'new') return
+    api
+      .nextNumbers()
+      .then((n) => setForm((f) => (f.receipt_number ? f : { ...f, receipt_number: n.receipt })))
+      .catch(() => undefined)
+  }, [editing])
+
   const startNew = () => {
     setForm(blank())
     setEditing('new')
   }
 
   const startEdit = (p: Payment) => {
-    const { customer_name, description, amount, method, paid_on, note, estimate_id } = p
-    setForm({ customer_name, description, amount, method, paid_on, note, estimate_id })
+    const { receipt_number, customer_name, description, amount, method, paid_on, note, estimate_id } = p
+    setForm({ receipt_number, customer_name, description, amount, method, paid_on, note, estimate_id })
     setEditing(p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -100,7 +110,7 @@ export function AdminPaymentsPage() {
     <>
       <PageHeader
         title="入金・領収書"
-        lead="入金を記録すると領収書番号が自動で付き、領収書を印刷・PDFで保存できます。"
+        lead="入金を記録すると領収書番号が付き（自分で入力もできます）、領収書を印刷・PDFで保存できます。"
         actions={
           !editing && (
             <>
@@ -128,6 +138,9 @@ export function AdminPaymentsPage() {
         <Card title={editing === 'new' ? '入金を記録' : `入金の記録を編集（${editing.receipt_number}）`}>
           <form onSubmit={save} noValidate>
             <div className="form-grid">
+              <Field label="No.（領収書番号）" htmlFor="receipt_number" error={errors.receipt_number} hint="半角の英数字とハイフン（-）で30文字まで。空のまま保存すると自動で付きます。">
+                <input id="receipt_number" className="input" value={form.receipt_number} onChange={(e) => set('receipt_number', e.target.value)} maxLength={30} autoComplete="off" />
+              </Field>
               <Field label="見積書（任意）" htmlFor="estimate_id" error={errors.estimate_id}>
                 <select
                   id="estimate_id"

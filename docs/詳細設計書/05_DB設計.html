@@ -989,7 +989,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>TEXT</td>
 <td></td>
 <td></td>
-<td>見積番号 <code>Q-YYYYMM-NNN</code></td>
+<td>見積番号 <code>YYYY-MMDD-NNN-HHMM</code>（以前に作ったものは <code>Q-YYYYMM-NNN</code> のまま）</td>
 <td>一意。作成時に採番し、変えない</td>
 </tr>
 <tr>
@@ -1005,8 +1005,16 @@ a:hover { text-decoration-thickness: 2px; }
 <td>TEXT</td>
 <td></td>
 <td></td>
-<td>お客さま名（様は付けない）</td>
+<td>お客さま名（様・御中は付けない）</td>
 <td>100文字</td>
+</tr>
+<tr>
+<td>honorific</td>
+<td>TEXT</td>
+<td></td>
+<td><code>&#39;様&#39;</code></td>
+<td>宛名の敬称 <code>様</code> / <code>御中</code></td>
+<td>版 5 で追加</td>
 </tr>
 <tr>
 <td>title</td>
@@ -1177,7 +1185,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>TEXT</td>
 <td></td>
 <td></td>
-<td>領収書番号 <code>R-YYYYMM-NNN</code></td>
+<td>領収書番号 <code>YYYY-MMDD-NNN-HHMM</code>（以前に作ったものは <code>R-YYYYMM-NNN</code> のまま）</td>
 <td>一意。作成時に採番し、変えない</td>
 </tr>
 <tr>
@@ -1562,6 +1570,14 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>4</td>
 <td>ご相談内容の選択肢の値を変更し、保存済みのお問い合わせも新しい値に置き換え</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>estimates.honorific</code>（敬称）と <code>estimates.delivery_place</code>（納品場所）</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>estimates.delivery_place</code> を削除（見積書に納品場所を出すのをやめたため）</td>
 </tr>
 </tbody></table></div>
 <p>追加するときの決まり:</p>

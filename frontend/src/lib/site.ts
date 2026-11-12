@@ -17,6 +17,7 @@ export type Business = {
   hours: string
   business_form: string
   line_url: string
+  invoice_number: string
 }
 
 export type PriceRow = { name: string; price: string }

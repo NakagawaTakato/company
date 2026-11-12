@@ -31,13 +31,13 @@ def _items_text(items: list[dict[str, Any]]) -> str:
 def estimates_csv(items: list[dict[str, Any]]) -> str:
     return _to_csv(
         [
-            "見積番号", "発行日", "有効期限", "状態", "お客さま名", "件名", "明細", "小計", "消費税率(%)", "消費税",
+            "見積番号", "発行日", "有効期限", "状態", "お客さま名", "敬称", "件名", "明細", "小計", "消費税率(%)", "消費税",
             "合計", "入金済み", "残額", "納期", "お支払い条件", "備考", "作成日時", "最終更新",
         ],
         (
             (
                 e["number"], e["issue_date"], e["valid_until"], ESTIMATE_LABELS.get(e["status"], e["status"]),
-                e["customer_name"], e["title"], _items_text(e.get("items", [])), e["subtotal"], e["tax_rate"],
+                e["customer_name"], e["honorific"], e["title"], _items_text(e.get("items", [])), e["subtotal"], e["tax_rate"],
                 e["tax"], e["total"], e["paid"], e["balance"], e["delivery"], e["payment_terms"], e["notes"],
                 format_jst(e["created_at"]), format_jst(e["updated_at"]),
             )

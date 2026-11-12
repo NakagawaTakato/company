@@ -900,6 +900,13 @@ a:hover { text-decoration-thickness: 2px; }
 <td>入金の CSV</td>
 <td>必要</td>
 </tr>
+<tr>
+<td>API-72</td>
+<td>GET</td>
+<td><code>/api/admin/next-numbers</code></td>
+<td>次に自動で付く見積番号・領収書番号</td>
+<td>必要</td>
+</tr>
 </tbody></table></div>
 <h2 id="sec-11">3. 共通のデータの形</h2>
 <p>応答で使うデータの形です。「日時」は 1.7 の形式です。</p>
@@ -1000,7 +1007,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tbody><tr>
 <td>id / number</td>
 <td>数値 / 文字列</td>
-<td>番号は <code>Q-YYYYMM-NNN</code></td>
+<td>番号は <code>YYYY-MMDD-NNN-HHMM</code>（以前に作ったものは <code>Q-YYYYMM-NNN</code> のまま）</td>
 </tr>
 <tr>
 <td>inquiry_id</td>
@@ -1011,6 +1018,11 @@ a:hover { text-decoration-thickness: 2px; }
 <td>customer_name / title / delivery / payment_terms / notes</td>
 <td>文字列</td>
 <td></td>
+</tr>
+<tr>
+<td>honorific</td>
+<td>文字列</td>
+<td>宛名の敬称 <code>様</code> / <code>御中</code></td>
 </tr>
 <tr>
 <td>issue_date / valid_until</td>
@@ -1065,7 +1077,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tbody><tr>
 <td>id / receipt_number</td>
 <td>数値 / 文字列</td>
-<td>番号は <code>R-YYYYMM-NNN</code></td>
+<td>番号は <code>YYYY-MMDD-NNN-HHMM</code>（以前に作ったものは <code>R-YYYYMM-NNN</code> のまま）</td>
 </tr>
 <tr>
 <td>estimate_id</td>
@@ -1075,7 +1087,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>estimate</td>
 <td>オブジェクト / null</td>
-<td><code>{id, number, title}</code></td>
+<td><code>{id, number, title, tax_rate}</code></td>
 </tr>
 <tr>
 <td>customer_name / description / note</td>
@@ -1198,7 +1210,7 @@ a:hover { text-decoration-thickness: 2px; }
 </thead>
 <tbody><tr>
 <td>business</td>
-<td><code>business_name, owner, address, phone, email, hours, business_form, line_url</code></td>
+<td><code>business_name, owner, address, phone, email, hours, business_form, line_url, invoice_number</code></td>
 </tr>
 <tr>
 <td>prices</td>
@@ -1680,7 +1692,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>API-28</td>
 <td>business（事業者情報）</td>
 <td>オブジェクト</td>
-<td>すべて必須。<code>business_name</code> 1〜60 / <code>owner</code> 1〜40 / <code>address</code> 1〜100 / <code>phone</code> 1〜30 / <code>email</code> 1〜254・形式 / <code>hours</code> 1〜60 / <code>business_form</code> 1〜120 / <code>line_url</code> 1〜300・<code>https://</code> で始まる URL</td>
+<td><code>invoice_number</code> のほかは必須。<code>business_name</code> 1〜60 / <code>owner</code> 1〜40 / <code>address</code> 1〜100 / <code>phone</code> 1〜30 / <code>email</code> 1〜254・形式 / <code>hours</code> 1〜60 / <code>business_form</code> 1〜120 / <code>line_url</code> 1〜300・<code>https://</code> で始まる URL / <code>invoice_number</code> 空、または <code>T</code> + 13桁（インボイスの登録番号）</td>
 </tr>
 <tr>
 <td>API-29</td>
@@ -2029,6 +2041,12 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </thead>
 <tbody><tr>
+<td>number</td>
+<td>文字列</td>
+<td>−</td>
+<td>半角の英数字とハイフン（-）で1〜30文字（違えば「半角の英数字とハイフン（-）で、30文字以内で入力してください。」）。ほかの見積書と重なれば 422 <code>{&quot;number&quot;: &quot;この番号はすでに使われています。&quot;}</code>。空なら作成時は採番し、変更時は今の番号のまま</td>
+</tr>
+<tr>
 <td>customer_name</td>
 <td>文字列</td>
 <td>○</td>
@@ -2045,6 +2063,12 @@ a:hover { text-decoration-thickness: 2px; }
 <td>日付</td>
 <td>○</td>
 <td>有効期限は発行日以降（違えば <code>body</code>「有効期限は発行日以降の日付にしてください。」）</td>
+</tr>
+<tr>
+<td>honorific</td>
+<td>文字列</td>
+<td>−</td>
+<td><code>様</code> / <code>御中</code>（省略時 <code>様</code>）</td>
 </tr>
 <tr>
 <td>delivery / payment_terms</td>
@@ -2107,11 +2131,11 @@ a:hover { text-decoration-thickness: 2px; }
 <p>並び順は発行日の新しい順（同じ日は ID の大きい順）。items は Estimate（<code>items</code> なし）です。</p>
 <p><strong>API-70 GET <code>/api/admin/estimates.csv</code>（見積書の CSV）</strong>: パラメータ <code>q</code>・<code>status</code> は API-54 と同じ（ページ分けなし・明細つき）。応答 200: <code>Content-Type: text/csv; charset=utf-8</code>、<code>Content-Disposition: attachment; filename=&quot;estimates_YYYYMMDD_HHMMSS.csv&quot;</code>（日時は日本時間）。中身は <a href="06_処理設計.html">06</a> 10章。操作の記録「見積書を CSV で出力」（{n} 件）。</p>
 <h4 id="sec-78">API-55 POST <code>/api/admin/estimates</code>（見積書を作成する）</h4>
-<p>見積番号を採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）。応答 201: Estimate（<code>items</code> つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。</p>
+<p>見積番号が空なら採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）。応答 201: Estimate（<code>items</code> つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。</p>
 <h4 id="sec-79">API-56 GET <code>/api/admin/estimates/{id}</code>（見積書の詳細）</h4>
 <p>応答 200: Estimate（<code>items</code> と <code>payments</code> つき）。見つからないときは 404「見積書が見つかりません。」</p>
 <h4 id="sec-80">API-57 PUT <code>/api/admin/estimates/{id}</code>（見積書を変える）</h4>
-<p>見積番号は変えません。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」）。</p>
+<p>見積番号は <code>number</code> を入れたときだけ変えます（空なら今のまま）。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」。番号を変えたときは番号のあとに「（番号 {前の番号} から変更）」）。</p>
 <h4 id="sec-81">API-58 DELETE <code>/api/admin/estimates/{id}</code>（見積書を削除する）</h4>
 <p>明細も削除します。入金の記録は残し、見積書とのひもづけだけを外します。応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「見積書を削除」。</p>
 <h3 id="sec-82">4.13 入金・領収書</h3>
@@ -2126,6 +2150,12 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </thead>
 <tbody><tr>
+<td>receipt_number</td>
+<td>文字列</td>
+<td>−</td>
+<td>半角の英数字とハイフン（-）で1〜30文字（違えば「半角の英数字とハイフン（-）で、30文字以内で入力してください。」）。ほかの領収書と重なれば 422 <code>{&quot;receipt_number&quot;: &quot;この番号はすでに使われています。&quot;}</code>。空なら作成時は採番し、変更時は今の番号のまま</td>
+</tr>
+<tr>
 <td>customer_name</td>
 <td>文字列</td>
 <td>○</td>
@@ -2187,12 +2217,13 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <p>並び順は入金日の新しい順。応答はページ分けの形に <code>total_amount</code>（<strong>検索条件に合う入金すべての合計</strong>。ページに関係なく計算）を加えたものです。</p>
 <p><strong>API-71 GET <code>/api/admin/payments.csv</code>（入金の CSV）</strong>: パラメータ <code>q</code> は API-59 と同じ（ページ分けなし）。応答 200: <code>Content-Type: text/csv; charset=utf-8</code>、<code>Content-Disposition: attachment; filename=&quot;payments_YYYYMMDD_HHMMSS.csv&quot;</code>（日時は日本時間）。中身は <a href="06_処理設計.html">06</a> 10章。操作の記録「入金の記録を CSV で出力」（{n} 件）。</p>
+<p><strong>API-72 GET <code>/api/admin/next-numbers</code>（次に付く番号）</strong>: 応答 200 <code>{&quot;estimate&quot;: &quot;2026-1111-002-1530&quot;, &quot;receipt&quot;: &quot;2026-1111-002-1530&quot;}</code>。いま作ったら自動で付く見積番号・領収書番号です（<a href="06_処理設計.html">06</a> 13章）。見積書の作成画面（A-06）と入金の記録（A-08）の入力欄の初期値に使います。番号は取っておかないので、保存までにほかの記録が作られると、保存時に重なりの 422 になることがあります。</p>
 <h4 id="sec-85">API-60 POST <code>/api/admin/payments</code>（入金を記録する）</h4>
-<p>領収書番号を採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。</p>
+<p>領収書番号が空なら採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。</p>
 <h4 id="sec-86">API-61 GET <code>/api/admin/payments/{id}</code>（入金の詳細）</h4>
 <p>応答 200: Payment。見つからないときは 404「入金の記録が見つかりません。」</p>
 <h4 id="sec-87">API-62 PUT <code>/api/admin/payments/{id}</code>（入金の記録を変える）</h4>
-<p>領収書番号は変えません。応答 200: Payment。操作の記録「入金の記録を変更」。</p>
+<p>領収書番号は <code>receipt_number</code> を入れたときだけ変えます（空なら今のまま）。応答 200: Payment。操作の記録「入金の記録を変更」（番号を変えたときは「（番号 {前の番号} から変更）」つき）。</p>
 <h4 id="sec-88">API-63 DELETE <code>/api/admin/payments/{id}</code>（入金の記録を削除する）</h4>
 <p>応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「入金の記録を削除」。</p>
 <h3 id="sec-89">4.14 おまかせ管理プラン</h3>

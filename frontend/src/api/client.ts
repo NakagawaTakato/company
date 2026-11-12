@@ -179,7 +179,10 @@ export type Dashboard = {
 export type EstimateItem = { description: string; quantity: number; unit: string; unit_price: number; amount?: number }
 
 export type EstimateInput = {
+  /** 空なら保存時に自動で付きます */
+  number: string
   customer_name: string
+  honorific: string
   title: string
   issue_date: string
   valid_until: string
@@ -207,6 +210,8 @@ export type Estimate = EstimateInput & {
 export type EstimateDetail = Estimate & { payments: Payment[] }
 
 export type PaymentInput = {
+  /** 空なら保存時に自動で付きます */
+  receipt_number: string
   customer_name: string
   description: string
   amount: number
@@ -219,7 +224,7 @@ export type PaymentInput = {
 export type Payment = PaymentInput & {
   id: number
   receipt_number: string
-  estimate: { id: number; number: string; title: string } | null
+  estimate: { id: number; number: string; title: string; tax_rate: number } | null
   created_at: string
 }
 
@@ -365,6 +370,7 @@ export const api = {
   // 見積書
   estimates: (filter: { q?: string; status?: string; page?: number; per_page?: number }) =>
     request<Paged<Estimate>>('GET', `${admin}/estimates${query(filter)}`),
+  nextNumbers: () => request<{ estimate: string; receipt: string }>('GET', `${admin}/next-numbers`),
   getEstimate: (id: string | number) => request<EstimateDetail>('GET', `${admin}/estimates/${encodeURIComponent(id)}`),
   createEstimate: (body: EstimateInput) => request<Estimate>('POST', `${admin}/estimates`, body),
   updateEstimate: (id: number, body: EstimateInput) => request<EstimateDetail>('PUT', `${admin}/estimates/${id}`, body),

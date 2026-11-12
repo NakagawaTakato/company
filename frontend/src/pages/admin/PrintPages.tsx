@@ -3,8 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { MdPrint } from 'react-icons/md'
 import { useNavigate, useParams } from 'react-router'
 import { ApiError, api, type EstimateDetail, type Payment } from '../../api/client'
-import { formatJpDate, todayJst, yen } from '../../lib/format'
-import { PAYMENT_METHODS, labelOf } from '../../lib/options'
+import { formatJpDate, todayJst } from '../../lib/format'
 import { useSite } from '../../lib/SiteContext'
 import { usePageTitle } from '../../lib/usePageTitle'
 
@@ -24,7 +23,19 @@ function usePrintData<T>(load: () => Promise<T>, key: string) {
   return { data, error }
 }
 
-function PrintShell({ title, error, note, children }: { title: string; error: string; note?: ReactNode; children?: ReactNode }) {
+function PrintShell({
+  title,
+  error,
+  note,
+  paperClass = '',
+  children,
+}: {
+  title: string
+  error: string
+  note?: ReactNode
+  paperClass?: string
+  children?: ReactNode
+}) {
   return (
     <div className="print-page">
       <div className="print-toolbar no-print">
@@ -37,123 +48,127 @@ function PrintShell({ title, error, note, children }: { title: string; error: st
       </div>
       {note && <p className="print-note no-print">{note}</p>}
       {error && <p className="form-alert no-print">{error}</p>}
-      {children && <article className="paper">{children}</article>}
+      {children && <article className={`paper ${paperClass}`.trim()}>{children}</article>}
     </div>
   )
 }
 
-function Issuer() {
-  const b = useSite().content.business
-  return (
-    <div className="paper__issuer">
-      <p className="paper__issuer-name">{b.business_name}</p>
-      <p>{b.owner}</p>
-      <p>{b.address}</p>
-      <p>TEL {b.phone}</p>
-      <p>{b.email}</p>
-    </div>
-  )
-}
+/** 見積書の明細は Excel の「見積書_スタンダード」と同じく 12 行（足りない分は空行）。13 行以上はそのまま続けます。 */
+const ESTIMATE_ROWS = 12
+
+const num = (value: number) => value.toLocaleString('ja-JP')
 
 export function EstimatePrintPage() {
   const { id = '' } = useParams()
   const { data: e, error } = usePrintData<EstimateDetail>(() => api.getEstimate(id), id)
+  const b = useSite().content.business
   usePageTitle(e ? `御見積書 ${e.number}` : '御見積書')
 
+  const rows = e ? [...e.items, ...Array<null>(Math.max(0, ESTIMATE_ROWS - e.items.length)).fill(null)] : []
+  const terms: [string, string][] = e
+    ? [
+        ['件　名', e.title],
+        ['納　期', e.delivery],
+        ['支払条件', e.payment_terms],
+        ['有効期限', formatJpDate(e.valid_until)],
+      ]
+    : []
+
   return (
-    <PrintShell title={e ? `見積書 ${e.number}` : '見積書'} error={error}>
+    <PrintShell title={e ? `見積書 ${e.number}` : '見積書'} error={error} paperClass="paper--quote">
       {e && (
-        <>
-          <header className="paper__head">
-            <h1 className="paper__title">御見積書</h1>
-            <dl className="paper__meta">
-              <div>
-                <dt>見積番号</dt>
-                <dd>{e.number}</dd>
-              </div>
-              <div>
-                <dt>発行日</dt>
-                <dd>{formatJpDate(e.issue_date)}</dd>
-              </div>
-            </dl>
-          </header>
-          <div className="paper__parties">
-            <div>
-              <p className="paper__to">{e.customer_name} 様</p>
-              <p>下記のとおりお見積り申し上げます。</p>
-              <dl className="paper__terms">
-                <div>
-                  <dt>件名</dt>
-                  <dd>{e.title}</dd>
-                </div>
-                <div>
-                  <dt>有効期限</dt>
-                  <dd>{formatJpDate(e.valid_until)}</dd>
-                </div>
-                {e.delivery && (
-                  <div>
-                    <dt>納期</dt>
-                    <dd>{e.delivery}</dd>
-                  </div>
-                )}
-                {e.payment_terms && (
-                  <div>
-                    <dt>お支払い条件</dt>
-                    <dd>{e.payment_terms}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-            <Issuer />
-          </div>
-          <p className="paper__amount">
-            <span>御見積金額</span>
-            <strong>{yen(e.total)}</strong>
-            <span>（税込）</span>
+        <div className="qt">
+          <h1 className="qt__title">御　見　積　書</h1>
+          <p className="qt__to">
+            <span className="qt__to-name">{e.customer_name}</span>
+            <span className="qt__to-honorific">{e.honorific || '様'}</span>
           </p>
-          <table className="paper__table">
+          <dl className="qt__meta">
+            <div>
+              <dt>見積番号</dt>
+              <dd>No. {e.number}</dd>
+            </div>
+            <div>
+              <dt>発行日</dt>
+              <dd>{formatJpDate(e.issue_date)}</dd>
+            </div>
+          </dl>
+          <p className="qt__lead">下記の通り御見積申し上げます。</p>
+          <dl className="qt__terms">
+            {terms.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="qt__issuer">
+            <p className="qt__issuer-name">{b.business_name}</p>
+            <p>{b.address}</p>
+            <p>TEL {b.phone}</p>
+            {b.invoice_number && <p>登録番号 {b.invoice_number}</p>}
+            <p>担当：{b.owner}</p>
+          </div>
+          <p className="qt__amount">
+            <span>御見積金額（税込）</span>
+            <strong>¥{num(e.total)}-</strong>
+          </p>
+          <table className="qt__table">
+            <colgroup>
+              <col className="qt__col-no" />
+              <col className="qt__col-name" />
+              <col className="qt__col-qty" />
+              <col className="qt__col-unit" />
+              <col className="qt__col-price" />
+              <col className="qt__col-amount" />
+            </colgroup>
             <thead>
               <tr>
-                <th scope="col">内容</th>
-                <th scope="col" className="num">数量</th>
+                <th scope="col">No.</th>
+                <th scope="col">品名・摘要</th>
+                <th scope="col">数量</th>
                 <th scope="col">単位</th>
-                <th scope="col" className="num">単価</th>
-                <th scope="col" className="num">金額</th>
+                <th scope="col">単価</th>
+                <th scope="col">金額</th>
               </tr>
             </thead>
             <tbody>
-              {e.items.map((item, index) => (
+              {rows.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.description}</td>
-                  <td className="num">{item.quantity}</td>
-                  <td>{item.unit}</td>
-                  <td className="num">{yen(item.unit_price)}</td>
-                  <td className="num">{yen(item.amount ?? 0)}</td>
+                  <td className="qt__c">{index + 1}</td>
+                  <td>{item?.description}</td>
+                  <td className="qt__r">{item && num(item.quantity)}</td>
+                  <td className="qt__c">{item?.unit}</td>
+                  <td className="qt__r">{item && num(item.unit_price)}</td>
+                  <td className="qt__r">{item && num(item.amount ?? 0)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <th scope="row" colSpan={4}>小計</th>
-                <td className="num">{yen(e.subtotal)}</td>
+                <td colSpan={3} className="qt__gap qt__gap--top" />
+                <th scope="row" colSpan={2}>小　計</th>
+                <td className="qt__r">{num(e.subtotal)}</td>
               </tr>
               <tr>
-                <th scope="row" colSpan={4}>消費税（{e.tax_rate}%）</th>
-                <td className="num">{yen(e.tax)}</td>
+                <td className="qt__gap" />
+                <td className="qt__gap qt__rate-label">消費税率</td>
+                <td className="qt__c">{e.tax_rate}%</td>
+                <th scope="row" colSpan={2}>消費税</th>
+                <td className="qt__r">{num(e.tax)}</td>
               </tr>
-              <tr className="paper__total">
-                <th scope="row" colSpan={4}>合計（税込）</th>
-                <td className="num">{yen(e.total)}</td>
+              <tr className="qt__total">
+                <td colSpan={3} className="qt__gap" />
+                <th scope="row" colSpan={2}>合計（税込）</th>
+                <td className="qt__r">{num(e.total)}</td>
               </tr>
             </tfoot>
           </table>
-          {e.notes && (
-            <section className="paper__notes">
-              <h2>備考</h2>
-              <p>{e.notes}</p>
-            </section>
-          )}
-        </>
+          <section className="qt__notes">
+            <h2>備考</h2>
+            <p>{e.notes}</p>
+          </section>
+        </div>
       )}
     </PrintShell>
   )
@@ -162,61 +177,77 @@ export function EstimatePrintPage() {
 export function ReceiptPrintPage() {
   const { id = '' } = useParams()
   const { data: p, error } = usePrintData<Payment>(() => api.getPayment(id), id)
+  const b = useSite().content.business
   usePageTitle(p ? `領収書 ${p.receipt_number}` : '領収書')
   const needsStamp = p && p.method === 'cash' && p.amount >= 50000
+  // 内訳: 税込の金額から消費税を逆算（1円未満は切り捨て）。税率は見積書から、見積書がなければ 10%
+  const rate = p?.estimate?.tax_rate ?? 10
+  const tax = p ? Math.floor((p.amount * rate) / (100 + rate)) : 0
+  const description = p?.description.replace(/として$/, '') ?? ''
 
   return (
     <PrintShell
       title={p ? `領収書 ${p.receipt_number}` : '領収書'}
       error={error}
+      paperClass="paper--receipt"
       note={needsStamp ? '※ 5万円以上の現金の領収書には、収入印紙が必要です。印刷して印紙を貼り、割印をしてお渡しください。（この注意書きは印刷されません）' : undefined}
     >
       {p && (
-        <>
-          <header className="paper__head">
-            <h1 className="paper__title">領収書</h1>
-            <dl className="paper__meta">
-              <div>
-                <dt>No.</dt>
-                <dd>{p.receipt_number}</dd>
-              </div>
-              <div>
-                <dt>発行日</dt>
-                <dd>{formatJpDate(todayJst())}</dd>
-              </div>
-            </dl>
-          </header>
-          <p className="paper__to paper__to--receipt">{p.customer_name} 様</p>
-          <p className="paper__amount paper__amount--receipt">
-            <strong>{yen(p.amount)}</strong>
-            <span>（税込）</span>
-          </p>
-          <dl className="paper__terms paper__terms--receipt">
-            <div>
-              <dt>但し</dt>
-              <dd>{p.description}</dd>
-            </div>
-            <div>
-              <dt>お支払い日</dt>
-              <dd>{formatJpDate(p.paid_on)}</dd>
-            </div>
-            <div>
-              <dt>お支払い方法</dt>
-              <dd>{labelOf(PAYMENT_METHODS, p.method)}</dd>
-            </div>
-            {p.estimate && (
-              <div>
-                <dt>見積番号</dt>
-                <dd>{p.estimate.number}</dd>
-              </div>
-            )}
-          </dl>
-          <p className="paper__received">上記の金額を、正に領収いたしました。</p>
-          <div className="paper__parties paper__parties--end">
-            <div />
-            <Issuer />
+        <div className="rc">
+          <h1 className="rc__title">領収書</h1>
+          <div className="rc__meta">
+            <p>
+              <span className="rc__accent">No.</span> {p.receipt_number}
+            </p>
+            <p>{formatJpDate(todayJst())}</p>
           </div>
-        </>
+          <p className="rc__to">
+            <span className="rc__to-name">{p.customer_name}</span>
+            <span className="rc__accent">様</span>
+          </p>
+          <p className="rc__amount">
+            <span className="rc__amount-label">金額</span>
+            <strong>¥{num(p.amount)}-</strong>
+          </p>
+          <div>
+            <p className="rc__tadashi">
+              <span className="rc__accent">但し</span>
+              <span className="rc__what">{description}</span>
+              <span className="rc__accent">として</span>
+            </p>
+            <p className="rc__received">上記正に領収いたしました</p>
+          </div>
+          <div className="rc__bottom">
+            <div className="rc__stamp">
+              <p>
+                収入
+                <br />
+                印紙
+                <br />
+                <small>（5万円以上）</small>
+              </p>
+            </div>
+            <table className="rc__breakdown">
+              <caption>内訳</caption>
+              <tbody>
+                <tr>
+                  <th scope="row">税抜金額</th>
+                  <td>¥{num(p.amount - tax)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">消費税額({rate}%)</th>
+                  <td>¥{num(tax)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="rc__issuer">
+              <p className="rc__issuer-name">{b.business_name}</p>
+              <p>{b.address}</p>
+              <p>TEL {b.phone}</p>
+              {b.invoice_number && <p className="rc__reg">登録番号 {b.invoice_number}</p>}
+            </div>
+          </div>
+        </div>
       )}
     </PrintShell>
   )

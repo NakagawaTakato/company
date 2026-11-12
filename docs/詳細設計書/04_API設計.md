@@ -166,6 +166,7 @@
 | API-69 | DELETE | `/api/admin/contracts/{id}` | おまかせ管理プランを削除する | 必要 |
 | API-70 | GET | `/api/admin/estimates.csv` | 見積書の CSV | 必要 |
 | API-71 | GET | `/api/admin/payments.csv` | 入金の CSV | 必要 |
+| API-72 | GET | `/api/admin/next-numbers` | 次に自動で付く見積番号・領収書番号 | 必要 |
 
 ## 3. 共通のデータの形
 
@@ -208,9 +209,10 @@ Inquiry の項目に、次を加えたものです。
 
 | 項目 | 型 | 内容 |
 | --- | --- | --- |
-| id / number | 数値 / 文字列 | 番号は `Q-YYYYMM-NNN` |
+| id / number | 数値 / 文字列 | 番号は `YYYY-MMDD-NNN-HHMM`（以前に作ったものは `Q-YYYYMM-NNN` のまま） |
 | inquiry_id | 数値 / null | 関連するお問い合わせ |
 | customer_name / title / delivery / payment_terms / notes | 文字列 | |
+| honorific | 文字列 | 宛名の敬称 `様` / `御中` |
 | issue_date / valid_until | 日付 | 発行日 / 有効期限 |
 | tax_rate | 数値 | 消費税率（%） |
 | status | 文字列 | `draft` / `sent` / `accepted` / `rejected` |
@@ -224,9 +226,9 @@ Inquiry の項目に、次を加えたものです。
 
 | 項目 | 型 | 内容 |
 | --- | --- | --- |
-| id / receipt_number | 数値 / 文字列 | 番号は `R-YYYYMM-NNN` |
+| id / receipt_number | 数値 / 文字列 | 番号は `YYYY-MMDD-NNN-HHMM`（以前に作ったものは `R-YYYYMM-NNN` のまま） |
 | estimate_id | 数値 / null | 関連する見積書 |
-| estimate | オブジェクト / null | `{id, number, title}` |
+| estimate | オブジェクト / null | `{id, number, title, tax_rate}` |
 | customer_name / description / note | 文字列 | お客さま名 / 但し書き / メモ |
 | amount | 数値 | 金額（税込） |
 | method | 文字列 | `cash` / `card` / `bank` |
@@ -265,7 +267,7 @@ Inquiry の項目に、次を加えたものです。
 
 | 項目 | 内容 |
 | --- | --- |
-| business | `business_name, owner, address, phone, email, hours, business_form, line_url` |
+| business | `business_name, owner, address, phone, email, hours, business_form, line_url, invoice_number` |
 | prices | `{"rows": [{"name", "price"}], "notes": [文字列]}` |
 | faq | `[{"q", "a"}]` |
 | works | `[{"image", "alt", "badge", "title", "text"}]` |
@@ -539,7 +541,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 | ID | 項目 | 本文 | チェック |
 | --- | --- | --- | --- |
-| API-28 | business（事業者情報） | オブジェクト | すべて必須。`business_name` 1〜60 / `owner` 1〜40 / `address` 1〜100 / `phone` 1〜30 / `email` 1〜254・形式 / `hours` 1〜60 / `business_form` 1〜120 / `line_url` 1〜300・`https://` で始まる URL |
+| API-28 | business（事業者情報） | オブジェクト | `invoice_number` のほかは必須。`business_name` 1〜60 / `owner` 1〜40 / `address` 1〜100 / `phone` 1〜30 / `email` 1〜254・形式 / `hours` 1〜60 / `business_form` 1〜120 / `line_url` 1〜300・`https://` で始まる URL / `invoice_number` 空、または `T` + 13桁（インボイスの登録番号） |
 | API-29 | prices（料金の目安） | `{"rows": [...], "notes": [...]}` | `rows` 1〜30行（`name` 1〜100・`price` 1〜40）。`notes` 10個まで（空は除き、1つ300文字まで。超えると「補足の文章は1つあたり300文字以内にしてください。」） |
 | API-30 | faq（よくある質問） | `[{"q", "a"}]` | 50件まで（超えると `body`「よくある質問は50件以内にしてください。」）。`q` 1〜200・`a` 1〜2000 |
 | API-31 | works（制作実績） | `[{"image", "alt", "badge", "title", "text"}]` | 20件まで（`body`「制作実績は20件以内にしてください。」）。`image` は `/uploads/{24桁の16進数}.{png・jpg・gif・webp}` か `/images/{英数字・_・-}.{png・jpg・jpeg・gif・webp・svg}`（違えば「画像をアップロードしてください。」）。`alt` 100まで・`badge` 20まで・`title` 1〜60・`text` 300まで |
@@ -690,9 +692,11 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 | 項目 | 型 | 必須 | チェック |
 | --- | --- | --- | --- |
+| number | 文字列 | − | 半角の英数字とハイフン（-）で1〜30文字（違えば「半角の英数字とハイフン（-）で、30文字以内で入力してください。」）。ほかの見積書と重なれば 422 `{"number": "この番号はすでに使われています。"}`。空なら作成時は採番し、変更時は今の番号のまま |
 | customer_name | 文字列 | ○ | 1〜100文字 |
 | title | 文字列 | ○ | 1〜120文字 |
 | issue_date / valid_until | 日付 | ○ | 有効期限は発行日以降（違えば `body`「有効期限は発行日以降の日付にしてください。」） |
+| honorific | 文字列 | − | `様` / `御中`（省略時 `様`） |
 | delivery / payment_terms | 文字列 | − | 200文字まで |
 | notes | 文字列 | − | 2000文字まで |
 | tax_rate | 整数 | − | 0〜100（省略時 10） |
@@ -714,7 +718,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 #### API-55 POST `/api/admin/estimates`（見積書を作成する）
 
-見積番号を採番して保存します（[06](06_処理設計.md) 13章）。応答 201: Estimate（`items` つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。
+見積番号が空なら採番して保存します（[06](06_処理設計.md) 13章）。応答 201: Estimate（`items` つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。
 
 #### API-56 GET `/api/admin/estimates/{id}`（見積書の詳細）
 
@@ -722,7 +726,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 #### API-57 PUT `/api/admin/estimates/{id}`（見積書を変える）
 
-見積番号は変えません。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」）。
+見積番号は `number` を入れたときだけ変えます（空なら今のまま）。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」。番号を変えたときは番号のあとに「（番号 {前の番号} から変更）」）。
 
 #### API-58 DELETE `/api/admin/estimates/{id}`（見積書を削除する）
 
@@ -734,6 +738,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 | 項目 | 型 | 必須 | チェック |
 | --- | --- | --- | --- |
+| receipt_number | 文字列 | − | 半角の英数字とハイフン（-）で1〜30文字（違えば「半角の英数字とハイフン（-）で、30文字以内で入力してください。」）。ほかの領収書と重なれば 422 `{"receipt_number": "この番号はすでに使われています。"}`。空なら作成時は採番し、変更時は今の番号のまま |
 | customer_name | 文字列 | ○ | 1〜100文字 |
 | description | 文字列 | ○ | 1〜200文字（但し書き） |
 | amount | 整数 | ○ | 1〜1,000,000,000 |
@@ -753,9 +758,11 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 **API-71 GET `/api/admin/payments.csv`（入金の CSV）**: パラメータ `q` は API-59 と同じ（ページ分けなし）。応答 200: `Content-Type: text/csv; charset=utf-8`、`Content-Disposition: attachment; filename="payments_YYYYMMDD_HHMMSS.csv"`（日時は日本時間）。中身は [06](06_処理設計.md) 10章。操作の記録「入金の記録を CSV で出力」（{n} 件）。
 
+**API-72 GET `/api/admin/next-numbers`（次に付く番号）**: 応答 200 `{"estimate": "2026-1111-002-1530", "receipt": "2026-1111-002-1530"}`。いま作ったら自動で付く見積番号・領収書番号です（[06](06_処理設計.md) 13章）。見積書の作成画面（A-06）と入金の記録（A-08）の入力欄の初期値に使います。番号は取っておかないので、保存までにほかの記録が作られると、保存時に重なりの 422 になることがあります。
+
 #### API-60 POST `/api/admin/payments`（入金を記録する）
 
-領収書番号を採番して保存します（[06](06_処理設計.md) 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。
+領収書番号が空なら採番して保存します（[06](06_処理設計.md) 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。
 
 #### API-61 GET `/api/admin/payments/{id}`（入金の詳細）
 
@@ -763,7 +770,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 #### API-62 PUT `/api/admin/payments/{id}`（入金の記録を変える）
 
-領収書番号は変えません。応答 200: Payment。操作の記録「入金の記録を変更」。
+領収書番号は `receipt_number` を入れたときだけ変えます（空なら今のまま）。応答 200: Payment。操作の記録「入金の記録を変更」（番号を変えたときは「（番号 {前の番号} から変更）」つき）。
 
 #### API-63 DELETE `/api/admin/payments/{id}`（入金の記録を削除する）
 
