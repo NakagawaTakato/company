@@ -51,7 +51,7 @@ export function AdminDashboardPage() {
         <Tile label="未対応のお問い合わせ" value={`${data.counts.new ?? 0} 件`} sub="一覧で確認する" to="/admin/inquiries?status=new" />
         <Tile label="今月のお問い合わせ" value={`${data.this_month} 件`} sub={diffText} />
         <Tile
-          label="保守契約（契約中）"
+          label="おまかせ管理プラン（契約中）"
           value={`${data.contracts_active} 件`}
           sub={`月額の合計 ${yen(data.monthly_revenue)}${data.contracts_ending ? `・解約予定 ${data.contracts_ending} 件` : ''}`}
           to="/admin/contracts"

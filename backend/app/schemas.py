@@ -47,6 +47,19 @@ HttpsUrlText = Annotated[str, AfterValidator(lambda v: _url(v, https_only=True))
 OptionalUrlText = Annotated[str, AfterValidator(lambda v: _url(v) if v else v)]
 
 
+DOC_NUMBER_RE = re.compile(r"[A-Za-z0-9-]{1,30}")
+
+
+def _doc_number(value: str) -> str:
+    if value and not DOC_NUMBER_RE.fullmatch(value):
+        raise ValueError("半角の英数字とハイフン（-）で、30文字以内で入力してください。")
+    return value
+
+
+# 見積番号・領収書番号（空なら自動で付けます）
+DocNumberText = Annotated[str, AfterValidator(_doc_number)]
+
+
 def contrast_with_white(hex_color: str) -> float:
     def channel(c: int) -> float:
         v = c / 255
@@ -83,7 +96,7 @@ class ContactRequest(BaseModel):
     prefecture: str = Field(description="お住まい（都道府県）", examples=["兵庫県"])
     age: str = Field(default="", description="ご年齢（任意）", examples=["30"])
     initial_payment: str = Field(description="初期費用のお支払い方法", examples=["cash"])
-    monthly_payment: str = Field(description="月額(保守プラン)のお支払い方法", examples=["none"])
+    monthly_payment: str = Field(description="月額(おまかせ管理プラン)のお支払い方法", examples=["none"])
     agreed: bool = Field(description="「個人情報の取扱い」への同意", examples=[True])
     website: str = Field(default="", description="迷惑送信対策の隠し欄（通常は空）")
 
@@ -237,6 +250,8 @@ class BusinessIn(Model):
     hours: str = Field(min_length=1, max_length=60)
     business_form: str = Field(min_length=1, max_length=120)
     line_url: HttpsUrlText = Field(min_length=1, max_length=300)
+    # インボイスの登録番号（T + 13桁）。空なら見積書に印刷しません。
+    invoice_number: str = Field(default="", pattern=r"^(T\d{13})?$")
 
 
 class PriceRow(Model):
@@ -290,7 +305,7 @@ class Testimonial(Model):
     published: bool = True
 
 
-# ------------------------------------------------------------------ 管理画面: 見積書・入金・保守契約
+# ------------------------------------------------------------------ 管理画面: 見積書・入金・おまかせ管理プラン
 
 class EstimateItemIn(Model):
     description: str = Field(min_length=1, max_length=200)
@@ -300,7 +315,9 @@ class EstimateItemIn(Model):
 
 
 class EstimateIn(Model):
+    number: DocNumberText = ""
     customer_name: str = Field(min_length=1, max_length=100)
+    honorific: Literal["様", "御中"] = "様"
     title: str = Field(min_length=1, max_length=120)
     issue_date: date
     valid_until: date
@@ -320,6 +337,7 @@ class EstimateIn(Model):
 
 
 class PaymentIn(Model):
+    receipt_number: DocNumberText = ""
     customer_name: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=200)
     amount: int = Field(ge=1, le=1_000_000_000)

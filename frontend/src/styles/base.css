@@ -151,15 +151,6 @@ textarea {
   flex: none;
 }
 
-.logo-mark__bg {
-  fill: var(--c-primary);
-}
-
-/* 電球の中の回路の線（背景と同じテーマ色） */
-.logo-mark__line {
-  stroke: var(--c-primary);
-}
-
 .logo__brand {
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -197,7 +188,7 @@ textarea {
   flex-direction: column;
 }
 
-/* 「Katachi」と下の「ホームページ制作」の横幅がそろうように、文字の大きさを合わせています（字間は .logo__brand / .logo__sub のまま） */
+/* 「AI Nova」と下の「ホームページ制作」の横幅がそろうように、文字の大きさを合わせています（字間は .logo__brand / .logo__sub のまま） */
 .logo--stacked .logo__brand {
   font-size: 24px;
 }
@@ -369,7 +360,8 @@ textarea {
   line-height: 1.6;
 }
 
-.chip:nth-child(3n + 2) {
+.chip:nth-child(3n + 2),
+.chips li:nth-child(3n + 2) > .chip {
   border-color: var(--c-blue-3);
   background: var(--c-tint-2);
 }

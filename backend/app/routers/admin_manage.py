@@ -64,7 +64,7 @@ def audit_logs(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -
 def backup(conn: sqlite3.Connection = Depends(get_conn)) -> FileResponse:
     archive = maintenance.create_backup(settings.database_path, UPLOAD_DIR)
     audit.log(conn, "バックアップをダウンロード")
-    filename = datetime.now(JST).strftime("katachi-backup-%Y%m%d-%H%M%S.zip")
+    filename = datetime.now(JST).strftime("ainova-backup-%Y%m%d-%H%M%S.zip")
     return FileResponse(
         archive,
         media_type="application/zip",

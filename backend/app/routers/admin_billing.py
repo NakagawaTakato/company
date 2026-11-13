@@ -1,25 +1,54 @@
-"""管理画面の API（見積書・入金と領収書・保守契約）。"""
+"""管理画面の API（見積書・入金と領収書・おまかせ管理プラン）。"""
 
 from __future__ import annotations
 
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import Response
 
-from .. import audit, billing, inquiries, schemas
-from ..db import today_jst
+from .. import audit, billing, billing_csv, inquiries, schemas
+from ..db import JST, today_jst
 from ..deps import PER_PAGE, ApiError, get_conn, page_number, pages, parse_id, require_admin
 
-router = APIRouter(prefix="/api/admin", tags=["管理画面: 見積書・入金・保守契約"], dependencies=[Depends(require_admin)])
+router = APIRouter(prefix="/api/admin", tags=["管理画面: 見積書・入金・おまかせ管理プラン"], dependencies=[Depends(require_admin)])
 
-ESTIMATE_LABELS = {"draft": "下書き", "sent": "送付済み", "accepted": "承諾", "rejected": "不成立"}
+ESTIMATE_LABELS = billing_csv.ESTIMATE_LABELS
+
+# CSV は絞り込み条件に合うものをすべて出力します（ページ分けなし）
+CSV_LIMIT = 100_000
+CSV_RESPONSES = {200: {"content": {"text/csv": {}}, "description": "CSV ファイル"}}
+
+
+def _csv_response(conn: sqlite3.Connection, name: str, label: str, count: int, text: str) -> Response:
+    filename = datetime.now(JST).strftime(f"{name}_%Y%m%d_%H%M%S.csv")
+    audit.log(conn, f"{label}を CSV で出力", f"{count} 件")
+    return Response(
+        content=text.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _estimate_status(raw: str | None) -> str | None:
+    status = raw or None
+    if status and status not in billing.ESTIMATE_STATUSES:
+        raise ApiError(400, "状態の指定が正しくありません。")
+    return status
 
 
 def _check_inquiry(conn: sqlite3.Connection, inquiry_id: int | None) -> None:
     if inquiry_id is not None and inquiries.get_inquiry(conn, inquiry_id) is None:
         raise ApiError(422, "入力内容をご確認ください。", {"inquiry_id": "関連するお問い合わせが見つかりません。"})
+
+
+def _check_number(conn: sqlite3.Connection, kind: str, number: str, exclude_id: int | None = None) -> None:
+    """自分で入力した番号が、ほかの見積書（領収書）と重なっていないか確かめます。"""
+    table, column = ("estimates", "number") if kind == "estimate" else ("payments", "receipt_number")
+    if number and billing.number_in_use(conn, table, column, number, exclude_id):
+        raise ApiError(422, "入力内容をご確認ください。", {column: "この番号はすでに使われています。"})
 
 
 def _estimate_or_404(conn: sqlite3.Connection, raw_id: str) -> dict[str, Any]:
@@ -38,12 +67,18 @@ def _estimate_data(body: schemas.EstimateIn) -> dict[str, Any]:
 
 # ------------------------------------------------------------------ 見積書
 
+@router.get("/next-numbers", summary="次に自動で付く見積番号・領収書番号（入力欄の初期値用）")
+def next_numbers(conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, str]:
+    return {
+        "estimate": billing.next_number(conn, "estimates", "number"),
+        "receipt": billing.next_number(conn, "payments", "receipt_number"),
+    }
+
+
 @router.get("/estimates", summary="見積書の一覧")
 def list_estimates(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     q = request.query_params
-    status = q.get("status") or None
-    if status and status not in billing.ESTIMATE_STATUSES:
-        raise ApiError(400, "状態の指定が正しくありません。")
+    status = _estimate_status(q.get("status"))
     page = page_number(q.get("page"))
     # 選択肢に使うときは ?per_page=100 までまとめて取得できます
     per_page = min(max(page_number(q.get("per_page")) if q.get("per_page") else PER_PAGE, 1), 100)
@@ -51,9 +86,24 @@ def list_estimates(request: Request, conn: sqlite3.Connection = Depends(get_conn
     return {"items": items, "total": total, "page": page, "pages": pages(total, per_page), "per_page": per_page}
 
 
+@router.get(
+    "/estimates.csv",
+    response_class=Response,
+    responses=CSV_RESPONSES,
+    summary="見積書を CSV でダウンロード（一覧と同じ絞り込み条件・明細つき）",
+)
+def export_estimates_csv(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> Response:
+    q = request.query_params
+    items, _ = billing.list_estimates(
+        conn, (q.get("q") or "").strip() or None, _estimate_status(q.get("status")), 1, CSV_LIMIT, with_items=True
+    )
+    return _csv_response(conn, "estimates", "見積書", len(items), billing_csv.estimates_csv(items))
+
+
 @router.post("/estimates", status_code=201, summary="見積書を作成")
 def create_estimate(body: schemas.EstimateIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     _check_inquiry(conn, body.inquiry_id)
+    _check_number(conn, "estimate", body.number)
     estimate_id = billing.save_estimate(conn, _estimate_data(body))
     estimate = billing.get_estimate(conn, estimate_id)
     audit.log(conn, "見積書を作成", f"{estimate['number']} {body.customer_name} 様 {estimate['total']:,}円")
@@ -73,9 +123,11 @@ def get_estimate(estimate_id: str, conn: sqlite3.Connection = Depends(get_conn))
 def update_estimate(estimate_id: str, body: schemas.EstimateIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     current = _estimate_or_404(conn, estimate_id)
     _check_inquiry(conn, body.inquiry_id)
+    _check_number(conn, "estimate", body.number, current["id"])
     billing.save_estimate(conn, _estimate_data(body), current["id"])
     estimate = billing.get_estimate(conn, current["id"])
-    audit.log(conn, "見積書を変更", f"{estimate['number']}（{ESTIMATE_LABELS[body.status]}） {estimate['total']:,}円")
+    renamed = f"（番号 {current['number']} から変更）" if estimate["number"] != current["number"] else ""
+    audit.log(conn, "見積書を変更", f"{estimate['number']}{renamed}（{ESTIMATE_LABELS[body.status]}） {estimate['total']:,}円")
     return get_estimate(estimate_id, conn)
 
 
@@ -115,8 +167,20 @@ def list_payments(request: Request, conn: sqlite3.Connection = Depends(get_conn)
     }
 
 
-@router.post("/payments", status_code=201, summary="入金を記録（領収書番号を自動で付けます）")
+@router.get(
+    "/payments.csv",
+    response_class=Response,
+    responses=CSV_RESPONSES,
+    summary="入金の記録を CSV でダウンロード（一覧と同じ検索条件）",
+)
+def export_payments_csv(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> Response:
+    items, _, _ = billing.list_payments(conn, (request.query_params.get("q") or "").strip() or None, 1, CSV_LIMIT)
+    return _csv_response(conn, "payments", "入金の記録", len(items), billing_csv.payments_csv(items))
+
+
+@router.post("/payments", status_code=201, summary="入金を記録（領収書番号が空なら自動で付けます）")
 def create_payment(body: schemas.PaymentIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
+    _check_number(conn, "receipt", body.receipt_number)
     payment = billing.get_payment(conn, billing.save_payment(conn, _payment_data(conn, body)))
     audit.log(conn, "入金を記録", f"{payment['receipt_number']} {body.customer_name} 様 {body.amount:,}円")
     return payment
@@ -130,9 +194,12 @@ def get_payment(payment_id: str, conn: sqlite3.Connection = Depends(get_conn)) -
 @router.put("/payments/{payment_id}", summary="入金の記録を変更")
 def update_payment(payment_id: str, body: schemas.PaymentIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     current = _payment_or_404(conn, payment_id)
+    _check_number(conn, "receipt", body.receipt_number, current["id"])
     billing.save_payment(conn, _payment_data(conn, body), current["id"])
-    audit.log(conn, "入金の記録を変更", f"{current['receipt_number']} {body.amount:,}円")
-    return _payment_or_404(conn, payment_id)
+    payment = _payment_or_404(conn, payment_id)
+    renamed = f"（番号 {current['receipt_number']} から変更）" if payment["receipt_number"] != current["receipt_number"] else ""
+    audit.log(conn, "入金の記録を変更", f"{payment['receipt_number']}{renamed} {body.amount:,}円")
+    return payment
 
 
 @router.delete("/payments/{payment_id}", response_model=schemas.OkResponse, summary="入金の記録を削除")
@@ -143,12 +210,12 @@ def delete_payment(payment_id: str, conn: sqlite3.Connection = Depends(get_conn)
     return {"ok": True}
 
 
-# ------------------------------------------------------------------ 保守契約
+# ------------------------------------------------------------------ おまかせ管理プラン
 
 def _contract_or_404(conn: sqlite3.Connection, raw_id: str) -> dict[str, Any]:
     contract = billing.get_contract(conn, parse_id(raw_id))
     if contract is None:
-        raise ApiError(404, "保守契約が見つかりません。")
+        raise ApiError(404, "おまかせ管理プランが見つかりません。")
     return contract
 
 
@@ -159,7 +226,7 @@ def _contract_data(body: schemas.ContractIn) -> dict[str, Any]:
     return data
 
 
-@router.get("/contracts", summary="保守契約の一覧（契約中の月額合計つき）")
+@router.get("/contracts", summary="おまかせ管理プランの一覧（契約中の月額合計つき）")
 def list_contracts(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     q = request.query_params
     status = q.get("status") or None
@@ -177,27 +244,27 @@ def list_contracts(request: Request, conn: sqlite3.Connection = Depends(get_conn
     }
 
 
-@router.post("/contracts", status_code=201, summary="保守契約を登録")
+@router.post("/contracts", status_code=201, summary="おまかせ管理プランを登録")
 def create_contract(body: schemas.ContractIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     _check_inquiry(conn, body.inquiry_id)
     contract = billing.get_contract(conn, billing.save_contract(conn, _contract_data(body)))
-    audit.log(conn, "保守契約を登録", f"{body.customer_name} 様 {body.site_name} 月額{body.monthly_fee:,}円")
+    audit.log(conn, "おまかせ管理プランを登録", f"{body.customer_name} 様 {body.site_name} 月額{body.monthly_fee:,}円")
     if body.inquiry_id is not None:
-        inquiries.add_note(conn, body.inquiry_id, f"保守契約「{body.site_name}」を登録", kind="system")
+        inquiries.add_note(conn, body.inquiry_id, f"おまかせ管理プラン「{body.site_name}」を登録", kind="system")
     return contract
 
 
-@router.get("/contracts/{contract_id}", summary="保守契約の詳細")
+@router.get("/contracts/{contract_id}", summary="おまかせ管理プランの詳細")
 def get_contract(contract_id: str, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     return _contract_or_404(conn, contract_id)
 
 
-@router.put("/contracts/{contract_id}", summary="保守契約を変更")
+@router.put("/contracts/{contract_id}", summary="おまかせ管理プランを変更")
 def update_contract(contract_id: str, body: schemas.ContractIn, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     current = _contract_or_404(conn, contract_id)
     _check_inquiry(conn, body.inquiry_id)
     billing.save_contract(conn, _contract_data(body), current["id"])
-    audit.log(conn, "保守契約を変更", f"{body.customer_name} 様 {body.site_name}")
+    audit.log(conn, "おまかせ管理プランを変更", f"{body.customer_name} 様 {body.site_name}")
     return _contract_or_404(conn, contract_id)
 
 
@@ -207,13 +274,13 @@ def request_cancel(contract_id: str, body: schemas.CancelRequest, conn: sqlite3.
     requested_on = body.requested_on or date.fromisoformat(today_jst())
     billing.request_cancel(conn, contract["id"], requested_on)
     updated = _contract_or_404(conn, contract_id)
-    audit.log(conn, "保守契約の解約申し出を登録", f"{contract['customer_name']} 様 {contract['site_name']}（{updated['end_date']} で終了）")
+    audit.log(conn, "おまかせ管理プランの解約申し出を登録", f"{contract['customer_name']} 様 {contract['site_name']}（{updated['end_date']} で終了）")
     return updated
 
 
-@router.delete("/contracts/{contract_id}", response_model=schemas.OkResponse, summary="保守契約を削除")
+@router.delete("/contracts/{contract_id}", response_model=schemas.OkResponse, summary="おまかせ管理プランを削除")
 def delete_contract(contract_id: str, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, bool]:
     contract = _contract_or_404(conn, contract_id)
     billing.delete_contract(conn, contract["id"])
-    audit.log(conn, "保守契約を削除", f"{contract['customer_name']} 様 {contract['site_name']}")
+    audit.log(conn, "おまかせ管理プランを削除", f"{contract['customer_name']} 様 {contract['site_name']}")
     return {"ok": True}

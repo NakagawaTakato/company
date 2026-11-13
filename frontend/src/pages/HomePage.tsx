@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, MouseEvent } from 'react'
 import { Link } from 'react-router'
 import {
   MdAccessTime,
@@ -16,6 +16,7 @@ import { assetUrl } from '../api/client'
 import { Logo } from '../components/Logo'
 import { SectionHeading } from '../components/SectionHeading'
 import {
+  AWARDS,
   CAREER,
   FLOW,
   HEADER_CTA,
@@ -41,6 +42,26 @@ const BADGE_COLORS = ['var(--c-accent-2)', 'var(--c-accent-5)']
 // そこまで来たら「よくある質問」の強調を外したいので、最後に加えています。
 const SECTION_IDS = [...NAV.map((item) => item.href.slice(1)), HEADER_CTA.href.slice(1)]
 
+// ページ内の「#〜」リンクを押したときの動きです。URL に # を付けずにスクロールだけするので、
+// リロードしても経歴などへ勝手に移動しません。移動先が .jump-target なら、少しの間光らせます。
+function handleInPageLink(event: MouseEvent<HTMLElement>) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return
+  }
+  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]')
+  const target = link && document.getElementById(decodeURIComponent(link.hash.slice(1)))
+  if (!target) return
+  event.preventDefault()
+  target.scrollIntoView()
+  if (target.classList.contains('jump-target')) {
+    // 一度外して付け直すと、同じボタンを続けて押しても毎回光ります
+    target.classList.remove('is-jumped')
+    void target.offsetWidth
+    target.classList.add('is-jumped')
+    target.addEventListener('animationend', () => target.classList.remove('is-jumped'), { once: true })
+  }
+}
+
 function FeatureCard({ item }: { item: Feature }) {
   const Icon = item.icon
   return (
@@ -61,7 +82,7 @@ export function HomePage() {
   const activeSection = useActiveSection(SECTION_IDS)
 
   return (
-    <div className="home">
+    <div className="home" onClick={handleInPageLink}>
       {/* ヘッダー（ロゴと「ご相談はこちら」ボタン）。画面上部に固定します */}
       <header className="home-header">
         <div className="home-header__inner">
@@ -132,24 +153,31 @@ export function HomePage() {
               <p className="profile-card__text">
                 IT専門学校で4年間(ロボット制作で金賞、卒業制作でカプコン賞)、Webスクールで半年間学び、IT開発会社で1年間、Web開発の実務を経験しました。
               </p>
+              {/* 受賞とスキルは、押すと制作実績・経歴の関係する場所へ移動します */}
               <ul className="profile-card__awards">
-                <li>
-                  <span className="badge" style={{ background: 'var(--c-accent-2)' }}>
-                    金賞
-                  </span>
-                  ロボット制作
-                </li>
-                <li>
-                  <span className="badge" style={{ background: 'var(--c-accent-5)' }}>
-                    カプコン賞
-                  </span>
-                  卒業制作 ARゲーム
-                </li>
+                {AWARDS.map((award) => {
+                  // 制作実績は管理画面で変えられるので、同じ賞のカードが無いときは制作実績の先頭へ移動します
+                  const index = works.findIndex((work) => work.badge === award.badge)
+                  return (
+                    <li key={award.badge}>
+                      <a
+                        className="badge badge--link"
+                        style={{ background: award.color }}
+                        href={index >= 0 ? `#work-${index}` : '#works'}
+                      >
+                        {award.badge}
+                      </a>
+                      {award.text}
+                    </li>
+                  )
+                })}
               </ul>
               <ul className="chips">
                 {SKILLS.map((skill) => (
-                  <li key={skill} className="chip">
-                    {skill}
+                  <li key={skill.label}>
+                    <a className="chip chip--link" href={`#${skill.target}`}>
+                      {skill.label}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -216,7 +244,7 @@ export function HomePage() {
                     style={accentStyle(item.accent)}
                   >
                     <span className="timeline__dot" aria-hidden="true" />
-                    <article className="timeline__card">
+                    <article id={item.id} className="timeline__card jump-target">
                       {Icon && (
                         <span className="icon-circle icon-circle--md timeline__icon" aria-hidden="true">
                           <Icon />
@@ -225,7 +253,7 @@ export function HomePage() {
                       <span className="pill">{item.period}</span>
                       <h3 className="timeline__title">{item.title}</h3>
                       {item.rows?.map((row) => (
-                        <p key={row.label} className="timeline__row">
+                        <p key={row.label} id={row.id} className="timeline__row jump-target">
                           <span className="tag">{row.label}</span>
                           {row.text}
                         </p>
@@ -246,7 +274,7 @@ export function HomePage() {
             {works.length > 0 && (
               <div className="grid grid--2">
                 {works.map((work, index) => (
-                  <article key={`${work.title}-${index}`} className="work-card">
+                  <article key={`${work.title}-${index}`} id={`work-${index}`} className="work-card jump-target">
                     <div className="work-card__image">
                       <img src={assetUrl(work.image)} alt={work.alt} loading="lazy" />
                     </div>
@@ -265,9 +293,10 @@ export function HomePage() {
             {otherWorks.length > 0 && (
               <>
                 <h3 className="sub-heading">そのほかの制作物</h3>
-                <ul className="chips">
+                <ul className="check-list">
                   {otherWorks.map((work) => (
-                    <li key={work} className="chip">
+                    <li key={work}>
+                      <MdCheckCircle aria-hidden="true" />
                       {work}
                     </li>
                   ))}
@@ -306,7 +335,10 @@ export function HomePage() {
           <div className="container">
             <SectionHeading eyebrow="PRICE" title="料金の目安" icon={MdRadioButtonChecked} />
             <div className="price-table">
-              <p className="price-table__caption">制作内容ごとの、1ページの相場です。</p>
+              <div className="price-table__head">
+                <p className="price-table__caption">制作内容ごとの、1ページの相場です。</p>
+                <span className="price-table__tax">表示価格はすべて税抜</span>
+              </div>
               <table>
                 <thead>
                   <tr>
@@ -422,7 +454,6 @@ export function HomePage() {
               </span>
               <span className="pill">対応時間</span>
               <strong>{business.hours}</strong>
-              <span className="hours__suffix">など</span>
             </p>
             <p className="hours hours--area">
               <span className="icon-circle icon-circle--md" aria-hidden="true">

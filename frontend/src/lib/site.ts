@@ -4,7 +4,7 @@
 import defaults from '../../../shared/site_defaults.json'
 
 export const BRAND = {
-  brand: 'Katachi',
+  brand: 'AI Nova',
   tagline: 'ホームページ制作',
 } as const
 
@@ -17,6 +17,7 @@ export type Business = {
   hours: string
   business_form: string
   line_url: string
+  invoice_number: string
 }
 
 export type PriceRow = { name: string; price: string }

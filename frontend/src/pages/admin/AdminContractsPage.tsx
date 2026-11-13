@@ -21,7 +21,7 @@ const blank = (inquiryId: number | null = null, name = '', email = ''): Contract
 })
 
 export function AdminContractsPage() {
-  usePageTitle('保守契約')
+  usePageTitle('おまかせ管理プラン')
   const [params, setParams] = useSearchParams()
   const [status, setStatus] = useState('')
   const { data, error, reload } = useLoader(() => api.contracts({ status }), [status])
@@ -65,7 +65,7 @@ export function AdminContractsPage() {
     const payload = { ...form, cancel_requested_on: form.cancel_requested_on || null, end_date: form.end_date || null }
     const saved = await action.run(
       () => (editing && editing !== 'new' ? api.updateContract(editing.id, payload) : api.createContract(payload)),
-      editing === 'new' ? '保守契約を登録しました。' : '保存しました。',
+      editing === 'new' ? 'おまかせ管理プランを登録しました。' : '保存しました。',
     )
     if (saved) {
       close()
@@ -83,7 +83,7 @@ export function AdminContractsPage() {
   }
 
   const remove = async (c: Contract) => {
-    if (!window.confirm(`${c.customer_name} 様「${c.site_name}」の保守契約を削除します。よろしいですか？`)) return
+    if (!window.confirm(`${c.customer_name} 様「${c.site_name}」のおまかせ管理プランを削除します。よろしいですか？`)) return
     if (await action.run(() => api.deleteContract(c.id), '削除しました。')) reload()
   }
 
@@ -93,13 +93,13 @@ export function AdminContractsPage() {
   return (
     <>
       <PageHeader
-        title="保守契約"
-        lead="保守プラン（月額）の契約を管理します。解約のお申し出は前月末までなので、申し出日の翌月末で終了します。"
+        title="おまかせ管理プラン"
+        lead="おまかせ管理プラン（月額）の契約を管理します。解約のお申し出は前月末までなので、申し出日の翌月末で終了します。"
         actions={
           !editing && (
             <button type="button" className="btn btn--primary btn--small" onClick={() => { setForm(blank()); setEditing('new') }}>
               <MdAdd aria-hidden="true" />
-              保守契約を登録
+              おまかせ管理プランを登録
             </button>
           )
         }
@@ -125,7 +125,7 @@ export function AdminContractsPage() {
       )}
 
       {editing && (
-        <Card title={editing === 'new' ? '保守契約を登録' : `保守契約を編集（${editing.site_name}）`}>
+        <Card title={editing === 'new' ? 'おまかせ管理プランを登録' : `おまかせ管理プランを編集（${editing.site_name}）`}>
           <form onSubmit={save} noValidate>
             {form.inquiry_id && (
               <p className="field__help">
@@ -187,7 +187,7 @@ export function AdminContractsPage() {
         {!data ? (
           <Empty>読み込み中…</Empty>
         ) : data.items.length === 0 ? (
-          <Empty>保守契約はまだありません。</Empty>
+          <Empty>おまかせ管理プランはまだありません。</Empty>
         ) : (
           <table className="admin-table admin-table--static">
             <thead>

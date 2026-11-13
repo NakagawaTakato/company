@@ -1,4 +1,4 @@
-"""Katachi サイトの FastAPI バックエンド（API 専用・ポート 8000）。
+"""AI Nova サイトの FastAPI バックエンド（API 専用・ポート 8000）。
 
 画面（React）は frontend/ を Vite で別に起動し、.env.fastapi の接続先からこの API を呼び出します。
 API の説明ページ: http://127.0.0.1:8000/api/docs
@@ -68,7 +68,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Katachi API (FastAPI)",
+    title="AI Nova API (FastAPI)",
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url=None,
@@ -159,7 +159,7 @@ app.include_router(admin_billing.router)
 
 @app.get("/", include_in_schema=False)
 def root() -> dict[str, str]:
-    return {"name": "Katachi API", "backend": "fastapi", "docs": "/api/docs"}
+    return {"name": "AI Nova API", "backend": "fastapi", "docs": "/api/docs"}
 
 
 @app.get("/api/health", response_model=schemas.HealthResponse, tags=["共通"], summary="動作確認")

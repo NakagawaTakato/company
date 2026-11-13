@@ -27,7 +27,7 @@ const NAV: { to: string; label: string; icon: IconType; end?: boolean }[] = [
   { to: '/admin/inquiries', label: 'お問い合わせ', icon: MdInbox },
   { to: '/admin/estimates', label: '見積書', icon: MdRequestQuote },
   { to: '/admin/payments', label: '入金・領収書', icon: MdPayments },
-  { to: '/admin/contracts', label: '保守契約', icon: MdBuild },
+  { to: '/admin/contracts', label: 'おまかせ管理プラン', icon: MdBuild },
   { to: '/admin/content', label: 'サイト内容', icon: MdArticle },
   { to: '/admin/theme', label: 'デザイン（色）', icon: MdPalette },
   { to: '/admin/mail', label: 'メール', icon: MdMail },

@@ -244,7 +244,7 @@ def test_public(c: Client) -> None:
     status, body = c.json("GET", "/api/health")
     check("ヘルスチェック", status == 200 and body.get("status") == "ok", (status, body))
     status, body = c.json("GET", "/")
-    check("ルートは API の案内を返す", status == 200 and body.get("name") == "Katachi API", (status, body))
+    check("ルートは API の案内を返す", status == 200 and body.get("name") == "AI Nova API", (status, body))
     status, body = c.json("GET", "/api/no-such-api")
     check("存在しない API は 404", status == 404 and "message" in body, (status, body))
     status, body = c.json("GET", "/contact")
@@ -307,6 +307,8 @@ def test_public(c: Client) -> None:
         ("GET", "/api/admin/dashboard"),
         ("PUT", "/api/admin/theme"),
         ("GET", "/api/admin/estimates"),
+        ("GET", "/api/admin/estimates.csv"),
+        ("GET", "/api/admin/payments.csv"),
         ("GET", "/api/admin/backup"),
         ("POST", "/api/admin/uploads"),
     ):
@@ -369,7 +371,7 @@ def test_inquiries(c: Client) -> int:
 
     tid = taro["id"]
     status, body = c.json("GET", f"/api/admin/inquiries/{tid}")
-    check("詳細にメモ・送信メール・見積書・保守契約が付く", status == 200 and {"notes", "mails", "estimates", "contracts"} <= set(body), body)
+    check("詳細にメモ・送信メール・見積書・おまかせ管理プランが付く", status == 200 and {"notes", "mails", "estimates", "contracts"} <= set(body), body)
     check("詳細: ID が数字でなければ 404", c.json("GET", "/api/admin/inquiries/abc")[0] == 404)
     check("詳細: 存在しない ID は 404", c.json("GET", "/api/admin/inquiries/999999")[0] == 404)
     status, body = c.json("PATCH", f"/api/admin/inquiries/{tid}", {"status": "bad"})
@@ -467,7 +469,7 @@ def test_mail(c: Client, tid: int) -> None:
     sink = SmtpSink()
     smtp = {
         "host": "127.0.0.1", "port": sink.port, "security": "none", "username": "", "password": "secret-pw",
-        "from_address": "noreply@example.com", "from_name": "Katachi テスト",
+        "from_address": "noreply@example.com", "from_name": "AI Nova テスト",
     }
     status, body = c.json("PUT", "/api/admin/mail/smtp", {**smtp, "from_address": "bad"})
     check("送信元アドレスの形式エラーは 422", status == 422 and "from_address" in body.get("errors", {}), body)
@@ -483,7 +485,7 @@ def test_mail(c: Client, tid: int) -> None:
     status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
     check("テストメールを送信", status == 200 and sink.wait_for(1) and "テストメール" in sink.subjects()[0], (status, body, sink.subjects()))
     sender = str(sink.messages[0]["from"]) if sink.messages else ""
-    check("差出人名（日本語）と送信元アドレス", "noreply@example.com" in sender and "Katachi" in sender, sender)
+    check("差出人名（日本語）と送信元アドレス", "noreply@example.com" in sender and "AI Nova" in sender, sender)
 
     notify = {
         "admin_notify": True, "admin_to": ["owner@example.com", "staff@example.com"], "auto_reply": True,
@@ -657,6 +659,11 @@ def test_theme_and_content(c: Client) -> None:
     check("事業者情報を保存", status == 200 and body["customized"]["business"], body.get("customized"))
     status, site = c.json("GET", "/api/site")
     check("公開サイトに事業者情報が反映される", site["content"]["business"]["line_url"] == "https://line.me/ti/p/test", site["content"]["business"])
+    status, body = c.json("PUT", "/api/admin/content/business", {**business, "invoice_number": "T123"})
+    check("登録番号は T + 13桁のみ（違えば 422）", status == 422 and "invoice_number" in body.get("errors", {}), body)
+    status, body = c.json("PUT", "/api/admin/content/business", {**business, "invoice_number": "T1234567890123"})
+    check("登録番号を保存", status == 200 and body["content"]["business"]["invoice_number"] == "T1234567890123", body["content"]["business"])
+    c.json("PUT", "/api/admin/content/business", business)
 
     status, body = c.json("PUT", "/api/admin/content/faq", [{"q": "質問1", "a": "回答1"}, {"q": "", "a": "x"}])
     check("よくある質問: 空の質問は 422（何件目かわかる）", status == 422 and "1.q" in body.get("errors", {}), body)
@@ -695,7 +702,7 @@ def test_theme_and_content(c: Client) -> None:
     check("初期値に戻す", status == 200 and not any(body["customized"].values()) and len(body["content"]["faq"]) == 8, body.get("customized"))
 
 
-# ------------------------------------------------------------------ 見積書・入金・保守契約
+# ------------------------------------------------------------------ 見積書・入金・おまかせ管理プラン
 
 def test_billing(c: Client, tid: int) -> None:
     print("[見積書]")
@@ -717,16 +724,47 @@ def test_billing(c: Client, tid: int) -> None:
     )
     check("数量が数字でなければ 422（何行目かわかる）", status == 422 and "items.0.quantity" in body.get("errors", {}), body)
     status, created = c.json("POST", "/api/admin/estimates", estimate)
-    month = datetime.now(JST).strftime("%Y%m")
-    check("見積書を作成（番号を自動採番）", status == 201 and created["number"].startswith(f"Q-{month}-"), created)
+    today = datetime.now(JST).strftime("%Y-%m%d")
+    check(
+        "見積書を作成（番号は 年-月日-連番-時分）",
+        status == 201 and re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", created["number"]) is not None,
+        created,
+    )
+    check("敬称（初期値は様）", created.get("honorific") == "様", created)
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "honorific": "殿"})
+    check("敬称は様・御中のみ（違えば 422）", status == 422 and "honorific" in body.get("errors", {}), body)
     check(
         "金額の計算（小計65,000・税6,500・合計71,500）",
         (created.get("subtotal"), created.get("tax"), created.get("total")) == (65000, 6500, 71500),
         created,
     )
     eid = created["id"]
-    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted"})
+    status, body = c.json(
+        "PUT", f"/api/admin/estimates/{eid}",
+        {**estimate, "status": "accepted", "honorific": "御中"},
+    )
     check("見積書を変更（承諾）", status == 200 and body["status"] == "accepted" and body["number"] == created["number"], body)
+    check("敬称を変更", body.get("honorific") == "御中", body)
+
+    # 番号は自分で入力できる（空なら自動）
+    status, body = c.json("GET", "/api/admin/next-numbers")
+    check(
+        "次に付く番号を取得（入力欄の初期値）",
+        status == 200 and all(re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", body.get(k, "")) for k in ("estimate", "receipt"))
+        and body["estimate"] != created["number"],
+        body,
+    )
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "number": created["number"]})
+    check("見積番号の重なりは 422", status == 422 and body.get("errors", {}).get("number") == "この番号はすでに使われています。", body)
+    status, body = c.json("POST", "/api/admin/estimates", {**estimate, "number": "見積 1"})
+    check("見積番号は半角英数字とハイフンのみ（違えば 422）", status == 422 and "半角" in body.get("errors", {}).get("number", ""), body)
+    status, own = c.json("POST", "/api/admin/estimates", {**estimate, "number": "TEST-EST-0001"})
+    check("見積番号を自分で入力して作成", status == 201 and own.get("number") == "TEST-EST-0001", own)
+    c.json("DELETE", f"/api/admin/estimates/{own['id']}")
+    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted", "number": "TEST-EST-0002"})
+    check("見積番号をあとから変更", status == 200 and body.get("number") == "TEST-EST-0002", body)
+    status, body = c.json("PUT", f"/api/admin/estimates/{eid}", {**estimate, "status": "accepted", "number": created["number"]})
+    check("見積番号を元に戻す（同じ見積書の番号は重なりとみなさない）", status == 200 and body.get("number") == created["number"], body)
     status, body = c.json("GET", f"/api/admin/inquiries/{tid}")
     check("お問い合わせの詳細に見積書が出る", any(e["id"] == eid for e in body["estimates"]), body["estimates"])
     status, body = c.json("GET", f"/api/admin/estimates?q={urllib.parse.quote('テスト')}")
@@ -744,15 +782,26 @@ def test_billing(c: Client, tid: int) -> None:
     status, paid = c.json("POST", "/api/admin/payments", payment)
     check(
         "入金を記録（領収書番号を自動採番）",
-        status == 201 and paid["receipt_number"].startswith(f"R-{month}-") and paid["estimate"]["id"] == eid,
+        status == 201 and re.fullmatch(rf"{today}-\d{{3}}-\d{{4}}", paid["receipt_number"]) is not None
+        and paid["estimate"]["id"] == eid
+        and paid["estimate"]["tax_rate"] == 10,
         paid,
     )
+    status, body = c.json("POST", "/api/admin/payments", {**payment, "receipt_number": paid["receipt_number"]})
+    check(
+        "領収書番号の重なりは 422",
+        status == 422 and body.get("errors", {}).get("receipt_number") == "この番号はすでに使われています。",
+        body,
+    )
+    status, body = c.json("PUT", f"/api/admin/payments/{paid['id']}", {**payment, "receipt_number": "TEST-R-0001"})
+    check("領収書番号をあとから変更", status == 200 and body.get("receipt_number") == "TEST-R-0001", body)
+    c.json("PUT", f"/api/admin/payments/{paid['id']}", {**payment, "receipt_number": paid["receipt_number"]})
     status, body = c.json("GET", f"/api/admin/estimates/{eid}")
     check("見積書に入金済み・残額が出る", body["paid"] == 35750 and body["balance"] == 35750 and len(body["payments"]) == 1, body)
     status, body = c.json("GET", "/api/admin/payments")
     check("入金の一覧と合計", status == 200 and body["total_amount"] >= 35750, body.get("total_amount"))
 
-    print("[保守契約]")
+    print("[おまかせ管理プラン]")
     contract = {
         "customer_name": "テスト 太郎", "email": "taro@example.com", "site_name": "テスト商店", "site_url": "https://example.com",
         "monthly_fee": 5000, "start_date": "2026-10-01", "note": "", "inquiry_id": tid,
@@ -760,7 +809,7 @@ def test_billing(c: Client, tid: int) -> None:
     status, body = c.json("POST", "/api/admin/contracts", {**contract, "site_url": "ftp://x"})
     check("サイトの URL の形式エラーは 422", status == 422 and "site_url" in body.get("errors", {}), body)
     status, created_c = c.json("POST", "/api/admin/contracts", contract)
-    check("保守契約を登録（契約中）", status == 201 and created_c["status"] == "active", created_c)
+    check("おまかせ管理プランを登録（契約中）", status == 201 and created_c["status"] == "active", created_c)
     status, body = c.json("GET", "/api/admin/dashboard")
     check(
         "ダッシュボードの集計",
@@ -771,12 +820,32 @@ def test_billing(c: Client, tid: int) -> None:
     status, body = c.json("POST", f"/api/admin/contracts/{created_c['id']}/cancel", {"requested_on": "2026-12-15"})
     check("解約の申し出 → 翌月末で終了", status == 200 and body["end_date"] == "2027-01-31" and body["status"] == "cancel_requested", body)
     status, body = c.json("GET", "/api/admin/contracts")
-    check("保守契約の一覧（状態ごとの件数）", status == 200 and body["counts"]["cancel_requested"] >= 1, body.get("counts"))
+    check("おまかせ管理プランの一覧（状態ごとの件数）", status == 200 and body["counts"]["cancel_requested"] >= 1, body.get("counts"))
+
+    print("[見積書・入金の CSV]")
+    for path, name, header, expect in (
+        (f"/api/admin/estimates.csv?status=accepted&q={urllib.parse.quote('テスト')}", "estimates_", "見積番号", created["number"]),
+        (f"/api/admin/payments.csv?q={urllib.parse.quote(paid['receipt_number'])}", "payments_", "領収書番号", paid["receipt_number"]),
+    ):
+        status, headers, content = c.request("GET", path)
+        text = content.decode("utf-8", "replace")
+        rows = text.strip().split("\r\n")
+        check(
+            f"{name}CSV を取得（BOM 付き・ファイル名・見出し）",
+            status == 200 and headers.get("content-type", "").startswith("text/csv")
+            and name in headers.get("content-disposition", "") and text.startswith(f'\ufeff"{header}"'),
+            (status, headers.get("content-disposition"), text[:80]),
+        )
+        check(f"{name}CSV は一覧と同じ条件で絞り込める", len(rows) >= 2 and all(expect in r for r in rows[1:]), rows[:3])
+    status, _, content = c.request("GET", "/api/admin/estimates.csv?status=accepted")
+    check("見積書の CSV に明細と入金済み・残額が入る", "デザイン 1.5式 × 10,000円 = 15,000円" in content.decode("utf-8") and '"35750","35750"' in content.decode("utf-8"), "")
+    status, _, _ = c.request("GET", "/api/admin/estimates.csv?status=bad")
+    check("CSV も状態の指定が正しくなければ 400", status == 400, status)
 
     status, body = c.json("DELETE", f"/api/admin/payments/{paid['id']}")
     check("入金の記録を削除", status == 200, body)
     status, body = c.json("DELETE", f"/api/admin/contracts/{created_c['id']}")
-    check("保守契約を削除", status == 200, body)
+    check("おまかせ管理プランを削除", status == 200, body)
     status, body = c.json("DELETE", f"/api/admin/estimates/{eid}")
     check("見積書を削除", status == 200 and c.json("GET", f"/api/admin/estimates/{eid}")[0] == 404, body)
 
@@ -811,9 +880,12 @@ def test_data_and_logs(c: Client) -> None:
         body["items"][:2],
     )
     actions: set[str] = set()
-    for page in (1, 2, 3):
+    page, pages_total = 1, 1
+    while page <= pages_total and page <= 20:  # すべてのページを読む（念のため20ページまで）
         status, body = c.json("GET", f"/api/admin/audit-logs?page={page}")
         actions |= {i["action"] for i in body["items"]}
+        pages_total = body.get("pages", 1)
+        page += 1
     check("操作の記録", {"対応状況を変更", "テーマ色を変更", "見積書を作成", "お問い合わせを削除"} <= actions, sorted(actions))
 
 
@@ -842,7 +914,7 @@ def test_account(c: Client, email_addr: str, password: str, new_password: str) -
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Katachi API テスト")
+    parser = argparse.ArgumentParser(description="AI Nova API テスト")
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--email", required=True)
     parser.add_argument("--password", required=True)

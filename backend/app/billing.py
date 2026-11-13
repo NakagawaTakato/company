@@ -1,8 +1,9 @@
-"""見積書・入金（領収書）・保守契約。
+"""見積書・入金（領収書）・おまかせ管理プラン。
 
 - 金額は円（整数）。明細の金額は「数量 × 単価」を四捨五入、消費税は切り捨てです。
-- 見積番号は Q-年月-連番、領収書番号は R-年月-連番 で自動採番します。
-- 保守契約の解約は「前月末までのお申し出」なので、申し出日の翌月末を終了日にします。
+- 見積番号・領収書番号は自分で入力できます。空のときは 年-月日-連番-時分（例 2026-1111-001-1447。作成した日時。
+  連番は日ごと）で自動採番します。
+- おまかせ管理プランの解約は「前月末までのお申し出」なので、申し出日の翌月末を終了日にします。
 """
 
 from __future__ import annotations
@@ -19,14 +20,22 @@ ESTIMATE_STATUSES = ("draft", "sent", "accepted", "rejected")
 PAYMENT_METHODS = ("cash", "card", "bank")
 
 
-def next_number(conn: sqlite3.Connection, table: str, column: str, prefix: str) -> str:
-    base = f"{prefix}-{datetime.now(JST).strftime('%Y%m')}-"
+def next_number(conn: sqlite3.Connection, table: str, column: str) -> str:
+    """見積番号・領収書番号「年-月日-連番-時分」（例 2026-1111-001-1447）。
+    作成した日時（日本時間）で、連番はその日の中で 001 から。"""
+    now = datetime.now(JST)
+    prefix = now.strftime("%Y-%m%d") + "-"
     numbers = [
-        int(row[0][len(base):])
-        for row in conn.execute(f"SELECT {column} FROM {table} WHERE {column} LIKE ?", (base + "%",))
-        if row[0][len(base):].isdigit()
+        int(rest[0])
+        for (number,) in conn.execute(f"SELECT {column} FROM {table} WHERE {column} LIKE ?", (prefix + "%",))
+        if len(rest := number[len(prefix):].split("-")) == 2 and rest[0].isdigit()
     ]
-    return f"{base}{(max(numbers) + 1 if numbers else 1):03d}"
+    return f"{prefix}{(max(numbers) + 1 if numbers else 1):03d}-{now.strftime('%H%M')}"
+
+
+def number_in_use(conn: sqlite3.Connection, table: str, column: str, number: str, exclude_id: int | None = None) -> bool:
+    row = conn.execute(f"SELECT id FROM {table} WHERE {column} = ? AND id IS NOT ?", (number, exclude_id)).fetchone()
+    return row is not None
 
 
 # ------------------------------------------------------------------ 見積書
@@ -82,27 +91,31 @@ def save_estimate(conn: sqlite3.Connection, data: dict[str, Any], estimate_id: i
     fields = (
         data["customer_name"], data["title"], data["issue_date"], data["valid_until"], data["delivery"],
         data["payment_terms"], data["notes"], data["tax_rate"], data["status"], data.get("inquiry_id"),
+        data.get("honorific", "様"),
     )
     if estimate_id is None:
         cur = conn.execute(
             """
             INSERT INTO estimates
                 (customer_name, title, issue_date, valid_until, delivery, payment_terms, notes, tax_rate, status,
-                 inquiry_id, number, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 inquiry_id, honorific, number, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (*fields, next_number(conn, "estimates", "number", "Q"), now, now),
+            (*fields, data.get("number") or next_number(conn, "estimates", "number"), now, now),
         )
         estimate_id = int(cur.lastrowid)
     else:
         conn.execute(
             """
             UPDATE estimates SET customer_name = ?, title = ?, issue_date = ?, valid_until = ?, delivery = ?,
-                payment_terms = ?, notes = ?, tax_rate = ?, status = ?, inquiry_id = ?, updated_at = ?
+                payment_terms = ?, notes = ?, tax_rate = ?, status = ?, inquiry_id = ?, honorific = ?,
+                updated_at = ?
             WHERE id = ?
             """,
             (*fields, now, estimate_id),
         )
+        if data.get("number"):
+            conn.execute("UPDATE estimates SET number = ? WHERE id = ?", (data["number"], estimate_id))
         conn.execute("DELETE FROM estimate_items WHERE estimate_id = ?", (estimate_id,))
     conn.executemany(
         """
@@ -124,7 +137,8 @@ def get_estimate(conn: sqlite3.Connection, estimate_id: int) -> dict[str, Any] |
 
 
 def list_estimates(
-    conn: sqlite3.Connection, q: str | None, status: str | None, page: int, per_page: int = 20, inquiry_id: int | None = None
+    conn: sqlite3.Connection, q: str | None, status: str | None, page: int, per_page: int = 20, inquiry_id: int | None = None,
+    with_items: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
     sql = "SELECT * FROM estimates WHERE 1 = 1"
     params: list[Any] = []
@@ -139,7 +153,7 @@ def list_estimates(
         params.append(inquiry_id)
     sql += " ORDER BY issue_date DESC, id DESC"
     rows, total = paginate(conn, sql, params, page, per_page)
-    return [_estimate_dict(conn, r, with_items=False) for r in rows], total
+    return [_estimate_dict(conn, r, with_items=with_items) for r in rows], total
 
 
 def delete_estimate(conn: sqlite3.Connection, estimate_id: int) -> None:
@@ -163,7 +177,7 @@ def save_payment(conn: sqlite3.Connection, data: dict[str, Any], payment_id: int
                  created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (*fields, next_number(conn, "payments", "receipt_number", "R"), now, now),
+            (*fields, data.get("receipt_number") or next_number(conn, "payments", "receipt_number"), now, now),
         )
         payment_id = int(cur.lastrowid)
     else:
@@ -175,6 +189,8 @@ def save_payment(conn: sqlite3.Connection, data: dict[str, Any], payment_id: int
             """,
             (*fields, now, payment_id),
         )
+        if data.get("receipt_number"):
+            conn.execute("UPDATE payments SET receipt_number = ? WHERE id = ?", (data["receipt_number"], payment_id))
     conn.commit()
     return payment_id
 
@@ -183,7 +199,7 @@ def _payment_dict(conn: sqlite3.Connection, row: sqlite3.Row) -> dict[str, Any]:
     result = {k: row[k] for k in row.keys()}
     estimate = None
     if row["estimate_id"] is not None:
-        e = conn.execute("SELECT id, number, title FROM estimates WHERE id = ?", (row["estimate_id"],)).fetchone()
+        e = conn.execute("SELECT id, number, title, tax_rate FROM estimates WHERE id = ?", (row["estimate_id"],)).fetchone()
         estimate = dict(e) if e else None
     result["estimate"] = estimate
     return result
@@ -216,7 +232,7 @@ def delete_payment(conn: sqlite3.Connection, payment_id: int) -> None:
     conn.commit()
 
 
-# ------------------------------------------------------------------ 保守契約
+# ------------------------------------------------------------------ おまかせ管理プラン
 
 def end_of_next_month(day: date) -> date:
     year, month = (day.year + 1, 1) if day.month == 12 else (day.year, day.month + 1)

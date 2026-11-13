@@ -19,7 +19,7 @@ import {
 } from 'react-icons/md'
 
 // トップページのタブ名（検索結果に出るタイトル）です。index.html の <title> と同じ文言にしてください。
-export const HOME_TITLE = '大阪・本町のホームページ制作｜Katachi（個人事業主・店舗・中小企業）'
+export const HOME_TITLE = '大阪・本町のホームページ制作｜AI Nova（個人事業主・店舗・中小企業）'
 
 // 対応エリアです（ページ下の「ご相談」欄に出ます）。index.html の説明文にも地名があるので、変えるときはそちらもそろえてください。
 export const SERVICE_AREA = { main: '大阪市・尼崎市・西宮市・伊丹市など', note: 'オンラインなら全国' }
@@ -42,7 +42,20 @@ export const NAV: NavItem[] = [
 // ヘッダー右上のボタンです（押すとページ下の「ご相談」エリアへ移動します）
 export const HEADER_CTA = { label: 'ご相談はこちら', href: '#contact' }
 
-export const SKILLS = ['Python', 'React', 'Laravel / PHP', 'C / C++', 'C# / Unity']
+// プロフィール欄の受賞バッジです。押すと、制作実績の中で badge が同じ賞状カードへ移動します。
+export const AWARDS = [
+  { badge: '金賞', text: 'ロボット制作', color: 'var(--c-accent-2)' },
+  { badge: 'カプコン賞', text: '卒業制作 ARゲーム', color: 'var(--c-accent-5)' },
+]
+
+// プロフィール欄のスキルです。押すと、経歴の中で target と同じ id を持つ行（またはカード）へ移動します。
+export const SKILLS = [
+  { label: 'Python', target: 'skill-python' },
+  { label: 'React', target: 'skill-react' },
+  { label: 'Laravel / PHP', target: 'skill-php' },
+  { label: 'C / C++', target: 'skill-c' },
+  { label: 'C# / Unity', target: 'skill-unity' },
+]
 
 export const STATS = [
   { value: '4', unit: '年間', label: 'IT専門学校で学習', accent: 'var(--c-accent-1)' },
@@ -115,8 +128,9 @@ export type CareerItem = {
   title: string
   icon?: IconType
   accent: string
-  rows?: { label: string; text: string }[]
+  rows?: { label: string; text: string; id?: string }[]
   text?: string
+  id?: string
   current?: boolean
 }
 
@@ -131,10 +145,12 @@ export const CAREER: CareerItem[] = [
       { label: '2年目', text: '組込みシステム(C言語)を学び、制作物としてロボットを作成。金賞を受賞しました。' },
       {
         label: '3年目',
+        id: 'skill-c',
         text: 'ゲーム制作を学び始め、C++ではクラスの仕組みまで深く学習。C言語でインベーダーゲーム、C++で迷路ゲームを制作しました。',
       },
       {
         label: '4年目',
+        id: 'skill-unity',
         text: '卒業制作として、UnityのC#でARを使った格闘ゲーム(ストリートファイター風)を制作。カプコン賞を受賞しました。',
       },
     ],
@@ -146,13 +162,14 @@ export const CAREER: CareerItem[] = [
     rows: [
       {
         label: '制作',
-        text: 'C#を学び、Unityを使って、横スクロールアクションゲーム(スーパーマリオブラザーズ風)を制作しました。',
+        text: 'C#を学び、Unityを使って、横スクロールアクションゲーム(スーパーマリオブラザーズ風)を制作しました。通所が自由で体調悪いときはすぐに休み、無理なく週4回で通ってました。',
       },
     ],
   },
   {
     period: '半年間',
     title: 'Webスクール',
+    id: 'skill-php',
     icon: MdCode,
     accent: 'var(--c-accent-3)',
     rows: [
@@ -168,10 +185,12 @@ export const CAREER: CareerItem[] = [
     rows: [
       {
         label: '前半6か月',
+        id: 'skill-python',
         text: 'Pythonを使ってExcelを扱うプログラムを作成し、Excel操作の難しいところまで携わりました。フローチャートを使った設計も経験しました。',
       },
       {
         label: '後半6か月',
+        id: 'skill-react',
         text: '役割を分担し、フロントエンド(React)は私が、バックエンド(Python/FastAPI)は東京大学卒業のエンジニアが担当しました。あわせて、詳細設計書の修正と作成も経験しました。',
       },
     ],

@@ -109,6 +109,8 @@ def get_content(conn: sqlite3.Connection) -> dict[str, Any]:
     for section in CONTENT_SECTIONS:
         stored = _load(conn, f"content.{section}")
         content[section] = stored if stored is not None else copy.deepcopy(SITE_DEFAULTS[section])
+    # あとから増えた事業者情報の項目（登録番号など）は、保存済みのデータに無くても初期値で補います。
+    content["business"] = {**SITE_DEFAULTS["business"], **content["business"]}
     return content
 
 

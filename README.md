@@ -1,4 +1,4 @@
-# Katachi ホームページ制作サイト
+# AI Nova ホームページ制作サイト
 
 Laravel（PHP）で作られていたサイトを、**フロントエンド React（Vite）／バックエンド FastAPI（Python）** で作り直したものです。
 画面は Vite で起動し、`frontend/.env.fastapi` に書いた接続先の API（FastAPI）を呼び出します。

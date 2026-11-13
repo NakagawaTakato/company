@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { MdAdd, MdSearch } from 'react-icons/md'
+import { MdAdd, MdDownload, MdSearch } from 'react-icons/md'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { api } from '../../api/client'
-import { Empty, Notice, PageHeader, Pagination, Pill, useLoader } from '../../components/admin/ui'
+import { Empty, Notice, PageHeader, Pagination, Pill, useAction, useLoader } from '../../components/admin/ui'
 import { formatJpDate, yen } from '../../lib/format'
 import { ESTIMATE_STATUSES, labelOf } from '../../lib/options'
 import { usePageTitle } from '../../lib/usePageTitle'
@@ -16,6 +16,7 @@ export function AdminEstimatesPage() {
   const page = Number(params.get('page') ?? 1) || 1
   const { data, error } = useLoader(() => api.estimates({ status, q, page }), [status, q, page])
   const [keyword, setKeyword] = useState(q)
+  const csv = useAction()
 
   const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params)
@@ -38,10 +39,21 @@ export function AdminEstimatesPage() {
         title="見積書"
         lead="作成した見積書は、印刷画面からそのまま印刷・PDFで保存できます。"
         actions={
-          <Link to="/admin/estimates/new" className="btn btn--primary btn--small">
-            <MdAdd aria-hidden="true" />
-            見積書を作成
-          </Link>
+          <>
+            <button
+              type="button"
+              className="btn btn--outline btn--small"
+              onClick={() => csv.run(() => api.downloadEstimatesCsv({ status, q }))}
+              disabled={csv.busy}
+            >
+              <MdDownload aria-hidden="true" />
+              {csv.busy ? '作成中…' : 'CSVダウンロード'}
+            </button>
+            <Link to="/admin/estimates/new" className="btn btn--primary btn--small">
+              <MdAdd aria-hidden="true" />
+              見積書を作成
+            </Link>
+          </>
         }
       />
       <div className="tabs admin-tabs" role="tablist" aria-label="状態で絞り込み">
@@ -72,7 +84,7 @@ export function AdminEstimatesPage() {
           検索
         </button>
       </form>
-      <Notice kind="error">{error}</Notice>
+      <Notice kind="error">{error || csv.error}</Notice>
 
       <div className="admin-card">
         {!data ? (

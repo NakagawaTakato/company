@@ -234,7 +234,7 @@ export function AdminContentPage() {
 }
 
 function BusinessForm({ value, onChange, err }: { value: Business; onChange: (v: Business) => void; err: (p: string) => string | undefined }) {
-  const fields: { key: keyof Business; label: string; hint?: string; max: number }[] = [
+  const fields: { key: keyof Business; label: string; hint?: string; max: number; optional?: boolean }[] = [
     { key: 'business_name', label: '屋号', max: 60 },
     { key: 'owner', label: '運営責任者', max: 40 },
     { key: 'address', label: '所在地', max: 100 },
@@ -243,12 +243,13 @@ function BusinessForm({ value, onChange, err }: { value: Business; onChange: (v:
     { key: 'hours', label: '対応時間', max: 60 },
     { key: 'business_form', label: '事業形態', max: 120, hint: '例: 個人事業主(開業届 提出済み・2026年10月1日 開業)' },
     { key: 'line_url', label: 'LINE の友だち追加 URL', max: 300, hint: 'https:// で始まる URL。LINE ページの QR コードもこの URL から作られます。' },
+    { key: 'invoice_number', label: '登録番号（インボイス）', max: 14, optional: true, hint: 'T + 13桁（例: T1234567890123）。見積書に印刷されます。登録していなければ空のままにしてください。' },
   ]
   return (
     <div className="form-grid">
       {fields.map((f) => (
-        <Field key={f.key} label={f.label} htmlFor={`business-${f.key}`} required error={err(f.key)} hint={f.hint}>
-          <input id={`business-${f.key}`} className="input" value={value[f.key]} onChange={(e) => onChange({ ...value, [f.key]: e.target.value })} maxLength={f.max} />
+        <Field key={f.key} label={f.label} htmlFor={`business-${f.key}`} required={!f.optional} error={err(f.key)} hint={f.hint}>
+          <input id={`business-${f.key}`} className="input" value={value[f.key] ?? ''} onChange={(e) => onChange({ ...value, [f.key]: e.target.value })} maxLength={f.max} />
         </Field>
       ))}
     </div>
@@ -258,7 +259,7 @@ function BusinessForm({ value, onChange, err }: { value: Business; onChange: (v:
 function PricesForm({ value, onChange, err }: { value: Prices; onChange: (v: Prices) => void; err: (p: string) => string | undefined }) {
   return (
     <>
-      <h3 className="side-heading">料金表（制作内容と1ページの相場）</h3>
+      <h3 className="side-heading">料金表（制作内容と1ページの相場・税抜）</h3>
       <ListEditor
         items={value.rows}
         onChange={(rows) => onChange({ ...value, rows })}

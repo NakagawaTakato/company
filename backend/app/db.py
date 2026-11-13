@@ -222,6 +222,19 @@ MIGRATIONS: list[str] = [
      WHERE instr(topics, '"laravel_php"') > 0;
     COMMIT;
     """,
+    """
+    BEGIN;
+    -- 見積書の宛名の敬称（様 / 御中）と納品場所
+    ALTER TABLE estimates ADD COLUMN honorific TEXT NOT NULL DEFAULT '様';
+    ALTER TABLE estimates ADD COLUMN delivery_place TEXT NOT NULL DEFAULT '';
+    COMMIT;
+    """,
+    """
+    BEGIN;
+    -- 見積書の納品場所はやめました（版 5 で追加した列を削除）
+    ALTER TABLE estimates DROP COLUMN delivery_place;
+    COMMIT;
+    """,
 ]
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------
-# Katachi サイトを「FastAPI（Python）版」で起動します。
+# AI Nova サイトを「FastAPI（Python）版」で起動します。
 # API（backend/・ポート 8000）と画面（frontend/ の Vite・ポート 5173）を一緒に起動します。
 #
 #   ./run_backend.sh                 … 画面 http://127.0.0.1:5173 / API http://127.0.0.1:8000

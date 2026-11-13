@@ -10,9 +10,9 @@ BT_FRONTEND_DIR="$BT_ROOT/frontend"
 BT_TOOLS_DIR="${BLUETAB_TOOLS_DIR:-$HOME/.local/share/bluetab-tools}"
 BT_NODE_MAJOR=24
 
-bt_log() { printf '\033[1;34m[Katachi]\033[0m %s\n' "$*"; }
-bt_warn() { printf '\033[1;33m[Katachi]\033[0m %s\n' "$*" >&2; }
-bt_die() { printf '\033[1;31m[Katachi] エラー:\033[0m %s\n' "$*" >&2; exit 1; }
+bt_log() { printf '\033[1;34m[AI Nova]\033[0m %s\n' "$*"; }
+bt_warn() { printf '\033[1;33m[AI Nova]\033[0m %s\n' "$*" >&2; }
+bt_die() { printf '\033[1;31m[AI Nova] エラー:\033[0m %s\n' "$*" >&2; exit 1; }
 
 bt_require_cmd() {
   command -v "$1" >/dev/null 2>&1 || bt_die "'$1' が見つかりません。$2"

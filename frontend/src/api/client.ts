@@ -179,7 +179,10 @@ export type Dashboard = {
 export type EstimateItem = { description: string; quantity: number; unit: string; unit_price: number; amount?: number }
 
 export type EstimateInput = {
+  /** 空なら保存時に自動で付きます */
+  number: string
   customer_name: string
+  honorific: string
   title: string
   issue_date: string
   valid_until: string
@@ -207,6 +210,8 @@ export type Estimate = EstimateInput & {
 export type EstimateDetail = Estimate & { payments: Payment[] }
 
 export type PaymentInput = {
+  /** 空なら保存時に自動で付きます */
+  receipt_number: string
   customer_name: string
   description: string
   amount: number
@@ -219,7 +224,7 @@ export type PaymentInput = {
 export type Payment = PaymentInput & {
   id: number
   receipt_number: string
-  estimate: { id: number; number: string; title: string } | null
+  estimate: { id: number; number: string; title: string; tax_rate: number } | null
   created_at: string
 }
 
@@ -365,10 +370,13 @@ export const api = {
   // 見積書
   estimates: (filter: { q?: string; status?: string; page?: number; per_page?: number }) =>
     request<Paged<Estimate>>('GET', `${admin}/estimates${query(filter)}`),
+  nextNumbers: () => request<{ estimate: string; receipt: string }>('GET', `${admin}/next-numbers`),
   getEstimate: (id: string | number) => request<EstimateDetail>('GET', `${admin}/estimates/${encodeURIComponent(id)}`),
   createEstimate: (body: EstimateInput) => request<Estimate>('POST', `${admin}/estimates`, body),
   updateEstimate: (id: number, body: EstimateInput) => request<EstimateDetail>('PUT', `${admin}/estimates/${id}`, body),
   deleteEstimate: (id: number) => request<{ ok: boolean }>('DELETE', `${admin}/estimates/${id}`),
+  downloadEstimatesCsv: (filter: { q?: string; status?: string }) =>
+    download(`${admin}/estimates.csv${query(filter)}`, 'estimates.csv'),
 
   // 入金・領収書
   payments: (filter: { q?: string; page?: number }) =>
@@ -377,8 +385,9 @@ export const api = {
   createPayment: (body: PaymentInput) => request<Payment>('POST', `${admin}/payments`, body),
   updatePayment: (id: number, body: PaymentInput) => request<Payment>('PUT', `${admin}/payments/${id}`, body),
   deletePayment: (id: number) => request<{ ok: boolean }>('DELETE', `${admin}/payments/${id}`),
+  downloadPaymentsCsv: (filter: { q?: string }) => download(`${admin}/payments.csv${query(filter)}`, 'payments.csv'),
 
-  // 保守契約
+  // おまかせ管理プラン
   contracts: (filter: { q?: string; status?: string }) =>
     request<{ items: Contract[]; monthly_revenue: number; counts: Record<string, number> }>(
       'GET',
@@ -394,5 +403,5 @@ export const api = {
   retention: () => request<Retention>('GET', `${admin}/retention`),
   saveRetention: (body: Omit<Retention, 'targets' | 'last_run'>) => request<Retention>('PUT', `${admin}/retention`, body),
   runRetention: (dry_run: boolean) => request<{ count: number }>('POST', `${admin}/retention/run`, { dry_run }),
-  downloadBackup: () => download(`${admin}/backup`, 'katachi-backup.zip'),
+  downloadBackup: () => download(`${admin}/backup`, 'ainova-backup.zip'),
 }

@@ -12,7 +12,9 @@ const EMPTY_ITEM: EstimateItem = { description: '', quantity: 1, unit: '式', un
 function newEstimate(inquiryId: number | null, customer = ''): EstimateInput {
   const today = todayJst()
   return {
+    number: '',
     customer_name: customer,
+    honorific: '様',
     title: 'ホームページ制作',
     issue_date: today,
     valid_until: addDays(today, 30),
@@ -56,7 +58,9 @@ export function AdminEstimateEditPage() {
     if (loaded) {
       const { items, ...rest } = loaded
       setForm({
+        number: rest.number,
         customer_name: rest.customer_name,
+        honorific: rest.honorific || '様',
         title: rest.title,
         issue_date: rest.issue_date,
         valid_until: rest.valid_until,
@@ -70,6 +74,15 @@ export function AdminEstimateEditPage() {
       })
     }
   }, [loaded])
+
+  // 新規のとき: 次に自動で付く番号を入れておきます（書き換えられます）
+  useEffect(() => {
+    if (!isNew) return
+    api
+      .nextNumbers()
+      .then((n) => setForm((f) => (f.number ? f : { ...f, number: n.estimate })))
+      .catch(() => undefined)
+  }, [isNew])
 
   useEffect(() => {
     if (inquiry && !form.customer_name) setForm((f) => ({ ...f, customer_name: inquiry.name }))
@@ -146,8 +159,17 @@ export function AdminEstimateEditPage() {
       <form onSubmit={save} noValidate>
         <Card title="基本情報">
           <div className="form-grid">
-            <Field label="お客さま名（様は不要）" htmlFor="customer_name" required error={errors.customer_name}>
+            <Field label="No.（見積番号）" htmlFor="number" error={errors.number} hint="半角の英数字とハイフン（-）で30文字まで。空のまま保存すると自動で付きます。">
+              <input id="number" className="input" value={form.number} onChange={(e) => set('number', e.target.value)} maxLength={30} autoComplete="off" />
+            </Field>
+            <Field label="お客さま名（様・御中は不要）" htmlFor="customer_name" required error={errors.customer_name}>
               <input id="customer_name" className="input" value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} maxLength={100} />
+            </Field>
+            <Field label="敬称" htmlFor="honorific" error={errors.honorific} hint="個人のお客さまは「様」、会社・団体は「御中」">
+              <select id="honorific" className="input select" value={form.honorific} onChange={(e) => set('honorific', e.target.value)}>
+                <option value="様">様</option>
+                <option value="御中">御中</option>
+              </select>
             </Field>
             <Field label="件名" htmlFor="title" required error={errors.title}>
               <input id="title" className="input" value={form.title} onChange={(e) => set('title', e.target.value)} maxLength={120} />
