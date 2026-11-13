@@ -101,17 +101,9 @@ export function cacheColor(color: string): void {
 /** ブラウザのタブのアイコンとアドレスバーの色を、テーマ色に合わせます */
 export function applyBrowserColor(color: string): void {
   const safe = isHexColor(color) ? color : DEFAULT_PRIMARY
-  // ロゴ（components/Logo.tsx）と同じ電球と回路です。回路の線と点はテーマ色で抜いています
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><rect width="44" height="44" rx="10" fill="${safe}"/>` +
-    `<g fill="#fff"><path d="M22 7C27.8 7 32 11.3 32 16.8C32 20.4 30.2 22.9 28.3 24.8C27.3 25.8 26.8 27 26.8 28.4V29.5` +
-    `H17.2V28.4C17.2 27 16.7 25.8 15.7 24.8C13.8 22.9 12 20.4 12 16.8C12 11.3 16.2 7 22 7Z"/>` +
-    `<rect x="17.2" y="31" width="9.6" height="2.4" rx="1.2"/><rect x="18.6" y="34.6" width="6.8" height="2.2" rx="1.1"/></g>` +
-    `<path fill="none" stroke="${safe}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ` +
-    `d="M22 27.5V14.2M22 23.5L17.5 19V16.6M22 21L26.5 16.5V15.6"/>` +
-    `<g fill="${safe}"><circle cx="22" cy="12.6" r="1.7"/><circle cx="17.5" cy="15" r="1.7"/><circle cx="26.5" cy="14" r="1.7"/></g></svg>`
+  // タブのアイコンはロゴと同じ画像（public/logo-mark.png）です。テーマ色では変わりません
   const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-  if (icon) icon.href = `data:image/svg+xml,${encodeURIComponent(svg)}`
+  if (icon) icon.href = '/logo-mark.png'
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', safe)
 }
 

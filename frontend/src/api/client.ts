@@ -403,5 +403,5 @@ export const api = {
   retention: () => request<Retention>('GET', `${admin}/retention`),
   saveRetention: (body: Omit<Retention, 'targets' | 'last_run'>) => request<Retention>('PUT', `${admin}/retention`, body),
   runRetention: (dry_run: boolean) => request<{ count: number }>('POST', `${admin}/retention/run`, { dry_run }),
-  downloadBackup: () => download(`${admin}/backup`, 'katachi-backup.zip'),
+  downloadBackup: () => download(`${admin}/backup`, 'ainova-backup.zip'),
 }

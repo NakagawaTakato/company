@@ -289,7 +289,7 @@ Inquiry の項目に、次を加えたものです。
 
 #### API-01 GET `/`（API の案内）
 
-応答 200: `{"name": "Katachi API", "backend": "fastapi", "docs": "/api/docs"}`
+応答 200: `{"name": "AI Nova API", "backend": "fastapi", "docs": "/api/docs"}`
 
 #### API-02 GET `/api/health`（動作確認）
 
@@ -486,7 +486,7 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 #### API-21 GET `/api/admin/backup`（バックアップの zip）
 
-応答 200: `application/zip`、ファイル名 `katachi-backup-YYYYMMDD-HHMMSS.zip`（日本時間）。中身は [06](06_処理設計.md) 12章。応答を送ったあとで一時フォルダを削除します。操作の記録「バックアップをダウンロード」。
+応答 200: `application/zip`、ファイル名 `ainova-backup-YYYYMMDD-HHMMSS.zip`（日本時間）。中身は [06](06_処理設計.md) 12章。応答を送ったあとで一時フォルダを削除します。操作の記録「バックアップをダウンロード」。
 
 #### API-22 GET `/api/admin/retention`（自動削除の設定）
 

@@ -19,7 +19,7 @@ import {
 } from 'react-icons/md'
 
 // トップページのタブ名（検索結果に出るタイトル）です。index.html の <title> と同じ文言にしてください。
-export const HOME_TITLE = '大阪・本町のホームページ制作｜Katachi（個人事業主・店舗・中小企業）'
+export const HOME_TITLE = '大阪・本町のホームページ制作｜AI Nova（個人事業主・店舗・中小企業）'
 
 // 対応エリアです（ページ下の「ご相談」欄に出ます）。index.html の説明文にも地名があるので、変えるときはそちらもそろえてください。
 export const SERVICE_AREA = { main: '大阪市・尼崎市・西宮市・伊丹市など', note: 'オンラインなら全国' }

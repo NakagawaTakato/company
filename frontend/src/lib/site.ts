@@ -4,7 +4,7 @@
 import defaults from '../../../shared/site_defaults.json'
 
 export const BRAND = {
-  brand: 'Katachi',
+  brand: 'AI Nova',
   tagline: 'ホームページ制作',
 } as const
 

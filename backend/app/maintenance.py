@@ -72,7 +72,7 @@ def create_backup(database_path: Path, uploads_dir: Path) -> Path:
                     zf.write(path, f"data/uploads/{path.name}")
         zf.writestr(
             "README.txt",
-            "Katachi サイトのバックアップです。\n"
+            "AI Nova サイトのバックアップです。\n"
             "戻すときは、サーバーを止めてから data/app.db と data/uploads/ をプロジェクトの data フォルダに上書きしてください。\n",
         )
     snapshot.unlink()

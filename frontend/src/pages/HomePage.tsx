@@ -454,7 +454,6 @@ export function HomePage() {
               </span>
               <span className="pill">対応時間</span>
               <strong>{business.hours}</strong>
-              <span className="hours__suffix">など</span>
             </p>
             <p className="hours hours--area">
               <span className="icon-circle icon-circle--md" aria-hidden="true">

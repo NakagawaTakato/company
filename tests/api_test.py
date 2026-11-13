@@ -244,7 +244,7 @@ def test_public(c: Client) -> None:
     status, body = c.json("GET", "/api/health")
     check("ヘルスチェック", status == 200 and body.get("status") == "ok", (status, body))
     status, body = c.json("GET", "/")
-    check("ルートは API の案内を返す", status == 200 and body.get("name") == "Katachi API", (status, body))
+    check("ルートは API の案内を返す", status == 200 and body.get("name") == "AI Nova API", (status, body))
     status, body = c.json("GET", "/api/no-such-api")
     check("存在しない API は 404", status == 404 and "message" in body, (status, body))
     status, body = c.json("GET", "/contact")
@@ -469,7 +469,7 @@ def test_mail(c: Client, tid: int) -> None:
     sink = SmtpSink()
     smtp = {
         "host": "127.0.0.1", "port": sink.port, "security": "none", "username": "", "password": "secret-pw",
-        "from_address": "noreply@example.com", "from_name": "Katachi テスト",
+        "from_address": "noreply@example.com", "from_name": "AI Nova テスト",
     }
     status, body = c.json("PUT", "/api/admin/mail/smtp", {**smtp, "from_address": "bad"})
     check("送信元アドレスの形式エラーは 422", status == 422 and "from_address" in body.get("errors", {}), body)
@@ -485,7 +485,7 @@ def test_mail(c: Client, tid: int) -> None:
     status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
     check("テストメールを送信", status == 200 and sink.wait_for(1) and "テストメール" in sink.subjects()[0], (status, body, sink.subjects()))
     sender = str(sink.messages[0]["from"]) if sink.messages else ""
-    check("差出人名（日本語）と送信元アドレス", "noreply@example.com" in sender and "Katachi" in sender, sender)
+    check("差出人名（日本語）と送信元アドレス", "noreply@example.com" in sender and "AI Nova" in sender, sender)
 
     notify = {
         "admin_notify": True, "admin_to": ["owner@example.com", "staff@example.com"], "auto_reply": True,
@@ -914,7 +914,7 @@ def test_account(c: Client, email_addr: str, password: str, new_password: str) -
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Katachi API テスト")
+    parser = argparse.ArgumentParser(description="AI Nova API テスト")
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--email", required=True)
     parser.add_argument("--password", required=True)
