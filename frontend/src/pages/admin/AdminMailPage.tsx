@@ -1,16 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { MdAdd, MdDelete, MdEdit, MdRefresh, MdSend } from 'react-icons/md'
 import { Link, useSearchParams } from 'react-router'
-import { api, type DeviceCode, type MailSettings, type Notifications, type OutboxMail, type ReplyTemplate, type SmtpSettings } from '../../api/client'
+import { api, type DeviceCode, type MailSettings, type Notifications, type OutboxMail, type ReplyTemplate } from '../../api/client'
 import { Card, Empty, Field, Notice, PageHeader, Pagination, Pill, Tabs, useAction, useLoader } from '../../components/admin/ui'
 import { formatDateTime } from '../../lib/format'
 import { MAIL_KINDS, MAIL_STATUSES, labelOf } from '../../lib/options'
 import { usePageTitle } from '../../lib/usePageTitle'
 
-type Tab = 'smtp' | 'notify' | 'templates' | 'outbox'
+type Tab = 'send' | 'notify' | 'templates' | 'outbox'
 
 const TABS: { value: Tab; label: string }[] = [
-  { value: 'smtp', label: '送信設定' },
+  { value: 'send', label: '送信設定' },
   { value: 'notify', label: '通知・自動返信' },
   { value: 'templates', label: '返信テンプレート' },
   { value: 'outbox', label: '送信履歴' },
@@ -44,13 +44,13 @@ function PlaceholderHelp({ withSummary = false }: { withSummary?: boolean }) {
 export function AdminMailPage() {
   usePageTitle('メール')
   const [params, setParams] = useSearchParams()
-  const tab = (TABS.find((t) => t.value === params.get('tab'))?.value ?? 'smtp') as Tab
+  const tab = (TABS.find((t) => t.value === params.get('tab'))?.value ?? 'send') as Tab
   const { data, setData, error } = useLoader(() => api.mailSettings(), [])
 
   return (
     <>
       <PageHeader title="メール" lead="お問い合わせの新着通知・お客さまへの自動返信・管理画面からの返信に使うメールの設定です。" />
-      {data && !data.ready && tab !== 'smtp' && (
+      {data && !data.ready && tab !== 'send' && (
         <Notice kind="warning">まだメールを送信できないため、「未送信」として記録されます。（{data.reason}）</Notice>
       )}
       <Tabs tabs={TABS} value={tab} onChange={(value) => setParams({ tab: value })} label="メールの設定" />
@@ -59,7 +59,7 @@ export function AdminMailPage() {
         <Empty>読み込み中…</Empty>
       ) : (
         <>
-          {tab === 'smtp' && <SendSettings settings={data} onSaved={setData} />}
+          {tab === 'send' && <SendSettings settings={data} onSaved={setData} />}
           {tab === 'notify' && <NotifyForm settings={data} onSaved={setData} />}
           {tab === 'templates' && <TemplatesPanel />}
           {tab === 'outbox' && <OutboxPanel />}
@@ -70,47 +70,24 @@ export function AdminMailPage() {
 }
 
 function SendSettings({ settings, onSaved }: { settings: MailSettings; onSaved: (s: MailSettings) => void }) {
-  const action = useAction()
   const test = useAction()
   const [testTo, setTestTo] = useState(settings.business_email)
-
-  const changeMethod = async (method: 'outlook' | 'smtp') => {
-    const result = await action.run(() => api.setMailMethod(method), method === 'outlook' ? 'Outlook で送るように切り替えました。' : 'SMTP で送るように切り替えました。')
-    if (result) onSaved(result)
-  }
 
   return (
     <>
       <Card title="送信方法">
-        <div className="method-options" role="radiogroup" aria-label="送信方法">
-          <label className={`method-option${settings.method === 'outlook' ? ' method-option--active' : ''}`}>
-            <input type="radio" name="method" checked={settings.method === 'outlook'} onChange={() => changeMethod('outlook')} disabled={action.busy} />
-            <span>
-              <strong>Outlook（Microsoft Graph）</strong>
-              <span className="field__help">元のサイトと同じ方法です。Azure に登録したアプリで、Outlook のアカウントから送ります。</span>
-            </span>
-          </label>
-          <label className={`method-option${settings.method === 'smtp' ? ' method-option--active' : ''}`}>
-            <input type="radio" name="method" checked={settings.method === 'smtp'} onChange={() => changeMethod('smtp')} disabled={action.busy} />
-            <span>
-              <strong>SMTP</strong>
-              <span className="field__help">レンタルサーバーや Gmail などのメールサーバーを使って送ります。</span>
-            </span>
-          </label>
-        </div>
+        <p className="field__help">メールは Outlook（Microsoft Graph）で送ります。Azure に登録したアプリで、Outlook のアカウントから送信します。</p>
         <p className="status-line">
           状態: {settings.ready ? <Pill tone="success">送信できます</Pill> : <Pill tone="warning">まだ送信できません</Pill>}
           {!settings.ready && <span className="field__help"> {settings.reason}</span>}
         </p>
-        <Notice kind="success">{action.message}</Notice>
-        <Notice kind="error">{action.error}</Notice>
       </Card>
 
       <div className="two-columns">
-        {settings.method === 'outlook' ? <OutlookPanel settings={settings} onSaved={onSaved} /> : <SmtpForm settings={settings} onSaved={onSaved} />}
+        <OutlookPanel settings={settings} onSaved={onSaved} />
         <div>
           <Card title="テスト送信">
-            <p className="field__help">今の送信方法で、テストメールを送ります。</p>
+            <p className="field__help">Outlook から、テストメールを送ります。</p>
             <div className="inline-field">
               <input className="input input--small" type="email" value={testTo} onChange={(e) => setTestTo(e.target.value)} aria-label="テストメールの宛先" />
               <button type="button" className="btn btn--outline btn--small" onClick={() => test.run(() => api.testMail(testTo), `${testTo} に送信しました。届いているか確認してください。`)} disabled={test.busy || !settings.ready}>
@@ -121,17 +98,6 @@ function SendSettings({ settings, onSaved }: { settings: MailSettings; onSaved: 
             <Notice kind="success">{test.message}</Notice>
             <Notice kind="error">{test.fieldErrors.to || test.error}</Notice>
           </Card>
-          {settings.method === 'smtp' && (
-            <Card title="Gmail を使う場合の入力例">
-              <ul className="help-list">
-                <li>サーバー名: smtp.gmail.com</li>
-                <li>接続方式: STARTTLS（ポート 587）</li>
-                <li>ユーザー名・送信元: Gmail のアドレス</li>
-                <li>パスワード: Google アカウントで作成した「アプリ パスワード」（2段階認証が必要です）</li>
-              </ul>
-              <p className="field__help">レンタルサーバーのメールを使う場合は、サーバー会社の案内にある「送信（SMTP）サーバー」の情報を入力してください。</p>
-            </Card>
-          )}
         </div>
       </div>
     </>
@@ -261,81 +227,6 @@ function OutlookPanel({ settings, onSaved }: { settings: MailSettings; onSaved: 
       )}
       <Notice kind="success">{action.message}</Notice>
       <Notice kind="error">{action.error}</Notice>
-    </Card>
-  )
-}
-
-function SmtpForm({ settings, onSaved }: { settings: MailSettings; onSaved: (s: MailSettings) => void }) {
-  const action = useAction()
-  const [form, setForm] = useState<Omit<SmtpSettings, 'password_set' | 'ready'>>(() => ({
-    host: settings.smtp.host,
-    port: settings.smtp.port,
-    security: settings.smtp.security,
-    username: settings.smtp.username,
-    from_address: settings.smtp.from_address,
-    from_name: settings.smtp.from_name,
-  }))
-  const [password, setPassword] = useState('')
-  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => setForm((f) => ({ ...f, [key]: value }))
-  const errors = action.fieldErrors
-
-  const save = async (event: FormEvent) => {
-    event.preventDefault()
-    const result = await action.run(() => api.saveSmtp({ ...form, password: password || null }), '保存しました。')
-    if (result) {
-      onSaved(result)
-      setPassword('')
-    }
-  }
-
-  const changeSecurity = (security: SmtpSettings['security']) => {
-    setForm((f) => ({ ...f, security, port: security === 'ssl' ? 465 : security === 'starttls' ? 587 : f.port }))
-  }
-
-  return (
-    <Card title="送信用メールサーバー（SMTP）">
-      <form onSubmit={save} noValidate>
-        <div className="form-grid">
-          <Field label="サーバー名" htmlFor="smtp-host" error={errors.host} hint="例: smtp.gmail.com">
-            <input id="smtp-host" className="input" value={form.host} onChange={(e) => set('host', e.target.value)} maxLength={255} />
-          </Field>
-          <Field label="接続方式" htmlFor="smtp-security" error={errors.security}>
-            <select id="smtp-security" className="input select" value={form.security} onChange={(e) => changeSecurity(e.target.value as SmtpSettings['security'])}>
-              <option value="starttls">STARTTLS（ポート 587）</option>
-              <option value="ssl">SSL/TLS（ポート 465）</option>
-              <option value="none">暗号化なし（おすすめしません）</option>
-            </select>
-          </Field>
-          <Field label="ポート" htmlFor="smtp-port" error={errors.port}>
-            <input id="smtp-port" type="number" className="input" value={form.port} onChange={(e) => set('port', Number(e.target.value))} />
-          </Field>
-          <Field label="ユーザー名" htmlFor="smtp-user" error={errors.username} hint="多くの場合、メールアドレスです。">
-            <input id="smtp-user" className="input" value={form.username} onChange={(e) => set('username', e.target.value)} maxLength={255} autoComplete="off" />
-          </Field>
-          <Field
-            label="パスワード"
-            htmlFor="smtp-password"
-            error={errors.password}
-            hint={settings.smtp.password_set ? '設定済みです。変更する場合だけ入力してください。' : 'Gmail の場合は「アプリ パスワード」を使います。'}
-          >
-            <input id="smtp-password" type="password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={255} autoComplete="new-password" placeholder={settings.smtp.password_set ? '••••••••（変更しない）' : ''} />
-          </Field>
-          <Field label="送信元メールアドレス" htmlFor="smtp-from" error={errors.from_address}>
-            <input id="smtp-from" type="email" className="input" value={form.from_address} onChange={(e) => set('from_address', e.target.value)} maxLength={254} />
-          </Field>
-          <Field label="差出人名" htmlFor="smtp-from-name" error={errors.from_name}>
-            <input id="smtp-from-name" className="input" value={form.from_name} onChange={(e) => set('from_name', e.target.value)} maxLength={100} />
-          </Field>
-        </div>
-        <Notice kind="success">{action.message}</Notice>
-        <Notice kind="error">{action.error}</Notice>
-        <div className="form-actions">
-          <span />
-          <button type="submit" className="btn btn--primary btn--small" disabled={action.busy}>
-            {action.busy ? '保存中…' : '保存する'}
-          </button>
-        </div>
-      </form>
     </Card>
   )
 }

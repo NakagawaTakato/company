@@ -235,7 +235,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td><code>MICROSOFT_CLIENT_ID</code></td>
 <td>空</td>
-<td>Outlook で送るための Azure のアプリのクライアント ID。あれば、送信方法の初期値が Outlook になる</td>
+<td>Outlook で送るための Azure のアプリのクライアント ID。メールを送るには必要</td>
 </tr>
 <tr>
 <td><code>MICROSOFT_TENANT</code></td>
@@ -382,6 +382,21 @@ a:hover { text-decoration-thickness: 2px; }
 <td><code>public/logo-mark.png</code>（<code>components/Logo.tsx</code>・<code>index.html</code>・<code>lib/theme.ts</code> の <code>applyBrowserColor</code> が使う）</td>
 <td>同じファイル名で画像を差し替える</td>
 </tr>
+<tr>
+<td>ログインの有効時間</td>
+<td><code>backend/app/security.py</code> の <code>SESSION_TTL_SECONDS</code>（初期値 12時間）</td>
+<td>ログインの有効時間は変更後にログインした分から、予告は画面を開き直すと反映される</td>
+</tr>
+<tr>
+<td>自動ログアウトの予告を出す時間</td>
+<td><code>frontend/src/components/admin/SessionExpiry.tsx</code> の <code>WARNING_SECONDS</code>（初期値 期限の5分前）</td>
+<td>有効時間より短くする</td>
+</tr>
+<tr>
+<td>自動返信の本文の初期値</td>
+<td><code>backend/app/settings_store.py</code> の <code>DEFAULT_AUTO_REPLY_BODY</code></td>
+<td>管理画面で保存した本文には影響しない。今の本文を変えるときは A-13 の通知・自動返信で直す</td>
+</tr>
 </tbody></table></div>
 <h2 id="sec-7">6. 起動のしかた（開発）</h2>
 <p>WSL のターミナルで <code>./run_backend.sh</code> を実行します（プロジェクトのルート <code>/mnt/c/Users/document/python/company</code> で）。</p>
@@ -439,7 +454,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>メール</td>
-<td>Outlook は偽の Microsoft サーバー（ポート 18999）、SMTP はテスト用の受け口（どちらも <code>api_test.py</code> が起動する）。本物には送らない</td>
+<td>偽の Microsoft サーバー（ポート 18999。<code>api_test.py</code> が起動する）に送る。本物には送らない</td>
 </tr>
 <tr>
 <td>回数の上限</td>
@@ -448,7 +463,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <p>API を3回起動して確かめます。</p>
 <ol>
-<li>全体のテスト: 公開サイトの API、ログイン、お問い合わせ（一覧・検索・詳細・メモ）、ページ分け、迷惑送信と削除、メール（SMTP・通知・自動返信・返信・送信履歴・テンプレート）、Outlook（サインイン・トークンの更新・送信）、CSV、テーマ色とサイト内容、見積書・入金・おまかせ管理プラン、データ管理と履歴、アカウント（パスワードの変更・ログアウト）</li>
+<li>全体のテスト: 公開サイトの API、ログイン、お問い合わせ（一覧・検索・詳細・メモ）、ページ分け、迷惑送信と削除、メール（送信設定・通知・テンプレート）、Outlook（サインイン・トークンの更新・テスト送信・新着通知・自動返信・返信・送信履歴の送り直しと削除）、CSV、テーマ色とサイト内容、見積書・入金・おまかせ管理プラン、データ管理と履歴、アカウント（パスワードの変更・ログアウト）</li>
 <li><code>.env</code> を変えずに再起動して、管理画面で変えたパスワードが残るか</li>
 <li><code>.env</code> のパスワードを変えて再起動して、その値にリセットされるか</li>
 </ol>
@@ -510,7 +525,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>2</td>
 <td>A-13 メール → 送信設定</td>
-<td>Outlook にサインイン（または SMTP を設定）して、テスト送信で届くか確かめる</td>
+<td>Outlook にサインインして、テスト送信で届くか確かめる</td>
 </tr>
 <tr>
 <td>3</td>
@@ -583,7 +598,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>保管</td>
-<td>zip には個人情報・管理者のパスワードのハッシュ・SMTP のパスワードが入る。他人に渡さず、不要になったら削除する</td>
+<td>zip には個人情報・管理者のパスワードのハッシュが入る。他人に渡さず、不要になったら削除する</td>
 </tr>
 </tbody></table></div>
 <h2 id="sec-15">10. 管理者のアカウント</h2>
@@ -616,12 +631,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </thead>
 <tbody><tr>
-<td>Outlook（標準）</td>
+<td>Outlook</td>
 <td>1. <code>.env</code> に <code>MICROSOFT_CLIENT_ID</code>（と必要なら <code>MAIL_FROM_ADDRESS</code>・<code>MAIL_FROM_NAME</code>）を書き、API を再起動する 2. A-13 の送信設定で「Outlook にサインイン」し、表示されたページでコードを入力して、送信に使う Outlook アカウントでサインインする（コマンド <code>cd backend &amp;&amp; .venv/bin/python -m app.outlook_login</code> でもできる） 3. テスト送信で確かめる。トークンは自動で更新する。更新できなくなったら、もう一度サインインする</td>
-</tr>
-<tr>
-<td>SMTP</td>
-<td>1. A-13 の送信設定で送信方法を「SMTP」にする 2. サーバー名・接続方式・ポート・ユーザー名・パスワード・送信元を保存する（Gmail はアプリ パスワード） 3. テスト送信で確かめる</td>
 </tr>
 </tbody></table></div>
 <p>送れなかったメールは、A-13 の送信履歴に理由と一緒に残ります。原因を直してから「送り直す」を押します。</p>
@@ -636,6 +647,10 @@ a:hover { text-decoration-thickness: 2px; }
 <tbody><tr>
 <td>ログインしても、すぐにログイン画面に戻る</td>
 <td>画面と API の URL の、ホスト名・ドメインが合っていない（Cookie が送られない）。開発では 127.0.0.1 と localhost を混ぜない（画面は自動でそろえる）。本番では画面と API を同じドメインの配下にし、HTTPS で開く（<code>COOKIE_SECURE=true</code> のときは HTTP では送られない）</td>
+</tr>
+<tr>
+<td>操作していないのに、ログイン画面に戻る</td>
+<td>ログインから12時間たつと、操作をしていなくても自動でログアウトする（残り5分で画面の下に予告が出る）。もう一度ログインする</td>
 </tr>
 <tr>
 <td>画面に「通信に失敗しました」と出る</td>
@@ -655,7 +670,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>メールが届かない</td>
-<td>A-13 の状態と送信履歴の理由を見る（未設定・未サインイン・認証のエラーなど）。直してから「送り直す」</td>
+<td>A-13 の状態と送信履歴の理由を見る（未設定・未サインイン・Outlook のエラーなど）。直してから「送り直す」</td>
 </tr>
 <tr>
 <td>新着通知メールのリンクが 127.0.0.1 になる</td>

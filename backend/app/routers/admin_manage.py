@@ -205,12 +205,9 @@ async def upload_image(request: Request, conn: sqlite3.Connection = Depends(get_
 # ------------------------------------------------------------------ メール
 
 def _mail_settings(conn: sqlite3.Connection) -> dict[str, Any]:
-    smtp = settings_store.get_setting(conn, "smtp")
-    password_set = bool(smtp.pop("password"))
     business_email = settings_store.business(conn)["email"]
     return {
-        **mailer.status(conn),  # method / ready / reason
-        "smtp": {**smtp, "password_set": password_set, "ready": mailer.smtp_ready(smtp)},
+        **mailer.status(conn),  # ready / reason
         "outlook": {
             "configured": OUTLOOK.configured,
             "signed_in": outlook.signed_in(OUTLOOK),
@@ -222,15 +219,8 @@ def _mail_settings(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
-@router.get("/mail/settings", summary="メールの送信設定と通知の設定（パスワードは返しません）")
+@router.get("/mail/settings", summary="メールの送信設定（Outlook）と通知の設定")
 def get_mail_settings(conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
-    return _mail_settings(conn)
-
-
-@router.put("/mail/method", summary="送信方法を切り替える（outlook / smtp）")
-def put_mail_method(body: schemas.MailMethodUpdate, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
-    mailer.set_method(conn, body.method)
-    audit.log(conn, "メールの送信方法を変更", "Outlook（Microsoft Graph）" if body.method == "outlook" else "SMTP")
     return _mail_settings(conn)
 
 
@@ -284,17 +274,6 @@ def outlook_poll(body: schemas.OutlookPoll, conn: sqlite3.Connection = Depends(g
 def outlook_logout(conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
     outlook.sign_out(OUTLOOK)
     audit.log(conn, "Outlook のサインインを解除")
-    return _mail_settings(conn)
-
-
-@router.put("/mail/smtp", summary="メールの送信設定（SMTP）を保存")
-def put_smtp(body: schemas.SmtpUpdate, conn: sqlite3.Connection = Depends(get_conn)) -> dict[str, Any]:
-    current = settings_store.get_setting(conn, "smtp")
-    value = body.model_dump()
-    if body.password is None:
-        value["password"] = current["password"]  # 入力がなければ今のパスワードのまま
-    settings_store.put_setting(conn, "smtp", value)
-    audit.log(conn, "メールの送信設定を変更", f"{body.host}:{body.port}")
     return _mail_settings(conn)
 
 

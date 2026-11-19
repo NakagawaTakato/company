@@ -17,7 +17,6 @@ from .uploads import NAME_RE
 
 HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 URL_RE = re.compile(r"^https?://[^\s<>\"']+$")
-MIN_CONTRAST = 4.5
 
 
 class Model(BaseModel):
@@ -58,16 +57,6 @@ def _doc_number(value: str) -> str:
 
 # 見積番号・領収書番号（空なら自動で付けます）
 DocNumberText = Annotated[str, AfterValidator(_doc_number)]
-
-
-def contrast_with_white(hex_color: str) -> float:
-    def channel(c: int) -> float:
-        v = c / 255
-        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
-
-    r, g, b = (int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
-    luminance = 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-    return 1.05 / (luminance + 0.05)
 
 
 # ------------------------------------------------------------------ 共通
@@ -122,6 +111,10 @@ class AdminResponse(BaseModel):
     email: str
 
 
+class AdminSessionResponse(AdminResponse):
+    expires_in: int = Field(description="ログインの期限までの残り秒数")
+
+
 class PasswordChange(Model):
     current_password: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=8, max_length=128)
@@ -159,22 +152,10 @@ class ThemeUpdate(Model):
     def check_color(cls, value: str) -> str:
         if not HEX_RE.match(value):
             raise ValueError("色は #1558c0 のような形式で指定してください。")
-        if contrast_with_white(value) < MIN_CONTRAST:
-            raise ValueError("この色は明るすぎて、白い文字が読みにくくなります。もう少し濃い色を選んでください。")
         return value.lower()
 
 
 # ------------------------------------------------------------------ 管理画面: メール
-
-class SmtpUpdate(Model):
-    host: str = Field(default="", max_length=255)
-    port: int = Field(default=587, ge=1, le=65535)
-    security: Literal["starttls", "ssl", "none"] = "starttls"
-    username: str = Field(default="", max_length=255)
-    password: str | None = Field(default=None, max_length=255, description="null のときは変更しない")
-    from_address: OptionalEmailText = Field(default="", max_length=254)
-    from_name: str = Field(default="", max_length=100)
-
 
 class NotificationsUpdate(Model):
     admin_notify: bool
@@ -191,10 +172,6 @@ class NotificationsUpdate(Model):
         for address in cleaned:
             _email(address)
         return cleaned
-
-
-class MailMethodUpdate(Model):
-    method: Literal["outlook", "smtp"]
 
 
 class OutlookPoll(Model):

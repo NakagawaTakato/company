@@ -1,18 +1,14 @@
 """メール送信（新着通知・自動返信・管理画面からの返信・テスト送信）。
 
-送信方法は2つあり、管理画面の「メール」で切り替えられます。
-- Outlook（Microsoft Graph）… 元の Laravel 版と同じ方法。.env の MICROSOFT_CLIENT_ID があるときの標準です。
-- SMTP … レンタルサーバーや Gmail などのメールサーバーを使う方法。
+送信は Outlook（Microsoft Graph）だけを使います。.env の MICROSOFT_CLIENT_ID を設定し、
+管理画面の「メール」で Outlook にサインインすると送れるようになります。
 送れる状態になっていないときは送信せず、送信履歴に「未送信」として残します。
 """
 
 from __future__ import annotations
 
 import re
-import smtplib
-import socket
 import sqlite3
-import ssl
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from email.utils import formataddr, make_msgid
@@ -25,16 +21,10 @@ from .deps import OUTLOOK, settings
 
 PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-METHOD_KEY = "mail.method"
-METHODS = ("outlook", "smtp")
 
 
 class MailError(Exception):
     pass
-
-
-def smtp_ready(smtp: dict[str, Any]) -> bool:
-    return bool(smtp.get("host") and smtp.get("from_address"))
 
 
 def render(template: str, values: dict[str, str]) -> str:
@@ -46,40 +36,21 @@ def one_line(text: str) -> str:
     return " ".join(text.split())
 
 
-# ------------------------------------------------------------------ 送信方法と状態
-
-def method(conn: sqlite3.Connection) -> str:
-    stored = settings_store.get_raw(conn, METHOD_KEY)
-    if stored in METHODS:
-        return stored
-    return "outlook" if OUTLOOK.configured else "smtp"
-
-
-def set_method(conn: sqlite3.Connection, value: str) -> None:
-    settings_store.put_raw(conn, METHOD_KEY, value)
-
+# ------------------------------------------------------------------ 送れる状態か
 
 def status(conn: sqlite3.Connection) -> dict[str, Any]:
-    """いまの送信方法で送れるか（送れないときは理由）。"""
-    current = method(conn)
-    if current == "outlook":
-        if not OUTLOOK.configured:
-            return {"method": current, "ready": False, "reason": ".env の MICROSOFT_CLIENT_ID が設定されていないため、Outlook で送れません。"}
-        if not outlook.signed_in(OUTLOOK):
-            return {"method": current, "ready": False, "reason": "Outlook にまだサインインしていないため、送信していません。管理画面の「メール」でサインインしてください。"}
-        return {"method": current, "ready": True, "reason": ""}
-    if not smtp_ready(settings_store.get_setting(conn, "smtp")):
-        return {"method": current, "ready": False, "reason": "メールの送信設定（SMTP）がされていないため、送信していません。"}
-    return {"method": current, "ready": True, "reason": ""}
+    """Outlook で送れるか（送れないときは理由）。"""
+    if not OUTLOOK.configured:
+        return {"ready": False, "reason": ".env の MICROSOFT_CLIENT_ID が設定されていないため、Outlook で送れません。"}
+    if not outlook.signed_in(OUTLOOK):
+        return {"ready": False, "reason": "Outlook にまだサインインしていないため、送信していません。管理画面の「メール」でサインインしてください。"}
+    return {"ready": True, "reason": ""}
 
 
 def sender(conn: sqlite3.Connection) -> tuple[str, str]:
-    """差出人（名前, アドレス）"""
+    """差出人（名前, アドレス）。.env の MAIL_FROM_NAME / MAIL_FROM_ADDRESS、なければ事業者情報。"""
     business = settings_store.business(conn)
-    if method(conn) == "outlook":
-        return (settings.mail_from_name or business["business_name"], settings.mail_from_address or business["email"])
-    smtp = settings_store.get_setting(conn, "smtp")
-    return (smtp.get("from_name") or business["business_name"], smtp["from_address"])
+    return (settings.mail_from_name or business["business_name"], settings.mail_from_address or business["email"])
 
 
 # ------------------------------------------------------------------ 送信
@@ -96,33 +67,6 @@ def build_message(from_name: str, from_address: str, to: str, subject: str, body
     message["Message-ID"] = make_msgid(domain=from_address.split("@")[-1] or "localhost")
     message.set_content(body)
     return message
-
-
-def send_smtp(smtp: dict[str, Any], message: EmailMessage) -> None:
-    host, port = smtp["host"], int(smtp.get("port") or 0)
-    security = smtp.get("security") or "starttls"
-    context = ssl.create_default_context()
-    try:
-        if security == "ssl":
-            client: smtplib.SMTP = smtplib.SMTP_SSL(host, port or 465, timeout=20, context=context)
-        else:
-            client = smtplib.SMTP(host, port or 587, timeout=20)
-        with client:
-            client.ehlo()
-            if security == "starttls":
-                client.starttls(context=context)
-                client.ehlo()
-            if smtp.get("username"):
-                client.login(smtp["username"], smtp.get("password") or "")
-            client.send_message(message)
-    except smtplib.SMTPAuthenticationError as exc:
-        raise MailError("メールサーバーの認証に失敗しました。ユーザー名とパスワードを確認してください。") from exc
-    except smtplib.SMTPNotSupportedError as exc:
-        raise MailError("メールサーバーが暗号化（STARTTLS）に対応していません。接続方式を確認してください。") from exc
-    except (socket.timeout, TimeoutError) as exc:
-        raise MailError("メールサーバーへの接続がタイムアウトしました。サーバー名とポートを確認してください。") from exc
-    except (OSError, smtplib.SMTPException) as exc:
-        raise MailError(f"メールを送信できませんでした（{type(exc).__name__}: {exc}）。") from exc
 
 
 # ------------------------------------------------------------------ 送信履歴
@@ -165,10 +109,7 @@ def deliver(conn: sqlite3.Connection, outbox_id: int) -> tuple[bool, str]:
     try:
         from_name, from_address = sender(conn)
         message = build_message(from_name, from_address, row["to_addr"], row["subject"], row["body"], row["reply_to"])
-        if state["method"] == "outlook":
-            outlook.send_mime(OUTLOOK, message.as_bytes())
-        else:
-            send_smtp(settings_store.get_setting(conn, "smtp"), message)
+        outlook.send_mime(OUTLOOK, message.as_bytes())
     except (MailError, outlook.OutlookError) as exc:
         _mark(conn, outbox_id, "failed", str(exc))
         return False, str(exc)

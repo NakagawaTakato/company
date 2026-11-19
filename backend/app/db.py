@@ -235,6 +235,12 @@ MIGRATIONS: list[str] = [
     ALTER TABLE estimates DROP COLUMN delivery_place;
     COMMIT;
     """,
+    """
+    BEGIN;
+    -- メールは Outlook（Microsoft Graph）だけで送ります。SMTP の設定（パスワードを含む）と送信方法の記録を削除
+    DELETE FROM settings WHERE key IN ('smtp', 'mail.method');
+    COMMIT;
+    """,
 ]
 
 

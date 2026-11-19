@@ -243,17 +243,6 @@ export type ContractInput = {
 
 export type Contract = ContractInput & { id: number; status: string; created_at: string }
 
-export type SmtpSettings = {
-  host: string
-  port: number
-  security: 'starttls' | 'ssl' | 'none'
-  username: string
-  from_address: string
-  from_name: string
-  password_set: boolean
-  ready: boolean
-}
-
 export type Notifications = {
   admin_notify: boolean
   admin_to: string[]
@@ -266,10 +255,8 @@ export type Notifications = {
 export type OutlookStatus = { configured: boolean; signed_in: boolean; tenant: string; from_address: string }
 
 export type MailSettings = {
-  method: 'outlook' | 'smtp'
   ready: boolean
   reason: string
-  smtp: SmtpSettings
   outlook: OutlookStatus
   notifications: Notifications
   business_email: string
@@ -307,7 +294,7 @@ export const api = {
   // ログイン・アカウント
   login: (email: string, password: string) => request<{ email: string }>('POST', `${admin}/login`, { email, password }),
   logout: () => request<{ ok: boolean }>('POST', `${admin}/logout`, {}),
-  me: () => request<{ email: string }>('GET', `${admin}/me`),
+  me: () => request<{ email: string; expires_in: number }>('GET', `${admin}/me`),
   changePassword: (current_password: string, new_password: string) =>
     request<{ ok: boolean }>('POST', `${admin}/password`, { current_password, new_password }),
 
@@ -335,10 +322,7 @@ export const api = {
 
   // メール
   mailSettings: () => request<MailSettings>('GET', `${admin}/mail/settings`),
-  saveSmtp: (body: Omit<SmtpSettings, 'password_set' | 'ready'> & { password: string | null }) =>
-    request<MailSettings>('PUT', `${admin}/mail/smtp`, body),
   saveNotifications: (body: Notifications) => request<MailSettings>('PUT', `${admin}/mail/notifications`, body),
-  setMailMethod: (method: 'outlook' | 'smtp') => request<MailSettings>('PUT', `${admin}/mail/method`, { method }),
   outlookDeviceCode: () => request<DeviceCode>('POST', `${admin}/mail/outlook/device-code`, {}),
   outlookPoll: (flow_id: string) =>
     request<{ status: 'ok' | 'pending' | 'slow_down'; settings?: MailSettings }>('POST', `${admin}/mail/outlook/poll`, { flow_id }),

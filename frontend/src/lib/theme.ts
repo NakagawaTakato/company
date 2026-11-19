@@ -1,5 +1,7 @@
 // 公開サイトのテーマ色（管理画面の「デザイン」で選んだ1色）から、青系の濃淡をまとめて作ります。
 // 初期の青を選んだときは、元のデザインの色をそのまま使います。
+// 明るい色（白い文字が読みにくい色）も選べます。そのときは、色の面（ボタン・帯）の文字を濃い色にし、
+// 白い背景の上の文字・数字・バッジには、同じ色みで読める濃さにした色を使います。
 import type { CSSProperties } from 'react'
 import { DEFAULT_PRIMARY } from './site'
 
@@ -25,6 +27,8 @@ function mix(hex: string, target: Rgb, amount: number): string {
 
 const WHITE: Rgb = [255, 255, 255]
 const BLACK: Rgb = [0, 0, 0]
+/** 明るい色の面にのせる濃い文字の色（base.css の --c-ink と同じ） */
+export const DARK_TEXT = '#14213d'
 
 export function isHexColor(value: string): boolean {
   return HEX_RE.test(value)
@@ -41,6 +45,11 @@ export function contrastWithWhite(hex: string): number {
   return 1.05 / (luminance + 0.05)
 }
 
+/** 明るい色（白い文字が読みにくい色）なら true。ボタンなどの文字を濃い色にします */
+export function isLightColor(hex: string): boolean {
+  return contrastWithWhite(hex) < MIN_CONTRAST
+}
+
 /** 白い文字が読める濃さになるまで暗くします */
 export function darkenUntilReadable(hex: string): string {
   let color = hex
@@ -53,21 +62,27 @@ export function themeVars(color: string): CSSProperties {
   if (!isHexColor(color) || color.toLowerCase() === DEFAULT_PRIMARY.toLowerCase()) return {}
   const p = color.toLowerCase()
   const [r, g, b] = toRgb(p)
+  const light = isLightColor(p)
+  // 白い背景の上の文字・アクセントに使う色（明るい色のときは、読める濃さまで暗くした色）
+  const deep = light ? darkenUntilReadable(p) : p
   const tint = (amount: number) => mix(p, WHITE, amount)
+  const deepTint = (amount: number) => mix(deep, WHITE, amount)
   return {
     '--c-primary': p,
-    '--c-primary-dark': mix(p, BLACK, 0.2),
+    '--c-primary-dark': mix(p, BLACK, light ? 0.12 : 0.2),
     '--c-primary-rgb': `${r}, ${g}, ${b}`,
+    '--c-primary-text': deep,
+    '--c-on-primary': light ? DARK_TEXT : '#ffffff',
     '--shadow-card': `0 12px 32px rgba(${r}, ${g}, ${b}, 0.08)`,
-    '--c-accent-1': p,
-    '--c-accent-2': tint(0.18),
-    '--c-accent-3': tint(0.1),
-    '--c-accent-4': tint(0.14),
-    '--c-accent-5': tint(0.4),
-    '--c-accent-6': tint(0.12),
-    '--c-blue-2': tint(0.18),
-    '--c-blue-3': tint(0.4),
-    '--c-sky': tint(0.14),
+    '--c-accent-1': deep,
+    '--c-accent-2': deepTint(0.18),
+    '--c-accent-3': deepTint(0.1),
+    '--c-accent-4': deepTint(0.14),
+    '--c-accent-5': deepTint(0.4),
+    '--c-accent-6': deepTint(0.12),
+    '--c-blue-2': deepTint(0.18),
+    '--c-blue-3': deepTint(0.4),
+    '--c-sky': deepTint(0.14),
     '--c-tint': tint(0.84),
     '--c-tint-2': tint(0.92),
     '--c-tint-3': tint(0.88),
@@ -75,9 +90,10 @@ export function themeVars(color: string): CSSProperties {
     '--c-current': tint(0.91),
     '--c-hero-from': tint(0.88),
     '--c-hero-mid': tint(0.95),
-    '--c-band-card': tint(0.08),
-    '--c-band-text': tint(0.84),
-    '--c-band-eyebrow': tint(0.76),
+    // 帯（色の面）: 明るい色のときは、カードを少し白く、文字を濃い色にします
+    '--c-band-card': light ? tint(0.35) : tint(0.08),
+    '--c-band-text': light ? '#33415c' : tint(0.84),
+    '--c-band-eyebrow': light ? DARK_TEXT : tint(0.76),
   } as CSSProperties
 }
 
@@ -107,7 +123,10 @@ export function applyBrowserColor(color: string): void {
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', safe)
 }
 
-export const THEME_PRESETS: { name: string; color: string }[] = [
+export type ThemePreset = { name: string; color: string }
+
+/** 濃いめの色（ボタンの文字は白） */
+export const THEME_PRESETS: ThemePreset[] = [
   { name: 'ブルー（初期）', color: DEFAULT_PRIMARY },
   { name: 'ネイビー', color: '#1e3a8a' },
   { name: 'ティール', color: '#0f766e' },
@@ -117,4 +136,17 @@ export const THEME_PRESETS: { name: string; color: string }[] = [
   { name: 'オレンジ', color: '#c2410c' },
   { name: 'ブラウン', color: '#7c4a1e' },
   { name: 'チャコール', color: '#374151' },
+]
+
+/** 明るめの色（ボタンの文字は濃い色） */
+export const LIGHT_THEME_PRESETS: ThemePreset[] = [
+  { name: 'スカイブルー', color: '#38bdf8' },
+  { name: 'アクア', color: '#22d3ee' },
+  { name: 'ミント', color: '#34d399' },
+  { name: 'ライム', color: '#a3e635' },
+  { name: 'イエロー', color: '#facc15' },
+  { name: 'オレンジ', color: '#fb923c' },
+  { name: 'コーラル', color: '#f87171' },
+  { name: 'ピンク', color: '#f472b6' },
+  { name: 'ラベンダー', color: '#a78bfa' },
 ]

@@ -18,6 +18,7 @@ import {
 } from 'react-icons/md'
 import { NavLink, Outlet, useNavigate, useOutletContext } from 'react-router'
 import { ApiError, api } from '../../api/client'
+import { SessionExpiry } from '../../components/admin/SessionExpiry'
 import { Logo } from '../../components/Logo'
 import { DEFAULT_PRIMARY } from '../../lib/site'
 import { applyBrowserColor } from '../../lib/theme'
@@ -108,6 +109,7 @@ export function AdminLayout() {
 
   return (
     <div className="admin">
+      <SessionExpiry />
       <AdminHeader email={email} onLogout={logout} />
       <div className="admin-container admin-container--wide admin-body">
         <nav className="admin-nav" aria-label="管理画面のメニュー">

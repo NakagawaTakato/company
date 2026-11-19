@@ -5,7 +5,7 @@ import { Card, Empty, Notice, PageHeader, useAction, useLoader } from '../../com
 import { LogoMark } from '../../components/Logo'
 import { useSite } from '../../lib/SiteContext'
 import { BRAND } from '../../lib/site'
-import { MIN_CONTRAST, THEME_PRESETS, contrastWithWhite, darkenUntilReadable, isHexColor, themeVars } from '../../lib/theme'
+import { DARK_TEXT, LIGHT_THEME_PRESETS, THEME_PRESETS, type ThemePreset, isHexColor, isLightColor, themeVars } from '../../lib/theme'
 import { usePageTitle } from '../../lib/usePageTitle'
 
 export function AdminThemePage() {
@@ -30,8 +30,7 @@ export function AdminThemePage() {
     if (isHexColor(value)) setColor(value.toLowerCase())
   }
 
-  const contrast = contrastWithWhite(color)
-  const readable = contrast >= MIN_CONTRAST
+  const light = isLightColor(color)
   const changed = color !== data.primary_color
 
   const save = async (value = color) => {
@@ -59,26 +58,34 @@ export function AdminThemePage() {
 
       <div className="theme-layout">
         <Card title="色を選ぶ">
-          <div className="swatches" role="radiogroup" aria-label="おすすめの色">
-            {THEME_PRESETS.map((preset) => {
-              const selected = preset.color.toLowerCase() === color
-              return (
-                <button
-                  key={preset.color}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  className={`swatch${selected ? ' swatch--selected' : ''}`}
-                  onClick={() => choose(preset.color)}
-                >
-                  <span className="swatch__chip" style={{ background: preset.color }}>
-                    {selected && <MdCheck aria-hidden="true" />}
-                  </span>
-                  <span className="swatch__name">{preset.name}</span>
-                </button>
-              )
-            })}
-          </div>
+          {[
+            { label: '濃いめの色', presets: THEME_PRESETS },
+            { label: '明るめの色', presets: LIGHT_THEME_PRESETS },
+          ].map((group) => (
+            <div key={group.label}>
+              <p className="swatches__label">{group.label}</p>
+              <div className="swatches" role="radiogroup" aria-label={`おすすめの${group.label}`}>
+                {group.presets.map((preset: ThemePreset) => {
+                  const selected = preset.color.toLowerCase() === color
+                  return (
+                    <button
+                      key={preset.color}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={`swatch${selected ? ' swatch--selected' : ''}`}
+                      onClick={() => choose(preset.color)}
+                    >
+                      <span className="swatch__chip" style={{ background: preset.color, color: isLightColor(preset.color) ? DARK_TEXT : '#fff' }}>
+                        {selected && <MdCheck aria-hidden="true" />}
+                      </span>
+                      <span className="swatch__name">{preset.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
 
           <div className="color-input">
             <label className="color-input__picker">
@@ -92,15 +99,11 @@ export function AdminThemePage() {
           </div>
           {!isHexColor(text) && <p className="field__error">#1558c0 のような形式で入力してください。</p>}
 
-          <p className={`contrast ${readable ? 'contrast--ok' : 'contrast--ng'}`}>
-            白い文字との見やすさ: <strong>{contrast.toFixed(1)}</strong> : 1（{MIN_CONTRAST} 以上が目安）
-            {readable ? ' — 読みやすい色です。' : ' — 明るすぎて、ボタンの白い文字が読みにくくなります。'}
+          <p className="contrast contrast--ok">
+            {light
+              ? '明るめの色です。ボタンや帯の文字は濃い色で表示し、白い背景の上の文字・数字は、同じ色みの読みやすい濃さで表示します。'
+              : '濃いめの色です。ボタンや帯の文字は白で表示します。'}
           </p>
-          {!readable && (
-            <button type="button" className="btn btn--outline btn--small" onClick={() => choose(darkenUntilReadable(color))}>
-              読みやすい濃さに調整
-            </button>
-          )}
 
           <Notice kind="success">{action.message}</Notice>
           <Notice kind="error">{action.fieldErrors.primary_color || action.error}</Notice>
@@ -113,7 +116,7 @@ export function AdminThemePage() {
             ) : (
               <span />
             )}
-            <button type="button" className="btn btn--primary" onClick={() => save()} disabled={action.busy || !changed || !readable}>
+            <button type="button" className="btn btn--primary" onClick={() => save()} disabled={action.busy || !changed}>
               {action.busy ? '保存中…' : 'この色で保存'}
             </button>
           </div>

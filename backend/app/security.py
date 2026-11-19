@@ -143,12 +143,17 @@ def create_session(conn: sqlite3.Connection, admin_id: int) -> str:
 def get_session_admin(conn: sqlite3.Connection, token: str) -> sqlite3.Row | None:
     return conn.execute(
         """
-        SELECT a.id, a.email
+        SELECT a.id, a.email, s.expires_at
         FROM admin_sessions s JOIN admins a ON a.id = s.admin_id
         WHERE s.token_hash = ? AND s.expires_at > ?
         """,
         (_token_hash(token), int(time.time())),
     ).fetchone()
+
+
+def session_seconds_left(admin: sqlite3.Row) -> int:
+    """ログインの期限までの残り秒数（get_session_admin の結果から計算します）。"""
+    return max(0, int(admin["expires_at"]) - int(time.time()))
 
 
 def delete_session(conn: sqlite3.Connection, token: str) -> None:

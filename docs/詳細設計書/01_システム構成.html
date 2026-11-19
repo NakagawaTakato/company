@@ -178,7 +178,6 @@ a:hover { text-decoration-thickness: 2px; }
   App --&gt; Up
   App --&gt; Tok
   App -- &quot;メール送信&quot; --&gt; Graph[&quot;Microsoft Graph&lt;br&gt;（Outlook）&quot;]
-  App -- &quot;メール送信&quot; --&gt; Smtp[&quot;SMTP サーバー&quot;]
   SPA -. &quot;本番のみ&quot; .-&gt; GA[&quot;Google Analytics 4&quot;]
   SPA -. &quot;リンクのみ&quot; .-&gt; Line[&quot;LINE&quot;]
 </pre>
@@ -335,13 +334,8 @@ a:hover { text-decoration-thickness: 2px; }
 </thead>
 <tbody><tr>
 <td>Microsoft Graph（Outlook）</td>
-<td>メール送信（標準の方法）</td>
-<td>メールを送るには、Outlook と SMTP のどちらかが必要</td>
-</tr>
-<tr>
-<td>SMTP サーバー</td>
-<td>メール送信（もう1つの方法）</td>
-<td>同上</td>
+<td>メール送信（送信方法はこれだけ）</td>
+<td>メールを送るには必要</td>
 </tr>
 <tr>
 <td>Google Analytics 4</td>
@@ -485,7 +479,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>mailer.py</code></td>
-<td>メール送信。送信方法の判断、送信履歴への登録・送信・結果の記録、新着通知と自動返信の本文、差し込み項目の置き換え、SMTP 送信</td>
+<td>メール送信。送れる状態かの判定、送信履歴への登録・送信（Outlook）・結果の記録、新着通知と自動返信の本文、差し込み項目の置き換え</td>
 </tr>
 <tr>
 <td><code>outlook.py</code></td>
@@ -574,7 +568,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>lib/theme.ts</code></td>
-<td>テーマ色の計算（CSS 変数・コントラスト比・読みやすい濃さへの調整・ファビコン）</td>
+<td>テーマ色の計算（CSS 変数・コントラスト比・明るい色の判定・読みやすい濃さへの調整・ファビコン）と、おすすめの色（濃いめ・明るめ）</td>
 </tr>
 <tr>
 <td><code>lib/format.ts</code></td>
@@ -627,6 +621,10 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td><code>components/admin/MonthlyChart.tsx</code></td>
 <td>ダッシュボードの月ごとのグラフ</td>
+</tr>
+<tr>
+<td><code>components/admin/SessionExpiry.tsx</code></td>
+<td>ログインの期限の予告と、期限が来たときの自動ログアウト</td>
 </tr>
 <tr>
 <td><code>pages/*.tsx</code></td>

@@ -246,6 +246,10 @@ a:hover { text-decoration-thickness: 2px; }
 <td>ログインから12時間（使っても延長しない）</td>
 </tr>
 <tr>
+<td>自動ログアウト</td>
+<td>期限の5分前に画面に予告を出し、期限が来たら操作がなくてもログイン画面に移る（開いたままの画面に情報を残さない）</td>
+</tr>
+<tr>
 <td>Cookie の名前</td>
 <td><code>bt_admin_session</code></td>
 </tr>
@@ -292,7 +296,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>期限切れ</td>
-<td>使えなくなる。行は起動時に削除</td>
+<td>使えなくなる。開いている画面は、操作がなくてもログイン画面に移る。行は起動時に削除</td>
 </tr>
 </tbody></table></div>
 <h2 id="sec-5">4. 試行回数の制限</h2>
@@ -507,11 +511,6 @@ a:hover { text-decoration-thickness: 2px; }
 <td>ログインのトークン</td>
 <td>ブラウザの Cookie</td>
 <td>HttpOnly。データベースにはハッシュだけ</td>
-</tr>
-<tr>
-<td>SMTP のパスワード</td>
-<td><code>settings</code> 表の <code>smtp</code>（メールサーバーへのログインに使うため、平文）</td>
-<td>画面・API の応答には返さない（設定済みかどうかだけ返す）。入力欄が空なら変えない。データベースとバックアップの zip に入るので、zip の保管に注意する</td>
 </tr>
 <tr>
 <td>Outlook のトークン</td>

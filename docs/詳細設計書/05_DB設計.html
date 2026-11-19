@@ -1499,12 +1499,6 @@ a:hover { text-decoration-thickness: 2px; }
 <td>A-12</td>
 </tr>
 <tr>
-<td><code>smtp</code></td>
-<td><code>{&quot;host&quot;, &quot;port&quot;, &quot;security&quot;, &quot;username&quot;, &quot;password&quot;, &quot;from_address&quot;, &quot;from_name&quot;}</code></td>
-<td><code>{&quot;host&quot;: &quot;&quot;, &quot;port&quot;: 587, &quot;security&quot;: &quot;starttls&quot;, &quot;username&quot;: &quot;&quot;, &quot;password&quot;: &quot;&quot;, &quot;from_address&quot;: &quot;&quot;, &quot;from_name&quot;: 初期の屋号}</code></td>
-<td>A-13</td>
-</tr>
-<tr>
 <td><code>notifications</code></td>
 <td><code>{&quot;admin_notify&quot;, &quot;admin_to&quot;, &quot;auto_reply&quot;, &quot;auto_reply_subject&quot;, &quot;auto_reply_body&quot;, &quot;site_url&quot;}</code></td>
 <td>新着通知 あり・送り先 空（= 事業者のメール）・自動返信 あり・件名「【{business_name}】お問い合わせを受け付けました」・本文（<code>settings_store.py</code> の <code>DEFAULT_AUTO_REPLY_BODY</code>）・<code>site_url</code> は <code>http://127.0.0.1:5173</code></td>
@@ -1523,12 +1517,6 @@ a:hover { text-decoration-thickness: 2px; }
 <td>自動削除の実行時</td>
 </tr>
 <tr>
-<td><code>mail.method</code></td>
-<td><code>&quot;outlook&quot;</code> / <code>&quot;smtp&quot;</code></td>
-<td>なし（<code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> があれば outlook、なければ smtp とみなす）</td>
-<td>A-13</td>
-</tr>
-<tr>
 <td><code>admin.env_password_hash</code></td>
 <td><code>.env</code> のパスワードのハッシュ（文字列）</td>
 <td>なし</td>
@@ -1543,7 +1531,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <p>読み出すときの決まり（<code>settings_store.py</code>）:</p>
 <ul>
-<li><code>theme</code>・<code>smtp</code>・<code>notifications</code>・<code>retention</code> は、初期値に保存した値を上書きして返します。初期値にないキーは捨てます（項目を追加したときも、保存済みの設定がそのまま使えます）。</li>
+<li><code>theme</code>・<code>notifications</code>・<code>retention</code> は、初期値に保存した値を上書きして返します。初期値にないキーは捨てます（項目を追加したときも、保存済みの設定がそのまま使えます）。</li>
 <li><code>content.*</code> は、保存した値をそのまま返します。保存がなければ初期値です。「初期値に戻す」は、この行を削除します。</li>
 </ul>
 <h2 id="sec-23">8. マイグレーション（表の作成・変更）</h2>
@@ -1578,6 +1566,10 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>6</td>
 <td><code>estimates.delivery_place</code> を削除（見積書に納品場所を出すのをやめたため）</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>settings</code> の <code>smtp</code>（SMTP のパスワードを含む）と <code>mail.method</code> を削除（メールは Outlook だけで送るため）</td>
 </tr>
 </tbody></table></div>
 <p>追加するときの決まり:</p>
