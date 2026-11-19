@@ -316,6 +316,7 @@ a:hover { text-decoration-thickness: 2px; }
 </pre>
 <ul>
 <li>ログアウトすると A-01 に移ります。</li>
+<li>ログインの期限が来ると、操作をしていなくても A-01 に移ります（3.2.1）。</li>
 <li>見積書・領収書の印刷（A-07・A-09）は、左のメニューのない画面です。新しいタブで開きます。</li>
 </ul>
 <h2 id="sec-4">3. 共通の仕様</h2>
@@ -346,7 +347,25 @@ a:hover { text-decoration-thickness: 2px; }
 <li>401 なら A-01 に移ります（履歴を置き換え）。それ以外のエラーは本文の上にメッセージを出します。</li>
 <li>ログインが確認できるまで、本文（各画面）は表示しません。</li>
 </ol>
-<h3 id="sec-7">3.3 API のエラーの扱い（<code>handleApiError</code>）</h3>
+<h3 id="sec-7">3.2.1 ログインの期限の予告と自動ログアウト（<code>components/admin/SessionExpiry.tsx</code>）</h3>
+<p>管理画面の外枠と、見積書・領収書の印刷ページで動きます。画面を開いたときに API-08 の <code>expires_in</code>（残り秒数）を受け取り、1秒ごとと、画面に戻ったとき（タブの切り替え・スリープからの復帰）に残り時間を確かめます。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>残り時間</th>
+<th>動き</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>5分以下</td>
+<td>画面の下に「まもなく自動でログアウトします。入力中の内容は保存してください。」と「残り {分}:{秒}」を表示する（印刷には出さない）</td>
+</tr>
+<tr>
+<td>0</td>
+<td>ボタンを押さなくても A-01 に移り（履歴を置き換え）、「ログインの有効期限が切れました。もう一度ログインしてください。」を表示する。保存していない入力内容は消える</td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-8">3.3 API のエラーの扱い（<code>handleApiError</code>）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -367,7 +386,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>上に加えて、<code>errors</code> の内容を各入力欄の下に出す。キーは項目名。リストの項目は「行番号.項目名」（例: <code>items.0.quantity</code> は明細の1行目の数量）。項目にひもづかないエラーはキー <code>body</code></td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-8">3.4 共通部品（<code>components/admin/ui.tsx</code>）</h3>
+<h3 id="sec-9">3.4 共通部品（<code>components/admin/ui.tsx</code>）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -416,7 +435,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>ボタンの処理（処理中・成功のメッセージ・エラー・項目ごとのエラー）</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-9">3.5 そのほか</h3>
+<h3 id="sec-10">3.5 そのほか</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -449,8 +468,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>一覧の絞り込み・タブなどは、できるだけ URL のパラメータに持つ（再読み込み・共有しても同じ表示になる）</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-10">4. 各画面</h2>
-<h3 id="sec-11">4.1 A-01 管理者ログイン</h3>
+<h2 id="sec-11">4. 各画面</h2>
+<h3 id="sec-12">4.1 A-01 管理者ログイン</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -498,7 +517,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>1. どちらかが空なら「メールアドレスとパスワードを入力してください。」<br>2. API-06 を呼ぶ<br>3. 成功 → A-02 へ（履歴を置き換え）<br>4. 失敗 → API のメッセージ（「メールアドレスまたはパスワードが正しくありません。」「ログインの試行回数が多すぎます。しばらくしてからお試しください。」など）</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-12">4.2 A-02 ダッシュボード</h3>
+<h3 id="sec-13">4.2 A-02 ダッシュボード</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -570,8 +589,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>集計のしかたは <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06 処理設計</a> 16章です。</p>
-<h3 id="sec-13">4.3 A-03 お問い合わせ一覧</h3>
-<h4 id="sec-14">絞り込みの条件（URL のパラメータ）</h4>
+<h3 id="sec-14">4.3 A-03 お問い合わせ一覧</h3>
+<h4 id="sec-15">絞り込みの条件（URL のパラメータ）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -611,7 +630,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>ページ送り</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-15">項目</h4>
+<h4 id="sec-16">項目</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -666,7 +685,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>「全 {n} 件」とページ送り</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-16">イベント</h4>
+<h4 id="sec-17">イベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -712,8 +731,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>一覧が空のとき: 条件やタブを指定していれば「条件に合うお問い合わせはありません。」、していなければ「お問い合わせはまだありません。」</p>
-<h3 id="sec-17">4.4 A-04 お問い合わせ詳細</h3>
-<h4 id="sec-18">画面の構成</h4>
+<h3 id="sec-18">4.4 A-04 お問い合わせ詳細</h3>
+<h4 id="sec-19">画面の構成</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -734,9 +753,9 @@ a:hover { text-decoration-thickness: 2px; }
 <td>対応状況 / 送信したメール / 見積書・おまかせ管理プラン</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-19">お問い合わせの内容</h4>
+<h4 id="sec-20">お問い合わせの内容</h4>
 <p>受付日時 / ご相談内容（ラベル）/ お名前 / メールアドレス（<code>mailto:</code> のリンク）/ 電話番号（<code>tel:</code> のリンク）/ お住まい / ご年齢（ないときは「未入力」）/ 初期費用のお支払い方法 / 月額(おまかせ管理プラン)のお支払い方法 / 最終更新</p>
-<h4 id="sec-20">操作とイベント</h4>
+<h4 id="sec-21">操作とイベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -825,7 +844,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>A-10（<code>/admin/contracts?new=1&amp;inquiry={ID}</code>）</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-21">各エリアの項目</h4>
+<h4 id="sec-22">各エリアの項目</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -855,7 +874,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>記録の種類: 「メモ」は管理者が入力したもの、「メール」は返信したメール、「記録」は対応状況の変更などの自動の記録です（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 9章）。</p>
-<h3 id="sec-22">4.5 A-05 見積書一覧</h3>
+<h3 id="sec-23">4.5 A-05 見積書一覧</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -896,8 +915,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>一覧が空のときは「見積書はまだありません。」です。</p>
-<h3 id="sec-23">4.6 A-06 見積書の作成・編集</h3>
-<h4 id="sec-24">新規のときの初期値</h4>
+<h3 id="sec-24">4.6 A-06 見積書の作成・編集</h3>
+<h4 id="sec-25">新規のときの初期値</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -950,7 +969,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>1行（内容 空・数量 1・単位「式」・単価 0）</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-25">項目定義</h4>
+<h4 id="sec-26">項目定義</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1108,7 +1127,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>明細の操作: 「行を追加」（50行まで）、各行の「上へ」「下へ」「この行を削除」（1行だけのときは削除できない）。</p>
-<h4 id="sec-26">ボタンとイベント</h4>
+<h4 id="sec-27">ボタンとイベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1150,9 +1169,9 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>画面の下には、合計（税込）と保存ボタンを常に表示します。関連するお問い合わせがあるときは「関連するお問い合わせ: #{ID} {お名前} 様」（→ A-04）を表示します。</p>
-<h4 id="sec-27">この見積書の入金（既存のときだけ）</h4>
+<h4 id="sec-28">この見積書の入金（既存のときだけ）</h4>
 <p>入金日 / 内容 / 方法 / 金額 / 領収書（番号のリンク → A-09 を新しいタブ）と、入金済み・残額。なければ「まだ入金はありません。」</p>
-<h3 id="sec-28">4.7 A-07 見積書の印刷</h3>
+<h3 id="sec-29">4.7 A-07 見積書の印刷</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1169,9 +1188,9 @@ a:hover { text-decoration-thickness: 2px; }
 <td><code>見積書_スタンダード.xlsx</code>（Excel のひな形）と同じ配置（「印」の枠は法人化までは出さない）。「御　見　積　書」/宛名（お客さま名は下線の左端から、「様」「御中」は下線の右端）/ 見積番号「No. {番号}」・発行日 /「下記の通り御見積申し上げます。」/ 件名・納期・支払条件・有効期限 / 発行者（屋号・所在地・TEL・登録番号（あれば）・「担当：{運営責任者}」）/御見積金額（税込）「¥{合計}-」/ 明細の表（No.・品名・摘要・数量・単位・単価・金額。12行に満たない分は空行。13行以上はそのまま続く）/ 小計・消費税率・消費税・合計（税込）/ 備考（空でも枠を出す）</td>
 </tr>
 </tbody></table></div>
-<p>API-56 で読み込みます。401 なら A-01 へ移ります（ログイン切れの案内つき）。発行者の情報はサイト内容の事業者情報です。</p>
-<h3 id="sec-29">4.8 A-08 入金・領収書</h3>
-<h4 id="sec-30">一覧</h4>
+<p>API-56 で読み込みます。401 なら A-01 へ移ります（ログイン切れの案内つき）。ログインの期限の予告と自動ログアウトは、3.2.1 のとおりです。発行者の情報はサイト内容の事業者情報です。</p>
+<h3 id="sec-30">4.8 A-08 入金・領収書</h3>
+<h4 id="sec-31">一覧</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1206,7 +1225,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>右上のボタン（入力欄を開いているときは出さない）。今の検索の条件（ページを除く）で API-71 を呼び、ファイルを保存する。処理中は「作成中…」</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-31">入力欄（記録・編集）</h4>
+<h4 id="sec-32">入力欄（記録・編集）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1284,10 +1303,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <ul>
-<li>現金で5万円以上のときは「5万円以上の現金の領収書には、収入印紙が必要です。」を表示します（※課題 No.8）。</li>
+<li>入力欄に「おまかせ管理プラン以外の入金は、見積書と領収書が必要です。」を表示します（おまかせ管理プランの月額は Stripe の自動決済のため、この画面では記録しません）（※課題 No.8）。</li>
 <li>見積書の画面から来たとき（<code>?new=1&amp;estimate={ID}</code>）は、入力欄を開き、見積書・お客さま名を入れます。但し書きは「{件名}費 着手金として」、金額は合計の半分（切り捨て）にします。その見積書にすでに入金があれば、但し書きは「{件名}費 残金として」、金額は残額にします。</li>
 </ul>
-<h4 id="sec-32">イベント</h4>
+<h4 id="sec-33">イベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1322,7 +1341,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>確認「{番号}（{名前} 様 {金額}）の記録を削除します。よろしいですか？」→ API-63 →「削除しました。」</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-33">4.9 A-09 領収書の印刷</h3>
+<h3 id="sec-34">4.9 A-09 領収書の印刷</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1336,7 +1355,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>注意（印刷されない）</td>
-<td>現金で5万円以上のとき「※ 5万円以上の現金の領収書には、収入印紙が必要です。印刷して印紙を貼り、割印をしてお渡しください。（この注意書きは印刷されません）」（※課題 No.8）</td>
+<td>出さない（※課題 No.8）</td>
 </tr>
 <tr>
 <td>用紙（A5 横・余白なし）</td>
@@ -1345,10 +1364,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <ul>
 <li><strong>発行日</strong>: 一度決まったら、印刷し直しても変わらない日付を表示します（決め方は ※課題 No.2。今は印刷画面を開いた日を表示しています）。</li>
-<li>API-61 で読み込みます。401 なら A-01 へ移ります。</li>
+<li>API-61 で読み込みます。401 なら A-01 へ移ります。ログインの期限の予告と自動ログアウトは、3.2.1 のとおりです。</li>
 </ul>
-<h3 id="sec-34">4.10 A-10 おまかせ管理プラン</h3>
-<h4 id="sec-35">画面の構成</h4>
+<h3 id="sec-35">4.10 A-10 おまかせ管理プラン</h3>
+<h4 id="sec-36">画面の構成</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1383,7 +1402,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>お客さま（「{名前} 様」とメール）/ サイト（URL があればリンク）/ 月額 / 開始日 / 終了日（なければ「―」）/ 状態 / 操作（「解約の申し出」（契約中のときだけ）・編集・削除）</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-36">項目定義</h4>
+<h4 id="sec-37">項目定義</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1469,7 +1488,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>終了日が開始日より前のときは「終了日は開始日以降の日付にしてください。」を入力欄の下に表示します。関連するお問い合わせがあるときは「関連するお問い合わせ: #{ID}」（→ A-04）を表示します。</p>
-<h4 id="sec-37">イベント</h4>
+<h4 id="sec-38">イベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1514,8 +1533,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>その状態で API-64 を呼ぶ</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-38">4.11 A-11 サイト内容</h3>
-<h4 id="sec-39">画面の構成</h4>
+<h3 id="sec-39">4.11 A-11 サイト内容</h3>
+<h4 id="sec-40">画面の構成</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1550,7 +1569,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>「変更済み」/「初期値のまま」と「保存する」</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-40">タブごとの項目</h4>
+<h4 id="sec-41">タブごとの項目</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1591,7 +1610,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>リストのタブ（料金表・よくある質問・制作実績・そのほかの制作物・お客さまの声）は、各行に番号と「上へ」「下へ」「削除」があり、下に「追加」ボタンがあります（上限の件数で押せなくなる）。</p>
-<h4 id="sec-41">イベント</h4>
+<h4 id="sec-42">イベント</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1627,7 +1646,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>入力エラーは、行番号つきのキー（例: <code>0.q</code>、<code>rows.0.name</code>）で各入力欄の下に出します。件数の上限を超えたときのエラー（キー <code>body</code>）は、保存ボタンの上に出します。</p>
-<h3 id="sec-42">4.12 A-12 デザイン（色）</h3>
+<h3 id="sec-43">4.12 A-12 デザイン（色）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1639,7 +1658,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tbody><tr>
 <td>1</td>
 <td>おすすめの色</td>
-<td>ブルー（初期・<code>#1558c0</code>）/ ネイビー <code>#1e3a8a</code> / ティール <code>#0f766e</code> / グリーン <code>#15803d</code> / パープル <code>#6d28d9</code> / ワイン <code>#9f1239</code> / オレンジ <code>#c2410c</code> / ブラウン <code>#7c4a1e</code> / チャコール <code>#374151</code>。選んだ色にチェック</td>
+<td>「濃いめの色」: ブルー（初期・<code>#1558c0</code>）/ ネイビー <code>#1e3a8a</code> / ティール <code>#0f766e</code> / グリーン <code>#15803d</code> / パープル <code>#6d28d9</code> / ワイン <code>#9f1239</code> / オレンジ <code>#c2410c</code> / ブラウン <code>#7c4a1e</code> / チャコール <code>#374151</code>。「明るめの色」: スカイブルー <code>#38bdf8</code> / アクア <code>#22d3ee</code> / ミント <code>#34d399</code> / ライム <code>#a3e635</code> / イエロー <code>#facc15</code> / オレンジ <code>#fb923c</code> / コーラル <code>#f87171</code> / ピンク <code>#f472b6</code> / ラベンダー <code>#a78bfa</code>。選んだ色にチェック（明るめの色では、チェックを濃い色で表示）</td>
 </tr>
 <tr>
 <td>2</td>
@@ -1653,38 +1672,33 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>4</td>
-<td>白い文字との見やすさ</td>
-<td>「{コントラスト比} : 1（4.5 以上が目安）」と「読みやすい色です。」/「明るすぎて、ボタンの白い文字が読みにくくなります。」</td>
+<td>色の説明</td>
+<td>明るめの色（白い文字とのコントラスト比が 4.5 未満）なら「明るめの色です。ボタンや帯の文字は濃い色で表示し、白い背景の上の文字・数字は、同じ色みの読みやすい濃さで表示します。」、それ以外は「濃いめの色です。ボタンや帯の文字は白で表示します。」（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 19章）</td>
 </tr>
 <tr>
 <td>5</td>
-<td>読みやすい濃さに調整</td>
-<td>コントラスト比が 4.5 未満のときだけ表示。黒を少しずつ混ぜて 4.5 以上にする（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 19章）</td>
-</tr>
-<tr>
-<td>6</td>
 <td>初期の青に戻す</td>
 <td>今の保存されている色が初期の青でないときだけ表示。押すと初期の青ですぐに保存する</td>
 </tr>
 <tr>
-<td>7</td>
+<td>6</td>
 <td>この色で保存</td>
-<td>色が変わっていて、読みやすい色のときだけ押せる。API-26 →「保存しました。公開サイトに反映されています。」→ 公開サイトの表示内容も読み込み直す</td>
+<td>色が変わっているときだけ押せる（明るい色も保存できる）。API-26 →「保存しました。公開サイトに反映されています。」→ 公開サイトの表示内容も読み込み直す</td>
 </tr>
 <tr>
-<td>8</td>
+<td>7</td>
 <td>見本</td>
 <td>選んでいる色で、ロゴ・見出し・ボタン・バッジ・チップ・帯・カードの見え方を表示（保存前でも変わる）</td>
 </tr>
 <tr>
-<td>9</td>
+<td>8</td>
 <td>公開サイトで確認</td>
 <td>右上。公開サイトを新しいタブで開く</td>
 </tr>
 </tbody></table></div>
-<p>API のエラー（明るすぎる色など）は、項目 <code>primary_color</code> のエラー文を表示します。</p>
-<h3 id="sec-43">4.13 A-13 メール</h3>
-<h4 id="sec-44">タブ（<code>?tab=</code>）</h4>
+<p>API のエラー（色の形式の誤りなど）は、項目 <code>primary_color</code> のエラー文を表示します。</p>
+<h3 id="sec-44">4.13 A-13 メール</h3>
+<h4 id="sec-45">タブ（<code>?tab=</code>）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1695,8 +1709,8 @@ a:hover { text-decoration-thickness: 2px; }
 </thead>
 <tbody><tr>
 <td>送信設定</td>
-<td><code>smtp</code>（初期）</td>
-<td>送信方法、Outlook のサインイン / SMTP の設定、テスト送信</td>
+<td><code>send</code>（初期）</td>
+<td>送信方法（Outlook）の説明と状態、Outlook のサインイン、テスト送信</td>
 </tr>
 <tr>
 <td>通知・自動返信</td>
@@ -1715,7 +1729,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>メールを送れない状態のときは、送信設定以外のタブの上に「まだメールを送信できないため、「未送信」として記録されます。（{理由}）」を出します。画面を開いたときに API-36 を呼びます。</p>
-<h4 id="sec-45">送信設定タブ</h4>
+<h4 id="sec-46">送信設定タブ</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1727,7 +1741,7 @@ a:hover { text-decoration-thickness: 2px; }
 <tbody><tr>
 <td>1</td>
 <td>送信方法</td>
-<td>ラジオボタン「Outlook（Microsoft Graph）」/「SMTP」。選ぶとすぐに API-37 で保存し、「Outlook で送るように切り替えました。」/「SMTP で送るように切り替えました。」</td>
+<td>「メールは Outlook（Microsoft Graph）で送ります。…」の説明（送信方法は Outlook だけで、切り替えはない）</td>
 </tr>
 <tr>
 <td>2</td>
@@ -1737,22 +1751,12 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td>3</td>
 <td>Outlook のサインイン</td>
-<td>送信方法が Outlook のとき（下の表）</td>
+<td>下の表</td>
 </tr>
 <tr>
 <td>4</td>
-<td>送信用メールサーバー（SMTP）</td>
-<td>送信方法が SMTP のとき（下の表）</td>
-</tr>
-<tr>
-<td>5</td>
 <td>テスト送信</td>
 <td>宛先（初期: 事業者情報のメール）と「送信」。送れない状態では押せない。API-43 →「{宛先} に送信しました。届いているか確認してください。」</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Gmail を使う場合の入力例</td>
-<td>送信方法が SMTP のとき。サーバー名 smtp.gmail.com / STARTTLS（587）/ Gmail のアドレス / アプリ パスワード</td>
 </tr>
 </tbody></table></div>
 <p>Outlook のサインイン（No.3）の表示:</p>
@@ -1781,75 +1785,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>サインインの途中は、<code>interval</code> 秒（最低2秒）ごとに API-39 で確認します。<code>slow_down</code> が返ったら間隔を5秒のばします。<code>ok</code> なら「サインインしました。お問い合わせメールを Outlook から送れます。」、エラーならそのメッセージを出して途中の表示を閉じます。</p>
-<p>SMTP の設定（No.4）の項目:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>No.</th>
-<th>項目名</th>
-<th>入力欄</th>
-<th>長さ・範囲</th>
-<th>備考</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>サーバー名</td>
-<td>テキスト</td>
-<td>255文字</td>
-<td>例: smtp.gmail.com</td>
-</tr>
-<tr>
-<td>2</td>
-<td>接続方式</td>
-<td>セレクト</td>
-<td>STARTTLS（ポート 587）/ SSL/TLS（ポート 465）/ 暗号化なし（おすすめしません）</td>
-<td>STARTTLS・SSL/TLS を選ぶと、ポートを 587・465 に変える</td>
-</tr>
-<tr>
-<td>3</td>
-<td>ポート</td>
-<td>数値</td>
-<td>1〜65535</td>
-<td></td>
-</tr>
-<tr>
-<td>4</td>
-<td>ユーザー名</td>
-<td>テキスト</td>
-<td>255文字</td>
-<td>多くの場合、メールアドレス</td>
-</tr>
-<tr>
-<td>5</td>
-<td>パスワード</td>
-<td>パスワード</td>
-<td>255文字</td>
-<td>空欄なら今のパスワードのまま。設定済みなら「設定済みです。変更する場合だけ入力してください。」</td>
-</tr>
-<tr>
-<td>6</td>
-<td>送信元メールアドレス</td>
-<td>メール</td>
-<td>254文字・形式</td>
-<td></td>
-</tr>
-<tr>
-<td>7</td>
-<td>差出人名</td>
-<td>テキスト</td>
-<td>100文字</td>
-<td></td>
-</tr>
-<tr>
-<td>8</td>
-<td>保存する</td>
-<td>ボタン</td>
-<td></td>
-<td>API-41 →「保存しました。」（パスワード欄は空に戻す）</td>
-</tr>
-</tbody></table></div>
-<h4 id="sec-46">通知・自動返信タブ</h4>
+<h4 id="sec-47">通知・自動返信タブ</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1926,7 +1862,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>API-42 →「保存しました。」</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-47">返信テンプレートタブ</h4>
+<h4 id="sec-48">返信テンプレートタブ</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1944,7 +1880,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>追加のときの初期値は、件名「【{business_name}】」、本文「{name} 様（改行2つ）{business_name}の{owner}です。（改行2つ）」です。</p>
-<h4 id="sec-48">送信履歴タブ</h4>
+<h4 id="sec-49">送信履歴タブ</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1974,7 +1910,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>「全 {n} 件」とページ送り（ページは画面の中で持つ）</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-49">4.14 A-14 迷惑送信</h3>
+<h3 id="sec-50">4.14 A-14 迷惑送信</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2014,7 +1950,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>アドレス・ドメイン / メモ（なければ「―」）/ 登録日時 /「解除」（確認「「{パターン}」のブロックを解除しますか？」→ API-53 →「ブロックを解除しました。」）。なければ「ブロックしているものはありません。」</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-50">4.15 A-15 履歴</h3>
+<h3 id="sec-51">4.15 A-15 履歴</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2035,10 +1971,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>どちらも新しい順で、20件ごとのページ送り（ページは画面の中で持つ）です。説明「管理画面での操作と、ログインの記録です。身に覚えのないログインがないか、ときどき確認してください。」を出します。</p>
-<h3 id="sec-51">4.16 A-16 データ管理</h3>
-<h4 id="sec-52">バックアップ</h4>
+<h3 id="sec-52">4.16 A-16 データ管理</h3>
+<h4 id="sec-53">バックアップ</h4>
 <p>「バックアップをダウンロード」（処理中は「作成中…」）→ API-21 でデータベースと画像の zip を保存します。</p>
-<h4 id="sec-53">個人情報の自動削除</h4>
+<h4 id="sec-54">個人情報の自動削除</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2106,7 +2042,7 @@ a:hover { text-decoration-thickness: 2px; }
 <li>確認「{n} 件のお問い合わせを削除します。元に戻せません。よろしいですか？」</li>
 <li>API-24（<code>dry_run: false</code>）で削除 →「削除しました。」→ API-22 で表示を更新</li>
 </ol>
-<h3 id="sec-54">4.17 A-17 アカウント</h3>
+<h3 id="sec-55">4.17 A-17 アカウント</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>

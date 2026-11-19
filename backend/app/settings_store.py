@@ -24,31 +24,24 @@ DEFAULT_AUTO_REPLY_BODY = """{name} 様
 
 {business_name}です。
 このたびはお問い合わせいただき、ありがとうございます。
-以下の内容で受け付けました。内容を確認して、ご連絡いたします。
+以下の内容で受け付けました。内容を確認し、再びご連絡いたします。
 
 {inquiry_summary}
 
 ※ このメールは自動でお送りしています。
 ※ お心当たりのない場合は、お手数ですがこのメールを破棄してください。
 
-――――――――――――――――
+------------------------------------------------
 {business_name}
-メール: {business_email}
-電話: {business_phone}
-対応時間: {hours}
+代表　中川　嵩斗（ナカガワ タカト）
+Mail: {business_email}
+TEL: {business_phone}
+営業時間: {hours}（土日祝休み）
+------------------------------------------------
 """
 
 DEFAULTS: dict[str, Any] = {
     "theme": SITE_DEFAULTS["theme"],
-    "smtp": {
-        "host": "",
-        "port": 587,
-        "security": "starttls",  # starttls / ssl / none
-        "username": "",
-        "password": "",
-        "from_address": "",
-        "from_name": SITE_DEFAULTS["business"]["business_name"],
-    },
     "notifications": {
         "admin_notify": True,
         "admin_to": [],  # 空のときは事業者情報のメールアドレスに送ります

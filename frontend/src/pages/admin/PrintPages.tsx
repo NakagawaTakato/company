@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { MdPrint } from 'react-icons/md'
 import { useNavigate, useParams } from 'react-router'
 import { ApiError, api, type EstimateDetail, type Payment } from '../../api/client'
+import { SessionExpiry } from '../../components/admin/SessionExpiry'
 import { formatJpDate, todayJst } from '../../lib/format'
 import { useSite } from '../../lib/SiteContext'
 import { usePageTitle } from '../../lib/usePageTitle'
@@ -38,6 +39,7 @@ function PrintShell({
 }) {
   return (
     <div className="print-page">
+      <SessionExpiry />
       <div className="print-toolbar no-print">
         <span>{title}</span>
         <span className="print-toolbar__hint">印刷画面で「PDF に保存」を選ぶと PDF になります。</span>

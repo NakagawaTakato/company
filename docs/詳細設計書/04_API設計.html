@@ -456,7 +456,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>API-08</td>
 <td>GET</td>
 <td><code>/api/admin/me</code></td>
-<td>ログイン中の管理者</td>
+<td>ログイン中の管理者と、ログインの残り時間</td>
 <td>必要</td>
 </tr>
 <tr>
@@ -657,10 +657,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>API-37</td>
-<td>PUT</td>
-<td><code>/api/admin/mail/method</code></td>
-<td>送信方法を切り替える</td>
-<td>必要</td>
+<td>−</td>
+<td>（欠番）</td>
+<td>送信方法の切り替え。SMTP をやめたため削除</td>
+<td>−</td>
 </tr>
 <tr>
 <td>API-38</td>
@@ -685,10 +685,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>API-41</td>
-<td>PUT</td>
-<td><code>/api/admin/mail/smtp</code></td>
-<td>SMTP の設定を保存する</td>
-<td>必要</td>
+<td>−</td>
+<td>（欠番）</td>
+<td>SMTP の設定の保存。SMTP をやめたため削除</td>
+<td>−</td>
 </tr>
 <tr>
 <td>API-42</td>
@@ -1174,16 +1174,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </thead>
 <tbody><tr>
-<td>method</td>
-<td>今の送信方法 <code>outlook</code> / <code>smtp</code></td>
-</tr>
-<tr>
 <td>ready / reason</td>
-<td>今の送信方法で送れるか / 送れないときの理由（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.3）</td>
-</tr>
-<tr>
-<td>smtp</td>
-<td><code>host, port, security, username, from_address, from_name</code>、<code>password_set</code>（パスワードが保存されているか）、<code>ready</code>（サーバー名と送信元があるか）。<strong>パスワードそのものは返さない</strong></td>
+<td>Outlook で送れるか / 送れないときの理由（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.3）</td>
 </tr>
 <tr>
 <td>outlook</td>
@@ -1347,7 +1339,7 @@ a:hover { text-decoration-thickness: 2px; }
 <li>メールアドレスがブロックリストに当てはまるか調べる。</li>
 <li>お問い合わせを保存する（対応状況 <code>new</code>、迷惑送信の印は 5 の結果）。</li>
 <li>回数に1件数える。</li>
-<li>迷惑送信でなければ、新着通知と自動返信を送信履歴に登録し、応答を返したあとで送る（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.8）。迷惑送信ならメールは送らない。</li>
+<li>迷惑送信でなければ、新着通知と自動返信を送信履歴に登録し、応答を返したあとで送る（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 4.7）。迷惑送信ならメールは送らない。</li>
 </ol>
 <div class="table-wrap"><table>
 <thead>
@@ -1444,8 +1436,8 @@ a:hover { text-decoration-thickness: 2px; }
 </ol>
 <h4 id="sec-33">API-07 POST <code>/api/admin/logout</code>（ログアウトする）</h4>
 <p>Cookie があれば、そのセッションを削除します。応答 200 <code>{&quot;ok&quot;: true}</code> と、Cookie を削除するヘッダー。ログインしていなくても呼べます。</p>
-<h4 id="sec-34">API-08 GET <code>/api/admin/me</code>（ログイン中の管理者）</h4>
-<p>応答 200: <code>{&quot;email&quot;: &quot;...&quot;}</code>。未ログインは 401。</p>
+<h4 id="sec-34">API-08 GET <code>/api/admin/me</code>（ログイン中の管理者と、ログインの残り時間）</h4>
+<p>応答 200: <code>{&quot;email&quot;: &quot;...&quot;, &quot;expires_in&quot;: ログインの期限までの残り秒数}</code>。未ログインは 401。</p>
 <h4 id="sec-35">API-09 POST <code>/api/admin/password</code>（パスワードを変更する）</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1668,12 +1660,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td><code>#</code> と16進数6桁（大文字も可）</td>
 <td>色は #1558c0 のような形式で指定してください。</td>
 </tr>
-<tr>
-<td>白い文字とのコントラスト比が 4.5 以上</td>
-<td>この色は明るすぎて、白い文字が読みにくくなります。もう少し濃い色を選んでください。</td>
-</tr>
 </tbody></table></div>
-<p>小文字にして保存します。応答は API-25 と同じ。操作の記録「テーマ色を変更」（色）。</p>
+<p>明るい色も保存できます（文字の色は画面側で調整します。<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 19章）。小文字にして保存します。応答は API-25 と同じ。操作の記録「テーマ色を変更」（色）。</p>
 <h3 id="sec-56">4.8 サイト内容・画像</h3>
 <h4 id="sec-57">API-27 GET <code>/api/admin/content</code>（サイト内容）</h4>
 <p>応答 200: <code>{&quot;content&quot;: SiteContent, &quot;customized&quot;: {&quot;business&quot;: 真偽, &quot;prices&quot;: 真偽, &quot;faq&quot;: 真偽, &quot;works&quot;: 真偽, &quot;other_works&quot;: 真偽, &quot;testimonials&quot;: 真偽}}</code>（<code>customized</code> は保存したことがあるか）</p>
@@ -1741,9 +1729,7 @@ a:hover { text-decoration-thickness: 2px; }
 <h3 id="sec-61">4.9 メール</h3>
 <h4 id="sec-62">API-36 GET <code>/api/admin/mail/settings</code>（メールの設定）</h4>
 <p>応答 200: MailSettings</p>
-<h4 id="sec-63">API-37 PUT <code>/api/admin/mail/method</code>（送信方法を切り替える）</h4>
-<p>本文: <code>{&quot;method&quot;: &quot;outlook&quot; | &quot;smtp&quot;}</code>（ほかの値は 422「選択肢から選んでください。」）。応答 200: MailSettings。操作の記録「メールの送信方法を変更」。</p>
-<h4 id="sec-64">API-38 POST <code>/api/admin/mail/outlook/device-code</code>（Outlook のサインイン用コードを発行する）</h4>
+<h4 id="sec-63">API-38 POST <code>/api/admin/mail/outlook/device-code</code>（Outlook のサインイン用コードを発行する）</h4>
 <p>処理（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 5章）:</p>
 <ol>
 <li>Microsoft にサインイン用のコードの発行を依頼する。</li>
@@ -1751,7 +1737,7 @@ a:hover { text-decoration-thickness: 2px; }
 </ol>
 <p>応答 200: <code>{&quot;flow_id&quot;, &quot;user_code&quot;, &quot;verification_uri&quot;, &quot;expires_in&quot;（秒・既定900）, &quot;interval&quot;（秒・既定5）}</code></p>
 <p>400: <code>.env</code> の <code>MICROSOFT_CLIENT_ID</code> がない（「.env の MICROSOFT_CLIENT_ID が設定されていません。」）、Microsoft に接続できない、Microsoft がエラーを返した。</p>
-<h4 id="sec-65">API-39 POST <code>/api/admin/mail/outlook/poll</code>（Outlook のサインインが終わったか確認する）</h4>
+<h4 id="sec-64">API-39 POST <code>/api/admin/mail/outlook/poll</code>（Outlook のサインインが終わったか確認する）</h4>
 <p>本文: <code>{&quot;flow_id&quot;: 1〜100文字}</code></p>
 <div class="table-wrap"><table>
 <thead>
@@ -1781,63 +1767,9 @@ a:hover { text-decoration-thickness: 2px; }
 <td>400（理由）。<code>flow_id</code> を捨てる</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-66">API-40 POST <code>/api/admin/mail/outlook/logout</code>（Outlook のサインインを解除する）</h4>
+<h4 id="sec-65">API-40 POST <code>/api/admin/mail/outlook/logout</code>（Outlook のサインインを解除する）</h4>
 <p>トークンのファイル（<code>data/microsoft-oauth.json</code>）を削除します。応答 200: MailSettings。操作の記録「Outlook のサインインを解除」。</p>
-<h4 id="sec-67">API-41 PUT <code>/api/admin/mail/smtp</code>（SMTP の設定を保存する）</h4>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>項目</th>
-<th>型</th>
-<th>省略したとき</th>
-<th>チェック</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>host</td>
-<td>文字列</td>
-<td>空</td>
-<td>255文字まで</td>
-</tr>
-<tr>
-<td>port</td>
-<td>整数</td>
-<td>587</td>
-<td>1〜65535</td>
-</tr>
-<tr>
-<td>security</td>
-<td>文字列</td>
-<td><code>starttls</code></td>
-<td><code>starttls</code> / <code>ssl</code> / <code>none</code></td>
-</tr>
-<tr>
-<td>username</td>
-<td>文字列</td>
-<td>空</td>
-<td>255文字まで</td>
-</tr>
-<tr>
-<td>password</td>
-<td>文字列 / null</td>
-<td>null</td>
-<td>255文字まで。<strong>null なら今のパスワードのまま</strong></td>
-</tr>
-<tr>
-<td>from_address</td>
-<td>文字列</td>
-<td>空</td>
-<td>254文字まで。空、またはメールの形式</td>
-</tr>
-<tr>
-<td>from_name</td>
-<td>文字列</td>
-<td>空</td>
-<td>100文字まで</td>
-</tr>
-</tbody></table></div>
-<p>応答 200: MailSettings。操作の記録「メールの送信設定を変更」（「{host}:{port}」）。</p>
-<h4 id="sec-68">API-42 PUT <code>/api/admin/mail/notifications</code>（新着通知・自動返信の設定を保存する）</h4>
+<h4 id="sec-66">API-42 PUT <code>/api/admin/mail/notifications</code>（新着通知・自動返信の設定を保存する）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1878,12 +1810,12 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>応答 200: MailSettings。操作の記録「通知・自動返信の設定を変更」。</p>
-<h4 id="sec-69">API-43 POST <code>/api/admin/mail/test</code>（テストメールを送る）</h4>
+<h4 id="sec-67">API-43 POST <code>/api/admin/mail/test</code>（テストメールを送る）</h4>
 <p>本文: <code>{&quot;to&quot;: メールアドレス}</code></p>
 <p>送信履歴に登録して（種類 <code>test</code>、件名「【{屋号}】テストメール」、本文「管理画面からのテストメールです。このメールが届いていれば、送信設定は正しく動いています。」）、その場で送ります。送れなければ 400（理由）。応答 200: <code>{&quot;ok&quot;: true}</code>。操作の記録「テストメールを送信」（宛先）。</p>
-<h4 id="sec-70">API-44 GET <code>/api/admin/mail/outbox</code>（送信履歴）</h4>
+<h4 id="sec-68">API-44 GET <code>/api/admin/mail/outbox</code>（送信履歴）</h4>
 <p><code>?page=</code> のページ分け（新しい順）。items は OutboxMail です（本文は返しません）。</p>
-<h4 id="sec-71">API-45 POST <code>/api/admin/mail/outbox/{id}/retry</code>（送れなかったメールを送り直す）</h4>
+<h4 id="sec-69">API-45 POST <code>/api/admin/mail/outbox/{id}/retry</code>（送れなかったメールを送り直す）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1908,7 +1840,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>200 <code>{&quot;ok&quot;: true}</code>。操作の記録「メールを送り直し」（「送信履歴 #{id}」）</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-72">API-46 DELETE <code>/api/admin/mail/outbox/{id}</code>（送信履歴の記録を削除する）</h4>
+<h4 id="sec-70">API-46 DELETE <code>/api/admin/mail/outbox/{id}</code>（送信履歴の記録を削除する）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1929,7 +1861,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>200 <code>{&quot;ok&quot;: true}</code>。操作の記録「送信履歴のメールを削除」（「#{id} {宛先}「{件名}」」）</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-73">4.10 返信テンプレート</h3>
+<h3 id="sec-71">4.10 返信テンプレート</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1970,7 +1902,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>追加・変更・削除は、操作の記録「返信テンプレートを追加 / 変更 / 削除」（名前）。</p>
-<h3 id="sec-74">4.11 迷惑送信（ブロックリスト）</h3>
+<h3 id="sec-72">4.11 迷惑送信（ブロックリスト）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2029,8 +1961,8 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </tbody></table></div>
 <p>追加・解除は、操作の記録「ブロックに追加 / ブロックを解除」（パターン）。</p>
-<h3 id="sec-75">4.12 見積書</h3>
-<h4 id="sec-76">本文（API-55・API-57 共通）</h4>
+<h3 id="sec-73">4.12 見積書</h3>
+<h4 id="sec-74">本文（API-55・API-57 共通）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2107,7 +2039,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>1〜50行。各行 <code>description</code> 1〜200・<code>quantity</code> 0より大きく100000以下・<code>unit</code> 10文字まで（省略時「式」）・<code>unit_price</code> 0〜100,000,000 の整数</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-77">API-54 GET <code>/api/admin/estimates</code>（見積書の一覧）</h4>
+<h4 id="sec-75">API-54 GET <code>/api/admin/estimates</code>（見積書の一覧）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2130,16 +2062,16 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <p>並び順は発行日の新しい順（同じ日は ID の大きい順）。items は Estimate（<code>items</code> なし）です。</p>
 <p><strong>API-70 GET <code>/api/admin/estimates.csv</code>（見積書の CSV）</strong>: パラメータ <code>q</code>・<code>status</code> は API-54 と同じ（ページ分けなし・明細つき）。応答 200: <code>Content-Type: text/csv; charset=utf-8</code>、<code>Content-Disposition: attachment; filename=&quot;estimates_YYYYMMDD_HHMMSS.csv&quot;</code>（日時は日本時間）。中身は <a href="06_処理設計.html">06</a> 10章。操作の記録「見積書を CSV で出力」（{n} 件）。</p>
-<h4 id="sec-78">API-55 POST <code>/api/admin/estimates</code>（見積書を作成する）</h4>
+<h4 id="sec-76">API-55 POST <code>/api/admin/estimates</code>（見積書を作成する）</h4>
 <p>見積番号が空なら採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 13章）。応答 201: Estimate（<code>items</code> つき）。操作の記録「見積書を作成」（「{番号} {お客さま名} 様 {合計}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「見積書 {番号} を作成（{合計}円）」を追加します。</p>
-<h4 id="sec-79">API-56 GET <code>/api/admin/estimates/{id}</code>（見積書の詳細）</h4>
+<h4 id="sec-77">API-56 GET <code>/api/admin/estimates/{id}</code>（見積書の詳細）</h4>
 <p>応答 200: Estimate（<code>items</code> と <code>payments</code> つき）。見つからないときは 404「見積書が見つかりません。」</p>
-<h4 id="sec-80">API-57 PUT <code>/api/admin/estimates/{id}</code>（見積書を変える）</h4>
+<h4 id="sec-78">API-57 PUT <code>/api/admin/estimates/{id}</code>（見積書を変える）</h4>
 <p>見積番号は <code>number</code> を入れたときだけ変えます（空なら今のまま）。明細はすべて入れ替えます。応答 200: API-56 と同じ。操作の記録「見積書を変更」（「{番号}（{状態}） {合計}円」。番号を変えたときは番号のあとに「（番号 {前の番号} から変更）」）。</p>
-<h4 id="sec-81">API-58 DELETE <code>/api/admin/estimates/{id}</code>（見積書を削除する）</h4>
+<h4 id="sec-79">API-58 DELETE <code>/api/admin/estimates/{id}</code>（見積書を削除する）</h4>
 <p>明細も削除します。入金の記録は残し、見積書とのひもづけだけを外します。応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「見積書を削除」。</p>
-<h3 id="sec-82">4.13 入金・領収書</h3>
-<h4 id="sec-83">本文（API-60・API-62 共通）</h4>
+<h3 id="sec-80">4.13 入金・領収書</h3>
+<h4 id="sec-81">本文（API-60・API-62 共通）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2198,7 +2130,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>指定した見積書があること（なければ 422 <code>{&quot;estimate_id&quot;: &quot;見積書が見つかりません。&quot;}</code>）</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-84">API-59 GET <code>/api/admin/payments</code>（入金の一覧）</h4>
+<h4 id="sec-82">API-59 GET <code>/api/admin/payments</code>（入金の一覧）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2218,16 +2150,16 @@ a:hover { text-decoration-thickness: 2px; }
 <p>並び順は入金日の新しい順。応答はページ分けの形に <code>total_amount</code>（<strong>検索条件に合う入金すべての合計</strong>。ページに関係なく計算）を加えたものです。</p>
 <p><strong>API-71 GET <code>/api/admin/payments.csv</code>（入金の CSV）</strong>: パラメータ <code>q</code> は API-59 と同じ（ページ分けなし）。応答 200: <code>Content-Type: text/csv; charset=utf-8</code>、<code>Content-Disposition: attachment; filename=&quot;payments_YYYYMMDD_HHMMSS.csv&quot;</code>（日時は日本時間）。中身は <a href="06_処理設計.html">06</a> 10章。操作の記録「入金の記録を CSV で出力」（{n} 件）。</p>
 <p><strong>API-72 GET <code>/api/admin/next-numbers</code>（次に付く番号）</strong>: 応答 200 <code>{&quot;estimate&quot;: &quot;2026-1111-002-1530&quot;, &quot;receipt&quot;: &quot;2026-1111-002-1530&quot;}</code>。いま作ったら自動で付く見積番号・領収書番号です（<a href="06_処理設計.html">06</a> 13章）。見積書の作成画面（A-06）と入金の記録（A-08）の入力欄の初期値に使います。番号は取っておかないので、保存までにほかの記録が作られると、保存時に重なりの 422 になることがあります。</p>
-<h4 id="sec-85">API-60 POST <code>/api/admin/payments</code>（入金を記録する）</h4>
+<h4 id="sec-83">API-60 POST <code>/api/admin/payments</code>（入金を記録する）</h4>
 <p>領収書番号が空なら採番して保存します（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 14章）。応答 201: Payment。操作の記録「入金を記録」（「{番号} {お客さま名} 様 {金額}円」）。</p>
-<h4 id="sec-86">API-61 GET <code>/api/admin/payments/{id}</code>（入金の詳細）</h4>
+<h4 id="sec-84">API-61 GET <code>/api/admin/payments/{id}</code>（入金の詳細）</h4>
 <p>応答 200: Payment。見つからないときは 404「入金の記録が見つかりません。」</p>
-<h4 id="sec-87">API-62 PUT <code>/api/admin/payments/{id}</code>（入金の記録を変える）</h4>
+<h4 id="sec-85">API-62 PUT <code>/api/admin/payments/{id}</code>（入金の記録を変える）</h4>
 <p>領収書番号は <code>receipt_number</code> を入れたときだけ変えます（空なら今のまま）。応答 200: Payment。操作の記録「入金の記録を変更」（番号を変えたときは「（番号 {前の番号} から変更）」つき）。</p>
-<h4 id="sec-88">API-63 DELETE <code>/api/admin/payments/{id}</code>（入金の記録を削除する）</h4>
+<h4 id="sec-86">API-63 DELETE <code>/api/admin/payments/{id}</code>（入金の記録を削除する）</h4>
 <p>応答 200 <code>{&quot;ok&quot;: true}</code>。操作の記録「入金の記録を削除」。</p>
-<h3 id="sec-89">4.14 おまかせ管理プラン</h3>
-<h4 id="sec-90">本文（API-65・API-67 共通）</h4>
+<h3 id="sec-87">4.14 おまかせ管理プラン</h3>
+<h4 id="sec-88">本文（API-65・API-67 共通）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2298,7 +2230,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>指定したお問い合わせがあること</td>
 </tr>
 </tbody></table></div>
-<h4 id="sec-91">API-64 GET <code>/api/admin/contracts</code>（おまかせ管理プランの一覧）</h4>
+<h4 id="sec-89">API-64 GET <code>/api/admin/contracts</code>（おまかせ管理プランの一覧）</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2317,11 +2249,11 @@ a:hover { text-decoration-thickness: 2px; }
 </tbody></table></div>
 <p>ページ分けはしません。並び順は開始日の新しい順。</p>
 <p>応答 200: <code>{&quot;items&quot;: Contract の配列, &quot;monthly_revenue&quot;: 終了していない・開始済みの契約の月額の合計, &quot;counts&quot;: {&quot;active&quot;: n, &quot;cancel_requested&quot;: n, &quot;ended&quot;: n}}</code>（<code>monthly_revenue</code> と <code>counts</code> は絞り込みに関係なく全体で計算）</p>
-<h4 id="sec-92">API-65 POST <code>/api/admin/contracts</code>（おまかせ管理プランを登録する）</h4>
+<h4 id="sec-90">API-65 POST <code>/api/admin/contracts</code>（おまかせ管理プランを登録する）</h4>
 <p>応答 201: Contract。操作の記録「おまかせ管理プランを登録」（「{お客さま名} 様 {サイト名} 月額{金額}円」）。お問い合わせにひもづけたときは、そのお問い合わせに記録「おまかせ管理プラン「{サイト名}」を登録」を追加します。</p>
-<h4 id="sec-93">API-66 GET <code>/api/admin/contracts/{id}</code>・API-67 PUT（詳細・変更）・API-69 DELETE（削除）</h4>
+<h4 id="sec-91">API-66 GET <code>/api/admin/contracts/{id}</code>・API-67 PUT（詳細・変更）・API-69 DELETE（削除）</h4>
 <p>見つからないときは 404「おまかせ管理プランが見つかりません。」。変更・削除は操作の記録「おまかせ管理プランを変更 / おまかせ管理プランを削除」。</p>
-<h4 id="sec-94">API-68 POST <code>/api/admin/contracts/{id}/cancel</code>（解約の申し出を登録する）</h4>
+<h4 id="sec-92">API-68 POST <code>/api/admin/contracts/{id}/cancel</code>（解約の申し出を登録する）</h4>
 <p>本文: <code>{&quot;requested_on&quot;?: 日付}</code>（省略時は今日・日本時間）</p>
 <p>申し出日を保存し、終了日を<strong>申し出日の翌月末</strong>にします（<a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06</a> 15章）。応答 200: Contract。操作の記録「おまかせ管理プランの解約申し出を登録」（「{お客さま名} 様 {サイト名}（{終了日} で終了）」）。</p>
 

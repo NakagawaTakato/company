@@ -18,7 +18,6 @@ import http.cookiejar
 import io
 import json
 import re
-import socketserver
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
@@ -84,58 +83,6 @@ def check(name: str, condition: Any, detail: Any = "") -> None:
     else:
         FAILED.append(name)
         print(f"  NG   {name}  {str(detail)[:400]}")
-
-
-# ------------------------------------------------------------------ テスト用のメール受信サーバー
-
-class SmtpSink:
-    """届いたメールを覚えておくだけの、テスト用 SMTP サーバー。"""
-
-    def __init__(self) -> None:
-        self.messages: list[email.message.EmailMessage] = []
-        sink = self
-
-        class Handler(socketserver.StreamRequestHandler):
-            def handle(self) -> None:
-                self.wfile.write(b"220 sink ESMTP\r\n")
-                while True:
-                    line = self.rfile.readline()
-                    if not line:
-                        return
-                    command = line.decode("ascii", "replace").strip().upper()
-                    if command.startswith(("EHLO", "HELO")):
-                        self.wfile.write(b"250-sink\r\n250 OK\r\n")
-                    elif command == "DATA":
-                        self.wfile.write(b"354 End data with <CR><LF>.<CR><LF>\r\n")
-                        chunks = []
-                        while True:
-                            data_line = self.rfile.readline()
-                            if data_line in (b".\r\n", b".\n", b""):
-                                break
-                            chunks.append(data_line[1:] if data_line.startswith(b"..") else data_line)
-                        sink.messages.append(email.message_from_bytes(b"".join(chunks), policy=email.policy.default))
-                        self.wfile.write(b"250 OK\r\n")
-                    elif command == "QUIT":
-                        self.wfile.write(b"221 Bye\r\n")
-                        return
-                    else:
-                        self.wfile.write(b"250 OK\r\n")
-
-        self.server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Handler)
-        self.server.daemon_threads = True
-        self.port = self.server.server_address[1]
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
-
-    def wait_for(self, count: int, timeout: float = 10) -> bool:
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            if len(self.messages) >= count:
-                return True
-            time.sleep(0.1)
-        return False
-
-    def subjects(self) -> list[str]:
-        return [str(m["subject"]) for m in self.messages]
 
 
 class FakeMicrosoft:
@@ -329,6 +276,7 @@ def test_login(c: Client, email_addr: str, password: str) -> None:
     check("ログイン Cookie が発行される", cookie is not None and cookie.path == "/api", cookie)
     status, body = c.json("GET", "/api/admin/me")
     check("ログイン中のユーザー", status == 200 and body.get("email") == email_addr.lower(), body)
+    check("ログインの残り秒数を返す", status == 200 and 0 < body.get("expires_in", 0) <= 12 * 60 * 60, body)
 
 
 def test_inquiries(c: Client) -> int:
@@ -445,8 +393,8 @@ def test_mail(c: Client, tid: int) -> None:
     print("[メール]")
     status, body = c.json("GET", "/api/admin/mail/settings")
     check(
-        "初期の送信方法は Outlook（サインイン前は送れない）",
-        status == 200 and body["method"] == "outlook" and body["ready"] is False
+        "送信は Outlook（サインイン前は送れない）",
+        status == 200 and body["ready"] is False and "smtp" not in body and "method" not in body
         and body["outlook"]["configured"] and not body["outlook"]["signed_in"],
         body,
     )
@@ -459,33 +407,8 @@ def test_mail(c: Client, tid: int) -> None:
     )
     status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
     check("サインイン前にテスト送信すると、理由つきのエラー", status == 400 and "サインイン" in body.get("message", ""), body)
-    status, body = c.json("PUT", "/api/admin/mail/method", {"method": "fax"})
-    check("送信方法は outlook / smtp のみ", status == 422, body)
-    status, body = c.json("PUT", "/api/admin/mail/method", {"method": "smtp"})
-    check("送信方法を SMTP に切り替え", status == 200 and body["method"] == "smtp" and body["smtp"]["password_set"] is False, body)
-    status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
-    check("SMTP 未設定のままテスト送信すると、理由つきのエラー", status == 400 and "SMTP" in body.get("message", ""), body)
-
-    sink = SmtpSink()
-    smtp = {
-        "host": "127.0.0.1", "port": sink.port, "security": "none", "username": "", "password": "secret-pw",
-        "from_address": "noreply@example.com", "from_name": "AI Nova テスト",
-    }
-    status, body = c.json("PUT", "/api/admin/mail/smtp", {**smtp, "from_address": "bad"})
-    check("送信元アドレスの形式エラーは 422", status == 422 and "from_address" in body.get("errors", {}), body)
-    status, body = c.json("PUT", "/api/admin/mail/smtp", smtp)
-    check(
-        "送信設定を保存（パスワードは返さない）",
-        status == 200 and body["smtp"]["ready"] and body["smtp"]["password_set"] and "password" not in body["smtp"],
-        body,
-    )
-    status, body = c.json("PUT", "/api/admin/mail/smtp", {**smtp, "password": None})
-    check("パスワード欄が空なら今のパスワードのまま", status == 200 and body["smtp"]["password_set"], body)
-
-    status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
-    check("テストメールを送信", status == 200 and sink.wait_for(1) and "テストメール" in sink.subjects()[0], (status, body, sink.subjects()))
-    sender = str(sink.messages[0]["from"]) if sink.messages else ""
-    check("差出人名（日本語）と送信元アドレス", "noreply@example.com" in sender and "AI Nova" in sender, sender)
+    check("SMTP の設定 API は無い", c.json("PUT", "/api/admin/mail/smtp", {"host": "smtp.example.com"})[0] in (404, 405))
+    check("送信方法の切り替え API は無い", c.json("PUT", "/api/admin/mail/method", {"method": "outlook"})[0] in (404, 405))
 
     notify = {
         "admin_notify": True, "admin_to": ["owner@example.com", "staff@example.com"], "auto_reply": True,
@@ -497,19 +420,53 @@ def test_mail(c: Client, tid: int) -> None:
     status, body = c.json("PUT", "/api/admin/mail/notifications", notify)
     check("通知・自動返信の設定を保存", status == 200 and body["notifications"]["site_url"] == "http://127.0.0.1:5173", body)
 
-    before = len(sink.messages)
+    print("[返信テンプレート]")
+    status, body = c.json("GET", "/api/admin/templates")
+    check("最初から2つのテンプレートがある", status == 200 and len(body) >= 2, body)
+    status, created = c.json("POST", "/api/admin/templates", {"name": "テスト", "subject": "件名 {name}", "body": "本文"})
+    check("テンプレートを追加", status == 201 and created["name"] == "テスト", created)
+    status, body = c.json("PUT", f"/api/admin/templates/{created['id']}", {"name": "テスト2", "subject": "件名", "body": "本文2"})
+    check("テンプレートを変更", status == 200 and body["name"] == "テスト2", body)
+    status, body = c.json("POST", "/api/admin/templates", {"name": "", "subject": "", "body": ""})
+    check("空のテンプレートは 422", status == 422 and {"name", "subject", "body"} <= set(body.get("errors", {})), body)
+    status, body = c.json("DELETE", f"/api/admin/templates/{created['id']}")
+    check("テンプレートを削除", status == 200, body)
+
+
+def test_outlook(c: Client, fake: FakeMicrosoft, tid: int) -> None:
+    print("[Outlook（Microsoft Graph）で送信]")
+    status, flow = c.json("POST", "/api/admin/mail/outlook/device-code")
+    check("サインイン用コードを発行（内部のコードは画面に渡さない）",
+          status == 200 and flow.get("user_code") == "TEST-CODE" and "device_code" not in flow, flow)
+    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
+    check("ブラウザでのサインイン前は pending", status == 200 and body.get("status") == "pending", body)
+    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
+    check("サインイン完了", status == 200 and body.get("status") == "ok" and body["settings"]["ready"]
+          and body["settings"]["outlook"]["signed_in"], body)
+    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
+    check("使い終わったサインイン用コードは使えない", status == 400, body)
+
+    before = len(fake.sent)
+    status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
+    check("Outlook でテストメールを送信", status == 200 and fake.wait_for(before + 1), (status, body))
+    check("期限切れ間近のトークンは自動で更新してから送る", "refresh_token" in fake.grants, fake.grants)
+    sender = str(fake.sent[-1]["from"]) if fake.sent else ""
+    check("差出人は .env の MAIL_FROM_ADDRESS", "owner@example.com" in sender, sender)
+
+    # 通知先（2人）と自動返信は test_mail で保存した設定を使います
+    before = len(fake.sent)
     contact(c, name="メール 三郎", email="saburo@example.com")
-    arrived = sink.wait_for(before + 3)
-    subjects = sink.subjects()[before:]
+    arrived = fake.wait_for(before + 3)
+    subjects = [str(m["subject"]) for m in fake.sent][before:]
     check("新着通知（2人）と自動返信が届く", arrived and len(subjects) == 3, subjects)
-    auto = next((m for m in sink.messages[before:] if str(m["to"]) == "saburo@example.com"), None)
+    auto = next((m for m in fake.sent[before:] if str(m["to"]) == "saburo@example.com"), None)
     auto_text = auto.get_content() if auto else ""
     check(
         "自動返信に名前と受付内容が入る",
         "メール 三郎 様" in auto_text and "お住まい: 兵庫県" in auto_text and auto is not None and "受付しました" in str(auto["subject"]),
         auto_text,
     )
-    admin_mail = next((m for m in sink.messages[before:] if str(m["to"]) == "owner@example.com"), None)
+    admin_mail = next((m for m in fake.sent[before:] if str(m["to"]) == "owner@example.com"), None)
     item = find(c, "メール 三郎")
     admin_text = admin_mail.get_content() if admin_mail else ""
     check("新着通知に管理画面へのリンクが入る", item and f"http://127.0.0.1:5173/admin/inquiries/{item['id']}" in admin_text, admin_text)
@@ -519,7 +476,7 @@ def test_mail(c: Client, tid: int) -> None:
     )
     check(
         "お客さまに返信",
-        status == 200 and sink.wait_for(before + 4) and str(sink.messages[-1]["to"]) == "taro@example.com",
+        status == 200 and fake.wait_for(before + 4) and str(fake.sent[-1]["to"]) == "taro@example.com",
         (status, body),
     )
     check("返信内容がメモ欄に残る", any(n["kind"] == "email" and "お見積りのご案内" in n["body"] for n in body.get("notes", [])), body.get("notes"))
@@ -541,51 +498,12 @@ def test_mail(c: Client, tid: int) -> None:
     status, body = c.json("DELETE", f"/api/admin/mail/outbox/{unsent['id'] if unsent else 0}")
     check("未送信のメールの記録を削除", unsent is not None and status == 200, body)
 
-    c.json("PUT", "/api/admin/mail/smtp", {**smtp, "port": 1})
-    status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
-    check("つながらないときは日本語のエラー", status == 400 and "送信できませんでした" in body.get("message", ""), body)
-    c.json("PUT", "/api/admin/mail/smtp", {"host": "", "port": 587, "security": "starttls", "username": "", "password": "", "from_address": "", "from_name": ""})
-
-    print("[返信テンプレート]")
-    status, body = c.json("GET", "/api/admin/templates")
-    check("最初から2つのテンプレートがある", status == 200 and len(body) >= 2, body)
-    status, created = c.json("POST", "/api/admin/templates", {"name": "テスト", "subject": "件名 {name}", "body": "本文"})
-    check("テンプレートを追加", status == 201 and created["name"] == "テスト", created)
-    status, body = c.json("PUT", f"/api/admin/templates/{created['id']}", {"name": "テスト2", "subject": "件名", "body": "本文2"})
-    check("テンプレートを変更", status == 200 and body["name"] == "テスト2", body)
-    status, body = c.json("POST", "/api/admin/templates", {"name": "", "subject": "", "body": ""})
-    check("空のテンプレートは 422", status == 422 and {"name", "subject", "body"} <= set(body.get("errors", {})), body)
-    status, body = c.json("DELETE", f"/api/admin/templates/{created['id']}")
-    check("テンプレートを削除", status == 200, body)
-
-
-def test_outlook(c: Client, fake: FakeMicrosoft) -> None:
-    print("[Outlook（Microsoft Graph）で送信]")
     c.json(
         "PUT", "/api/admin/mail/notifications",
         {"admin_notify": True, "admin_to": [], "auto_reply": True,
          "auto_reply_subject": "【{business_name}】お問い合わせを受け付けました", "auto_reply_body": "{name} 様\n\n{inquiry_summary}\n",
          "site_url": "http://127.0.0.1:5173"},
     )
-    status, body = c.json("PUT", "/api/admin/mail/method", {"method": "outlook"})
-    check("送信方法を Outlook に戻す", status == 200 and body["method"] == "outlook", body)
-    status, flow = c.json("POST", "/api/admin/mail/outlook/device-code")
-    check("サインイン用コードを発行（内部のコードは画面に渡さない）",
-          status == 200 and flow.get("user_code") == "TEST-CODE" and "device_code" not in flow, flow)
-    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
-    check("ブラウザでのサインイン前は pending", status == 200 and body.get("status") == "pending", body)
-    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
-    check("サインイン完了", status == 200 and body.get("status") == "ok" and body["settings"]["ready"]
-          and body["settings"]["outlook"]["signed_in"], body)
-    status, body = c.json("POST", "/api/admin/mail/outlook/poll", {"flow_id": flow.get("flow_id", "")})
-    check("使い終わったサインイン用コードは使えない", status == 400, body)
-
-    before = len(fake.sent)
-    status, body = c.json("POST", "/api/admin/mail/test", {"to": "owner@example.com"})
-    check("Outlook でテストメールを送信", status == 200 and fake.wait_for(before + 1), (status, body))
-    check("期限切れ間近のトークンは自動で更新してから送る", "refresh_token" in fake.grants, fake.grants)
-    sender = str(fake.sent[-1]["from"]) if fake.sent else ""
-    check("差出人は .env の MAIL_FROM_ADDRESS", "owner@example.com" in sender, sender)
 
     before = len(fake.sent)
     contact(c, name="アウトルック 四郎", email="shiro@example.com")
@@ -637,8 +555,8 @@ def test_csv(c: Client) -> None:
 
 def test_theme_and_content(c: Client) -> None:
     print("[デザイン（テーマ色）]")
-    status, body = c.json("PUT", "/api/admin/theme", {"primary_color": "#ffff00"})
-    check("明るすぎる色は 422（理由つき）", status == 422 and "明るすぎ" in body["errors"].get("primary_color", ""), body)
+    status, body = c.json("PUT", "/api/admin/theme", {"primary_color": "#FACC15"})
+    check("明るい色も保存できる（小文字にする）", status == 200 and body["primary_color"] == "#facc15", body)
     status, body = c.json("PUT", "/api/admin/theme", {"primary_color": "red"})
     check("色の形式エラーは 422", status == 422, body)
     status, body = c.json("PUT", "/api/admin/theme", {"primary_color": "#0F766E"})
@@ -936,7 +854,7 @@ def main() -> int:
     test_spam_and_delete(c)
     test_mail(c, tid)
     if args.fake_microsoft_port:
-        test_outlook(c, FakeMicrosoft(args.fake_microsoft_port))
+        test_outlook(c, FakeMicrosoft(args.fake_microsoft_port), tid)
     test_csv(c)
     test_theme_and_content(c)
     test_billing(c, tid)

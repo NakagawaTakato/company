@@ -114,12 +114,12 @@
 }
 
 .home-nav a:hover {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 /* 今見ているエリアのメニュー（青字＋下線） */
 .home-nav a[aria-current='location'] {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-weight: 700;
 }
 
@@ -152,7 +152,7 @@
 }
 
 .hero__eyebrow {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -278,7 +278,7 @@
 }
 
 .stat__value {
-  color: var(--accent, var(--c-primary));
+  color: var(--accent, var(--c-primary-text));
   font-size: 52px;
   font-weight: 700;
   line-height: 1.1;
@@ -314,7 +314,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -357,7 +357,7 @@
 }
 
 .section-heading--inverse .section-title {
-  color: #fff;
+  color: var(--c-on-primary);
 }
 
 .section-note {
@@ -391,7 +391,7 @@
   flex-shrink: 0;
   margin-top: 0.2em;
   /* テーマ色に合わせます（緑はヒーローの「お約束」のチェックだけに使い、安心のポイントだとわかるようにしています） */
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 18px;
 }
 
@@ -424,7 +424,7 @@
 
 .strength-card__title {
   margin-top: 14px;
-  color: #fff;
+  color: var(--c-on-primary);
   font-size: 20px;
 }
 
@@ -569,7 +569,7 @@
 }
 
 .note-box strong {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 /* ---------------------------------------------------------------- お客さまの声 */
@@ -645,7 +645,7 @@
   padding: 4px 12px;
   border-radius: 999px;
   background: var(--c-tint-3);
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
@@ -661,7 +661,7 @@
 .price-table thead th {
   padding: 18px 22px;
   background: var(--c-tint-3);
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-size: 14px;
   text-align: left;
 }
@@ -684,7 +684,7 @@
 }
 
 .price-table td {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
   font-weight: 700;
 }
 

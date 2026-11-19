@@ -6,6 +6,9 @@
   --c-primary: #1558c0;
   --c-primary-dark: #0f479f;
   --c-primary-rgb: 21, 88, 192;
+  /* 白い背景の上の文字の色・色の面（ボタン・帯）の上の文字の色。明るいテーマ色のときは lib/theme.ts が変えます */
+  --c-primary-text: #1558c0;
+  --c-on-primary: #ffffff;
   --c-accent-1: #1558c0;
   --c-accent-2: #3b7bd6;
   --c-accent-3: #2f6fd0;
@@ -98,7 +101,7 @@ svg {
 }
 
 a {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 button,
@@ -131,7 +134,7 @@ textarea {
 }
 
 .text-primary {
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 .text-line {
@@ -225,7 +228,7 @@ textarea {
 
 .btn--primary {
   background: var(--c-primary);
-  color: #fff;
+  color: var(--c-on-primary);
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -235,7 +238,7 @@ textarea {
 .btn--outline {
   border-color: var(--c-primary);
   background: #fff;
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 .btn--outline:hover:not(:disabled) {
@@ -283,7 +286,7 @@ textarea {
   justify-content: center;
   border-radius: 50%;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 .icon-circle--lg {
@@ -426,7 +429,7 @@ textarea {
 
 .badge-opt {
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-text);
 }
 
 .input {

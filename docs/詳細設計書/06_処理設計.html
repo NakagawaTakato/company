@@ -367,13 +367,13 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td><code>failed</code></td>
 <td>失敗</td>
-<td>メールサーバーや Microsoft がエラーを返した・つながらない</td>
+<td>Microsoft がエラーを返した・つながらない</td>
 <td><code>error</code> に理由</td>
 </tr>
 <tr>
 <td><code>skipped</code></td>
 <td>未送信</td>
-<td>送信方法の設定やサインインがまだで、送らなかった</td>
+<td>Outlook の設定やサインインがまだで、送らなかった</td>
 <td><code>error</code> に理由（4.3）</td>
 </tr>
 </tbody></table></div>
@@ -382,54 +382,36 @@ a:hover { text-decoration-thickness: 2px; }
 <li>送るタイミング: 新着通知・自動返信は、お問い合わせの応答のあとで、登録した順に送ります。返信・テスト・送り直しは、その場で送り、結果を応答で返します。</li>
 <li>API が送信の途中で止まると、その行は「送信中」のまま残ります（※課題 No.5）。</li>
 </ul>
-<h3 id="sec-10">4.2 送信方法の決め方</h3>
-<ol>
-<li><code>settings</code> の <code>mail.method</code> が <code>outlook</code> か <code>smtp</code> なら、それを使う。</li>
-<li>保存されていなければ、<code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> があれば <code>outlook</code>、なければ <code>smtp</code>。</li>
-</ol>
+<h3 id="sec-10">4.2 送信方法</h3>
+<p>メールは Outlook（Microsoft Graph）だけで送ります（4.6）。送信方法の切り替えはありません。</p>
 <h3 id="sec-11">4.3 送れる状態かの判定</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>送信方法</th>
 <th>送れない条件</th>
 <th>理由（<code>error</code> と画面に出る文）</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>outlook</td>
 <td><code>.env</code> に <code>MICROSOFT_CLIENT_ID</code> がない</td>
 <td>.env の MICROSOFT_CLIENT_ID が設定されていないため、Outlook で送れません。</td>
 </tr>
 <tr>
-<td>outlook</td>
 <td>トークンのファイル（<code>data/microsoft-oauth.json</code>）がない</td>
 <td>Outlook にまだサインインしていないため、送信していません。管理画面の「メール」でサインインしてください。</td>
-</tr>
-<tr>
-<td>smtp</td>
-<td>SMTP のサーバー名か送信元のアドレスがない</td>
-<td>メールの送信設定（SMTP）がされていないため、送信していません。</td>
 </tr>
 </tbody></table></div>
 <h3 id="sec-12">4.4 差出人</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>送信方法</th>
 <th>差出人名</th>
 <th>送信元のアドレス</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>outlook</td>
 <td><code>.env</code> の <code>MAIL_FROM_NAME</code>、なければ屋号</td>
 <td><code>.env</code> の <code>MAIL_FROM_ADDRESS</code>、なければ事業者情報のメール</td>
-</tr>
-<tr>
-<td>smtp</td>
-<td>SMTP の設定の差出人名、なければ屋号</td>
-<td>SMTP の設定の送信元のアドレス</td>
 </tr>
 </tbody></table></div>
 <p>Outlook では、サインインした Outlook アカウントから送られます。送信元のアドレスは、そのアカウントと同じにします。</p>
@@ -466,60 +448,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>テキスト（UTF-8）</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-14">4.6 SMTP での送信</h3>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>接続方式（security）</th>
-<th>接続のしかた</th>
-<th>ポートが空のとき</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>ssl</code></td>
-<td>最初から暗号化して接続（SMTP over SSL/TLS）</td>
-<td>465</td>
-</tr>
-<tr>
-<td><code>starttls</code>（初期）</td>
-<td>接続してから STARTTLS で暗号化</td>
-<td>587</td>
-</tr>
-<tr>
-<td><code>none</code></td>
-<td>暗号化しない</td>
-<td>587</td>
-</tr>
-</tbody></table></div>
-<ul>
-<li>待ち時間は20秒。暗号化するときは、サーバーの証明書を確認します。</li>
-<li>ユーザー名が入っていればログインします。</li>
-</ul>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>エラー</th>
-<th>理由の文</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>認証の失敗</td>
-<td>メールサーバーの認証に失敗しました。ユーザー名とパスワードを確認してください。</td>
-</tr>
-<tr>
-<td>STARTTLS に対応していない</td>
-<td>メールサーバーが暗号化（STARTTLS）に対応していません。接続方式を確認してください。</td>
-</tr>
-<tr>
-<td>時間切れ</td>
-<td>メールサーバーへの接続がタイムアウトしました。サーバー名とポートを確認してください。</td>
-</tr>
-<tr>
-<td>そのほか（つながらないなど）</td>
-<td>メールを送信できませんでした（{エラーの種類}: {内容}）。</td>
-</tr>
-</tbody></table></div>
-<h3 id="sec-15">4.7 Outlook（Microsoft Graph）での送信（<code>outlook.py</code>）</h3>
+<h3 id="sec-14">4.6 Outlook（Microsoft Graph）での送信（<code>outlook.py</code>）</h3>
 <ol>
 <li>アクセストークンを用意する。保存したトークンの期限まで60秒より長く残っていれば、そのまま使う。残りが短ければ、リフレッシュトークンで新しいトークンをもらい、ファイルに保存する（新しいリフレッシュトークンが返らなければ、今のものを使い続ける）。</li>
 <li><code>POST {Graph}/v1.0/me/sendMail</code> に、4.5 で組み立てたメール（MIME 形式）を Base64 にして送る（<code>Content-Type: text/plain</code>、<code>Authorization: Bearer {トークン}</code>）。件名・本文・返信先が、そのまま届きます。</li>
@@ -553,8 +482,8 @@ a:hover { text-decoration-thickness: 2px; }
 <td>Outlook（Microsoft Graph）に接続できませんでした（{内容}）。</td>
 </tr>
 </tbody></table></div>
-<p>トークンの読み出しと更新は、同時に2つ動かないように鍵（ロック）をかけます。Outlook.com は SMTP のパスワード認証を廃止しているため、この方法を標準にしています。</p>
-<h3 id="sec-16">4.8 新着通知と自動返信（<code>queue_new_inquiry_mails</code>）</h3>
+<p>トークンの読み出しと更新は、同時に2つ動かないように鍵（ロック）をかけます。Outlook.com は SMTP のパスワード認証を廃止しているため、この方法で送ります。</p>
+<h3 id="sec-15">4.7 新着通知と自動返信（<code>queue_new_inquiry_mails</code>）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -618,21 +547,23 @@ taro@example.com
 
 {business_name}です。
 このたびはお問い合わせいただき、ありがとうございます。
-以下の内容で受け付けました。内容を確認して、ご連絡いたします。
+以下の内容で受け付けました。内容を確認し、再びご連絡いたします。
 
 {inquiry_summary}
 
 ※ このメールは自動でお送りしています。
 ※ お心当たりのない場合は、お手数ですがこのメールを破棄してください。
 
-――――――――――――――――
+------------------------------------------------
 {business_name}
-メール: {business_email}
-電話: {business_phone}
-対応時間: {hours}
+代表　中川　嵩斗（ナカガワ タカト）
+Mail: {business_email}
+TEL: {business_phone}
+営業時間: {hours}（土日祝休み）
+------------------------------------------------
 </code></pre>
 <p>件名の初期値は「【{business_name}】お問い合わせを受け付けました」です。</p>
-<h3 id="sec-17">4.9 差し込み項目</h3>
+<h3 id="sec-16">4.8 差し込み項目</h3>
 <p><code>{項目名}</code> を、送るときに次の値に置き換えます。知らない項目は、そのまま残します。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -692,13 +623,13 @@ taro@example.com
 <li>返信テンプレートは、管理画面（A-04）でテンプレートを選んだときに画面で置き換え、管理者が直してから送ります。</li>
 <li>事業者の情報は、サイト内容の事業者情報です。</li>
 </ul>
-<h3 id="sec-18">4.10 管理画面からの返信（API-17）</h3>
+<h3 id="sec-17">4.9 管理画面からの返信（API-17）</h3>
 <ol>
 <li>送信履歴に「返信」として登録し、その場で送る。</li>
 <li>送れたときだけ、お問い合わせの記録（種類「メール」）に件名と本文を残し、未対応なら対応中に変える。</li>
 <li>送れなかったときは、エラーを返す。送信履歴には「失敗」「未送信」で残り、送信履歴から送り直せる（※課題 No.6: 送り直しで送れても、2 の記録・対応状況の変更は行われない）。</li>
 </ol>
-<h2 id="sec-19">5. Outlook のサインイン（デバイスコード）</h2>
+<h2 id="sec-18">5. Outlook のサインイン（デバイスコード）</h2>
 <p>管理者の Outlook アカウントで1回だけサインインし、そのトークンでメールを送ります。OAuth 2.0 のデバイス認可フローを使います。</p>
 <pre class="mermaid">sequenceDiagram
   autonumber
@@ -793,8 +724,8 @@ taro@example.com
 </tr>
 </tbody></table></div>
 <p>コマンドからもサインインできます（<code>cd backend &amp;&amp; .venv/bin/python -m app.outlook_login</code>）。開くページとコードを表示し、<code>interval</code> 秒ごと（<code>slow_down</code> なら5秒のばす）に、有効期限まで確認します。</p>
-<h2 id="sec-20">6. ログインとセッション（<code>security.py</code>）</h2>
-<h3 id="sec-21">6.1 ログイン（API-06）</h3>
+<h2 id="sec-19">6. ログインとセッション（<code>security.py</code>）</h2>
+<h3 id="sec-20">6.1 ログイン（API-06）</h3>
 <ol>
 <li>回数の上限を確認する（7章）。</li>
 <li>メールアドレスの前後の空白を除いて小文字にし、管理者を探す。</li>
@@ -803,13 +734,14 @@ taro@example.com
 <li>結果をログイン履歴に記録する（メール254文字・IP 64文字・User-Agent 300文字で切る）。</li>
 <li>成功なら、ランダムなトークン（32バイト）を作り、その SHA-256 をセッションとして保存して（期限は12時間後）、トークンを Cookie で返す。</li>
 </ol>
-<h3 id="sec-22">6.2 ログインの確認（<code>require_admin</code>）</h3>
+<h3 id="sec-21">6.2 ログインの確認（<code>require_admin</code>）</h3>
 <p>Cookie のトークンの SHA-256 で、期限が切れていないセッションを探し、管理者を返します。見つからなければ 401 です。期限は延長しません（ログインから12時間で切れる）。</p>
-<h3 id="sec-23">6.3 ログアウト</h3>
+<p>画面は API-08 の残り秒数（<code>expires_in</code>）をもとに、期限の5分前に予告を出し、期限が来たら操作がなくてもログイン画面に移ります（<a href="03_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E7%AE%A1%E7%90%86%E7%94%BB%E9%9D%A2.html">03</a> 3.2.1）。</p>
+<h3 id="sec-22">6.3 ログアウト</h3>
 <p>Cookie のトークンのセッションを削除し、Cookie も削除します。</p>
-<h3 id="sec-24">6.4 パスワードの変更（API-09）</h3>
+<h3 id="sec-23">6.4 パスワードの変更（API-09）</h3>
 <p>今のパスワードを確かめてから新しいハッシュに変え、<strong>この画面以外のセッションをすべて削除</strong>します（ほかの端末はログアウトされる）。</p>
-<h3 id="sec-25">6.5 起動時の管理者の反映（<code>sync_admin</code>）</h3>
+<h3 id="sec-24">6.5 起動時の管理者の反映（<code>sync_admin</code>）</h3>
 <p><code>.env</code> の <code>ADMIN_EMAIL</code>・<code>ADMIN_PASSWORD</code> を、管理者のアカウントに反映します。</p>
 <pre class="mermaid">flowchart TD
   S[&quot;API の起動&quot;] --&gt; C1{&quot;ADMIN_EMAIL に&lt;br&gt;@ がある？&quot;}
@@ -831,7 +763,7 @@ taro@example.com
 <li>これにより、管理画面で変えたパスワードは再起動しても残り、パスワードを忘れたときは <code>.env</code> を書き換えて再起動すればリセットできます。</li>
 <li><code>ADMIN_EMAIL</code> を変えると、新しいメールアドレスの管理者が作られ、古い管理者（とそのセッション）は削除されます。</li>
 </ul>
-<h2 id="sec-26">7. 試行回数の制限（<code>security.RateLimiter</code>）</h2>
+<h2 id="sec-25">7. 試行回数の制限（<code>security.RateLimiter</code>）</h2>
 <p>接続元の IP アドレスごとに、一定時間内の回数を数えます（スライディングウィンドウ）。回数は API のメモリにだけ持つので、API を再起動すると0に戻ります。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -856,7 +788,7 @@ taro@example.com
 </tr>
 </tbody></table></div>
 <p>接続元の IP は、API に直接つないできた相手の IP です。リバースプロキシの後ろで動かすときの注意は <a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 8.4 です。</p>
-<h2 id="sec-27">8. 対応状況と迷惑送信の変更</h2>
+<h2 id="sec-26">8. 対応状況と迷惑送信の変更</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -894,7 +826,7 @@ taro@example.com
 <li>迷惑送信の印（<code>is_spam</code>）を付けると、通常の一覧・タブの件数・ダッシュボードの集計から外れ、迷惑送信の一覧に出ます。自動削除では、受付からの日数で削除します（11章）。</li>
 <li>変えたときは、お問い合わせの記録（9章）と操作の記録（21章）を残します。</li>
 </ul>
-<h2 id="sec-28">9. メモ・記録（タイムライン）</h2>
+<h2 id="sec-27">9. メモ・記録（タイムライン）</h2>
 <p>お問い合わせごとの出来事を、<code>inquiry_notes</code> に新しい順で残します。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -949,7 +881,7 @@ taro@example.com
 </tr>
 </tbody></table></div>
 <p>どの種類でも、記録を追加すると、お問い合わせの最終更新（<code>updated_at</code>）が変わります（自動削除の期間の数え始めも変わる。11章）。</p>
-<h2 id="sec-29">10. CSV 出力（API-11）</h2>
+<h2 id="sec-28">10. CSV 出力（API-11）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -995,9 +927,9 @@ taro@example.com
 <td>領収書番号 / 入金日 / お客さま名 / 但し書き / 金額 / お支払い方法 / 見積番号 / 備考 / 記録日時 / 最終更新</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-30">11. 個人情報の自動削除</h2>
+<h2 id="sec-29">11. 個人情報の自動削除</h2>
 <p>「個人情報の取扱い」に「不要になった情報は削除します」と書いているため、対応が終わったお問い合わせを、決めた期間のあとに削除します。</p>
-<h3 id="sec-31">11.1 削除の対象（<code>maintenance.retention_targets</code>）</h3>
+<h3 id="sec-30">11.1 削除の対象（<code>maintenance.retention_targets</code>）</h3>
 <p>次のどちらかに当てはまるお問い合わせです。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1019,9 +951,9 @@ taro@example.com
 <li>「n か月前」は、今の日時から月を n 戻した日の同じ時刻（UTC）です。日が29日以降のときは28日にします。</li>
 <li>対応状況を1つも選んでいなければ、迷惑送信だけが対象になります。</li>
 </ul>
-<h3 id="sec-32">11.2 削除するもの</h3>
+<h3 id="sec-31">11.2 削除するもの</h3>
 <p>お問い合わせ・そのメモと記録・<strong>そのお問い合わせの送信履歴</strong>を削除します（※課題 No.1: 今は送信履歴が残る）。見積書・おまかせ管理プランは残し、ひもづけだけを外します。</p>
-<h3 id="sec-33">11.3 実行のタイミングと記録</h3>
+<h3 id="sec-32">11.3 実行のタイミングと記録</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1041,7 +973,7 @@ taro@example.com
 <td>前回の実行を保存し、操作の記録「古いお問い合わせを削除（手動）」</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-34">12. バックアップ（API-21・<code>maintenance.create_backup</code>）</h2>
+<h2 id="sec-33">12. バックアップ（API-21・<code>maintenance.create_backup</code>）</h2>
 <ol>
 <li>一時フォルダを作る。</li>
 <li>SQLite のバックアップ機能で、<code>app.db</code> の写しを作る（API を動かしたままでも、壊れていない写しになる）。</li>
@@ -1054,8 +986,8 @@ taro@example.com
 <li>zip を返し、送り終わったら一時フォルダごと削除する。</li>
 </ol>
 <p><code>.env</code> と <code>data/microsoft-oauth.json</code>（Outlook のトークン）は zip に入りません。戻したあとは Outlook のサインインをし直します（<a href="08_%E8%A8%AD%E5%AE%9A%E3%81%A8%E9%81%8B%E7%94%A8.html">08</a> 9章）。</p>
-<h2 id="sec-35">13. 見積書（<code>billing.py</code>）</h2>
-<h3 id="sec-36">13.1 金額の計算</h3>
+<h2 id="sec-34">13. 見積書（<code>billing.py</code>）</h2>
+<h3 id="sec-35">13.1 金額の計算</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1090,7 +1022,7 @@ taro@example.com
 </tbody></table></div>
 <p>例: 明細「トップページのデザイン 1式 × 50,000円」「下層ページ 2.5ページ × 15,000円」→ 小計 87,500円、消費税（10%）8,750円、合計 96,250円。</p>
 <p>画面（A-06）も同じ計算で、入力しながら合計を表示します。保存した値ではなく、読むたびに計算します。</p>
-<h3 id="sec-37">13.2 番号の採番（見積書・領収書）</h3>
+<h3 id="sec-36">13.2 番号の採番（見積書・領収書）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1116,13 +1048,13 @@ taro@example.com
 </tr>
 </tbody></table></div>
 <p>いちばん大きい番号の記録を削除すると、次に作る記録に同じ番号が付きます（※課題 No.11）。</p>
-<h3 id="sec-38">13.3 保存</h3>
+<h3 id="sec-37">13.3 保存</h3>
 <ul>
 <li>作成: 番号を採番して保存し、明細を順番（<code>sort_order</code> 0から）に保存する。</li>
 <li>変更: 番号以外の項目を変え、明細はいったんすべて削除して入れ直す。</li>
 <li>お問い合わせにひもづけて作成したときは、そのお問い合わせに記録を追加する（変更のときは追加しない）。</li>
 </ul>
-<h3 id="sec-39">13.4 状態</h3>
+<h3 id="sec-38">13.4 状態</h3>
 <p>状態は管理者が選びます（自動では変わりません）。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1153,7 +1085,7 @@ taro@example.com
 <td>なし</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-40">14. 入金と領収書</h2>
+<h2 id="sec-39">14. 入金と領収書</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1178,12 +1110,12 @@ taro@example.com
 <td><strong>一度決まったら、印刷し直しても変わらない日付</strong>（決め方は ※課題 No.2。今は印刷画面を開いた日）</td>
 </tr>
 <tr>
-<td>収入印紙の注意</td>
-<td>お支払い方法が現金で、金額が5万円以上のとき、入力画面と印刷画面（印刷されない）に注意を出す（※課題 No.8）</td>
+<td>見積書と領収書の注意</td>
+<td>おまかせ管理プラン以外の入金（この画面で記録する入金。おまかせ管理プランの月額は Stripe の自動決済のため記録しない）は、見積書と領収書が必要。入力画面に「おまかせ管理プラン以外の入金は、見積書と領収書が必要です。」を出す。印刷画面には出さない（※課題 No.8）</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-41">15. おまかせ管理プラン</h2>
-<h3 id="sec-42">15.1 状態の判定（<code>billing.contract_status</code>）</h3>
+<h2 id="sec-40">15. おまかせ管理プラン</h2>
+<h3 id="sec-41">15.1 状態の判定（<code>billing.contract_status</code>）</h3>
 <p>状態は保存せず、読むたびに「今日（日本時間）」で判定します。</p>
 <pre class="mermaid">flowchart TD
   S[&quot;おまかせ管理プラン&quot;] --&gt; Q1{&quot;終了日があり、&lt;br&gt;今日より前？&quot;}
@@ -1196,7 +1128,7 @@ taro@example.com
 <li>終了日の当日は、まだ「解約予定」です（翌日から「終了」）。</li>
 <li>申し出日を入れずに終了日だけを入れたときは、終了日を過ぎるまで「契約中」です。</li>
 </ul>
-<h3 id="sec-43">15.2 解約の申し出（API-68）</h3>
+<h3 id="sec-42">15.2 解約の申し出（API-68）</h3>
 <p>おまかせ管理プランは「解約のお申し出は前月末まで」なので、終了日を<strong>申し出日の翌月の末日</strong>にします。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1218,9 +1150,9 @@ taro@example.com
 <td>2027-02-28</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-44">15.3 月額の合計</h3>
+<h3 id="sec-43">15.3 月額の合計</h3>
 <p>状態が「終了」でなく、開始日が今日以前の契約の月額を合計します（契約中と解約予定を含む）。ダッシュボードとおまかせ管理プランの画面で使います。</p>
-<h2 id="sec-45">16. ダッシュボードの集計（<code>dashboard.summary</code>）</h2>
+<h2 id="sec-44">16. ダッシュボードの集計（<code>dashboard.summary</code>）</h2>
 <p>日付の区切りはすべて日本時間です。お問い合わせの件数は、迷惑送信を除きます。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1270,7 +1202,7 @@ taro@example.com
 <td>成功したログインを新しい順に並べて2番目（1番目は今回のログイン）</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-46">17. 画像のアップロード（API-35・<code>uploads.py</code>）</h2>
+<h2 id="sec-45">17. 画像のアップロード（API-35・<code>uploads.py</code>）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1315,7 +1247,7 @@ taro@example.com
 <td>自動では削除しない</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-47">18. サイト内容とテーマ色の保存</h2>
+<h2 id="sec-46">18. サイト内容とテーマ色の保存</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1340,19 +1272,19 @@ taro@example.com
 <td>API を読み込めるまでは <code>shared/site_defaults.json</code> の値。テーマ色は前回の色（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a> 3.1）</td>
 </tr>
 </tbody></table></div>
-<h2 id="sec-48">19. テーマ色の計算（画面・<code>lib/theme.ts</code>）</h2>
-<h3 id="sec-49">19.1 白い文字とのコントラスト比</h3>
-<p>WCAG の計算方法です。API（<code>schemas.contrast_with_white</code>）も同じ式でチェックします。</p>
+<h2 id="sec-47">19. テーマ色の計算（画面・<code>lib/theme.ts</code>）</h2>
+<h3 id="sec-48">19.1 白い文字とのコントラスト比</h3>
+<p>WCAG の計算方法です。</p>
 <ol>
 <li>R・G・B をそれぞれ 0〜1 にする（÷255）。</li>
 <li>値が 0.03928 以下なら ÷12.92、それより大きければ ((値 + 0.055) ÷ 1.055) の 2.4 乗。</li>
 <li>明るさ L = 0.2126 × R + 0.7152 × G + 0.0722 × B</li>
 <li>白とのコントラスト比 = 1.05 ÷ (L + 0.05)</li>
 </ol>
-<p>4.5 以上を「読みやすい」とします（WCAG 2.1 の AA の基準）。</p>
-<h3 id="sec-50">19.2 読みやすい濃さに調整</h3>
-<p>コントラスト比が 4.5 になるまで、黒を6%ずつ混ぜます（最大40回）。</p>
-<h3 id="sec-51">19.3 CSS 変数</h3>
+<p>4.5 以上なら「濃いめの色」（白い文字が読みやすい・WCAG 2.1 の AA の基準）、4.5 未満なら「明るめの色」とします（<code>isLightColor</code>）。どちらの色も保存できます。</p>
+<h3 id="sec-49">19.2 読みやすい濃さに調整</h3>
+<p>コントラスト比が 4.5 になるまで、黒を6%ずつ混ぜます（最大40回）。明るめの色のとき、白い背景の上の文字・アクセントに使う色（下の「読める色」）を作るのに使います。</p>
+<h3 id="sec-50">19.3 CSS 変数</h3>
 <p>テーマ色から、次の CSS 変数を作って公開サイトの枠に設定します。「白 n%」は白に n% 近づけた色、「黒 n%」は黒に n% 近づけた色です。テーマ色が初期の青のときは設定せず、<code>base.css</code> の元の色を使います。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1424,9 +1356,44 @@ taro@example.com
 <td>白 76%</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-52">19.4 ファビコンとアドレスバーの色</h3>
+<p>明るめの色のときは、次の変数を変えます（「読める色」は 19.2 で暗くした色）。濃いめの色のときは、<code>--c-primary-text</code> はテーマ色、<code>--c-on-primary</code> は白です（<code>base.css</code> の初期値も同じ）。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>変数</th>
+<th>使う場所</th>
+<th>明るめの色のとき</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--c-primary-text</code></td>
+<td>白い背景の上の文字（リンク・見出しの色文字・アイコン・ナビ）</td>
+<td>読める色</td>
+</tr>
+<tr>
+<td><code>--c-on-primary</code></td>
+<td>色の面の上の文字（ボタン・帯の見出し・帯のカードの見出し）</td>
+<td>濃い色 <code>#14213d</code></td>
+</tr>
+<tr>
+<td><code>--c-primary-dark</code></td>
+<td>ボタンにマウスをのせたとき</td>
+<td>黒 12%</td>
+</tr>
+<tr>
+<td><code>--c-accent-1</code>〜<code>6</code>・<code>--c-blue-2</code>・<code>--c-blue-3</code>・<code>--c-sky</code></td>
+<td>数字・カードの線・バッジ</td>
+<td>読める色をもとに、上の表と同じ割合で白を混ぜる</td>
+</tr>
+<tr>
+<td><code>--c-band-card</code> / <code>--c-band-text</code> / <code>--c-band-eyebrow</code></td>
+<td>帯のカード・本文・小見出し</td>
+<td>白 35% / <code>#33415c</code> / <code>#14213d</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="sec-51">19.4 ファビコンとアドレスバーの色</h3>
 <p>ファビコンはロゴと同じ画像（<code>public/logo-mark.png</code>）にします（テーマ色では変わりません）。<code>meta[name=&quot;theme-color&quot;]</code> もテーマ色にします。管理画面では初期の青にします。</p>
-<h2 id="sec-53">20. アクセス解析（画面・<code>lib/analytics.ts</code>）</h2>
+<h2 id="sec-52">20. アクセス解析（画面・<code>lib/analytics.ts</code>）</h2>
 <p>次の条件をすべて満たすときだけ、Google Analytics 4（gtag.js）を読み込みます。</p>
 <ol>
 <li><code>frontend/.env.fastapi</code> の <code>VITE_GA_ID</code> に測定 ID がある</li>
@@ -1435,7 +1402,7 @@ taro@example.com
 <li>最初に開いた URL が <code>/admin</code> で始まらない</li>
 </ol>
 <p>ページの移動（画面の切り替え）は、GA4 の拡張計測機能（ブラウザの履歴の変化）で計測します。測定 ID があるときは、「個人情報の取扱い」にアクセス解析の説明を出します（<a href="02_%E7%94%BB%E9%9D%A2%E8%A8%AD%E8%A8%88_%E5%85%AC%E9%96%8B%E3%82%B5%E3%82%A4%E3%83%88.html">02</a> 4.2）。</p>
-<h2 id="sec-54">21. 操作の記録（<code>audit.py</code>）</h2>
+<h2 id="sec-53">21. 操作の記録（<code>audit.py</code>）</h2>
 <p>管理画面での操作を <code>audit_logs</code> に残し、A-15 で確認できます。内容は1000文字で切ります。</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1493,16 +1460,8 @@ taro@example.com
 <td>{ファイル名}</td>
 </tr>
 <tr>
-<td>メールの送信方法を変更</td>
-<td>Outlook（Microsoft Graph）/ SMTP</td>
-</tr>
-<tr>
 <td>Outlook にサインイン / Outlook のサインインを解除</td>
 <td></td>
-</tr>
-<tr>
-<td>メールの送信設定を変更</td>
-<td>{サーバー名}:{ポート}</td>
 </tr>
 <tr>
 <td>通知・自動返信の設定を変更</td>
@@ -1570,7 +1529,7 @@ taro@example.com
 </tr>
 </tbody></table></div>
 <p>ログイン・ログアウトは操作の記録に入れず、ログインはログイン履歴（<code>login_history</code>）に残します。</p>
-<h2 id="sec-55">22. 画面の API の呼び出し（<code>api/client.ts</code>）</h2>
+<h2 id="sec-54">22. 画面の API の呼び出し（<code>api/client.ts</code>）</h2>
 <div class="table-wrap"><table>
 <thead>
 <tr>

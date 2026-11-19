@@ -534,6 +534,35 @@
   color: #7a4f00;
 }
 
+/* ログインの期限が近いときの予告（スクロールしても見える位置に固定） */
+.session-warning {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 16px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  border: 1px solid #c98a00;
+  border-radius: 10px;
+  background: #fff6e0;
+  box-shadow: 0 8px 24px rgba(20, 33, 61, 0.18);
+  color: #7a4f00;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.session-warning strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .notice--error {
   border-color: var(--c-danger);
   background: #fdecea;
@@ -830,13 +859,6 @@
 .status-line {
   margin-bottom: 14px;
   font-size: 14px;
-}
-
-.help-list {
-  padding-left: 18px;
-  list-style: disc;
-  font-size: 14px;
-  line-height: 1.9;
 }
 
 .placeholder-help {
@@ -1287,6 +1309,13 @@
   align-items: start;
 }
 
+.swatches__label {
+  margin-bottom: 6px;
+  color: var(--c-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .swatches {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -1373,11 +1402,6 @@
   color: #17713e;
 }
 
-.contrast--ng {
-  background: #fff6e0;
-  color: #7a4f00;
-}
-
 .theme-preview {
   padding: 22px;
   border: 1px solid var(--c-border);
@@ -1427,7 +1451,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   background: var(--c-band-card);
-  color: #fff;
+  color: var(--c-on-primary);
   font-weight: 700;
 }
 
@@ -2125,43 +2149,7 @@
   }
 }
 
-/* ---------------------------------------------------------------- メールの送信方法・Outlook のサインイン */
-.method-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.method-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
-  border: 2px solid var(--c-field);
-  border-radius: 12px;
-  background: var(--c-bg);
-  cursor: pointer;
-}
-
-.method-option--active {
-  border-color: var(--c-primary);
-  background: #fff;
-}
-
-.method-option input {
-  width: 18px;
-  height: 18px;
-  margin-top: 3px;
-  accent-color: var(--c-primary);
-}
-
-.method-option > span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
+/* ---------------------------------------------------------------- Outlook のサインイン */
 .device-login ol {
   display: grid;
   gap: 12px;
@@ -2190,10 +2178,4 @@
   margin-bottom: 10px;
   color: var(--c-text);
   font-size: 13px;
-}
-
-@media (max-width: 760px) {
-  .method-options {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }

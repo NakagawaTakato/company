@@ -123,9 +123,9 @@ def logout(request: Request, conn: sqlite3.Connection = Depends(get_conn)) -> JS
     return response
 
 
-@router.get("/me", response_model=schemas.AdminResponse, responses=schemas.AUTH_RESPONSES, summary="ログイン中の管理者")
-def me(admin: sqlite3.Row = Depends(require_admin)) -> dict[str, str]:
-    return {"email": admin["email"]}
+@router.get("/me", response_model=schemas.AdminSessionResponse, responses=schemas.AUTH_RESPONSES, summary="ログイン中の管理者と、ログインの残り時間")
+def me(admin: sqlite3.Row = Depends(require_admin)) -> dict[str, Any]:
+    return {"email": admin["email"], "expires_in": security.session_seconds_left(admin)}
 
 
 @router.post("/password", response_model=schemas.OkResponse, summary="パスワードを変更する")

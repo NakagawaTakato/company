@@ -102,7 +102,7 @@
 | API-05 | GET | `/uploads/{name}` | アップロードした画像 | 不要 |
 | API-06 | POST | `/api/admin/login` | ログインする | 不要 |
 | API-07 | POST | `/api/admin/logout` | ログアウトする | 不要 |
-| API-08 | GET | `/api/admin/me` | ログイン中の管理者 | 必要 |
+| API-08 | GET | `/api/admin/me` | ログイン中の管理者と、ログインの残り時間 | 必要 |
 | API-09 | POST | `/api/admin/password` | パスワードを変更する | 必要 |
 | API-10 | GET | `/api/admin/inquiries` | お問い合わせの一覧 | 必要 |
 | API-11 | GET | `/api/admin/inquiries.csv` | お問い合わせの CSV | 必要 |
@@ -131,11 +131,11 @@
 | API-34 | DELETE | `/api/admin/content/{section}` | サイト内容を初期値に戻す | 必要 |
 | API-35 | POST | `/api/admin/uploads` | 画像をアップロードする | 必要 |
 | API-36 | GET | `/api/admin/mail/settings` | メールの設定 | 必要 |
-| API-37 | PUT | `/api/admin/mail/method` | 送信方法を切り替える | 必要 |
+| API-37 | − | （欠番） | 送信方法の切り替え。SMTP をやめたため削除 | − |
 | API-38 | POST | `/api/admin/mail/outlook/device-code` | Outlook のサインイン用コードを発行する | 必要 |
 | API-39 | POST | `/api/admin/mail/outlook/poll` | Outlook のサインインが終わったか確認する | 必要 |
 | API-40 | POST | `/api/admin/mail/outlook/logout` | Outlook のサインインを解除する | 必要 |
-| API-41 | PUT | `/api/admin/mail/smtp` | SMTP の設定を保存する | 必要 |
+| API-41 | − | （欠番） | SMTP の設定の保存。SMTP をやめたため削除 | − |
 | API-42 | PUT | `/api/admin/mail/notifications` | 新着通知・自動返信の設定を保存する | 必要 |
 | API-43 | POST | `/api/admin/mail/test` | テストメールを送る | 必要 |
 | API-44 | GET | `/api/admin/mail/outbox` | 送信履歴 | 必要 |
@@ -252,9 +252,7 @@ Inquiry の項目に、次を加えたものです。
 
 | 項目 | 内容 |
 | --- | --- |
-| method | 今の送信方法 `outlook` / `smtp` |
-| ready / reason | 今の送信方法で送れるか / 送れないときの理由（[06](06_処理設計.md) 4.3） |
-| smtp | `host, port, security, username, from_address, from_name`、`password_set`（パスワードが保存されているか）、`ready`（サーバー名と送信元があるか）。**パスワードそのものは返さない** |
+| ready / reason | Outlook で送れるか / 送れないときの理由（[06](06_処理設計.md) 4.3） |
 | outlook | `configured`（`.env` に `MICROSOFT_CLIENT_ID` があるか）、`signed_in`（トークンのファイルがあるか）、`tenant`、`from_address`（`.env` の `MAIL_FROM_ADDRESS`、なければ事業者情報のメール） |
 | notifications | `admin_notify, admin_to, auto_reply, auto_reply_subject, auto_reply_body, site_url` |
 | business_email | 事業者情報のメール |
@@ -325,7 +323,7 @@ Inquiry の項目に、次を加えたものです。
 5. メールアドレスがブロックリストに当てはまるか調べる。
 6. お問い合わせを保存する（対応状況 `new`、迷惑送信の印は 5 の結果）。
 7. 回数に1件数える。
-8. 迷惑送信でなければ、新着通知と自動返信を送信履歴に登録し、応答を返したあとで送る（[06](06_処理設計.md) 4.8）。迷惑送信ならメールは送らない。
+8. 迷惑送信でなければ、新着通知と自動返信を送信履歴に登録し、応答を返したあとで送る（[06](06_処理設計.md) 4.7）。迷惑送信ならメールは送らない。
 
 | コード | 条件 | message |
 | --- | --- | --- |
@@ -376,9 +374,9 @@ Inquiry の項目に、次を加えたものです。
 
 Cookie があれば、そのセッションを削除します。応答 200 `{"ok": true}` と、Cookie を削除するヘッダー。ログインしていなくても呼べます。
 
-#### API-08 GET `/api/admin/me`（ログイン中の管理者）
+#### API-08 GET `/api/admin/me`（ログイン中の管理者と、ログインの残り時間）
 
-応答 200: `{"email": "..."}`。未ログインは 401。
+応答 200: `{"email": "...", "expires_in": ログインの期限までの残り秒数}`。未ログインは 401。
 
 #### API-09 POST `/api/admin/password`（パスワードを変更する）
 
@@ -525,9 +523,8 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 | チェック | エラー文（項目 `primary_color`） |
 | --- | --- |
 | `#` と16進数6桁（大文字も可） | 色は #1558c0 のような形式で指定してください。 |
-| 白い文字とのコントラスト比が 4.5 以上 | この色は明るすぎて、白い文字が読みにくくなります。もう少し濃い色を選んでください。 |
 
-小文字にして保存します。応答は API-25 と同じ。操作の記録「テーマ色を変更」（色）。
+明るい色も保存できます（文字の色は画面側で調整します。[06](06_処理設計.md) 19章）。小文字にして保存します。応答は API-25 と同じ。操作の記録「テーマ色を変更」（色）。
 
 ### 4.8 サイト内容・画像
 
@@ -572,10 +569,6 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 
 応答 200: MailSettings
 
-#### API-37 PUT `/api/admin/mail/method`（送信方法を切り替える）
-
-本文: `{"method": "outlook" | "smtp"}`（ほかの値は 422「選択肢から選んでください。」）。応答 200: MailSettings。操作の記録「メールの送信方法を変更」。
-
 #### API-38 POST `/api/admin/mail/outlook/device-code`（Outlook のサインイン用コードを発行する）
 
 処理（[06](06_処理設計.md) 5章）:
@@ -602,20 +595,6 @@ Cookie があれば、そのセッションを削除します。応答 200 `{"ok
 #### API-40 POST `/api/admin/mail/outlook/logout`（Outlook のサインインを解除する）
 
 トークンのファイル（`data/microsoft-oauth.json`）を削除します。応答 200: MailSettings。操作の記録「Outlook のサインインを解除」。
-
-#### API-41 PUT `/api/admin/mail/smtp`（SMTP の設定を保存する）
-
-| 項目 | 型 | 省略したとき | チェック |
-| --- | --- | --- | --- |
-| host | 文字列 | 空 | 255文字まで |
-| port | 整数 | 587 | 1〜65535 |
-| security | 文字列 | `starttls` | `starttls` / `ssl` / `none` |
-| username | 文字列 | 空 | 255文字まで |
-| password | 文字列 / null | null | 255文字まで。**null なら今のパスワードのまま** |
-| from_address | 文字列 | 空 | 254文字まで。空、またはメールの形式 |
-| from_name | 文字列 | 空 | 100文字まで |
-
-応答 200: MailSettings。操作の記録「メールの送信設定を変更」（「{host}:{port}」）。
 
 #### API-42 PUT `/api/admin/mail/notifications`（新着通知・自動返信の設定を保存する）
 

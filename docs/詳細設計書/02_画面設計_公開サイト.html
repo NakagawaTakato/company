@@ -266,6 +266,7 @@ a:hover { text-decoration-thickness: 2px; }
 <ul>
 <li>公開サイトの画面だけを <code>public-theme</code> の枠で囲み、テーマ色から作った CSS 変数を上書きします（計算方法は <a href="06_%E5%87%A6%E7%90%86%E8%A8%AD%E8%A8%88.html">06 処理設計</a> 19章）。</li>
 <li>テーマ色が初期の青（<code>#1558c0</code>）のときは上書きせず、CSS の元の色をそのまま使います。</li>
+<li>明るい色（白い文字が読みにくい色）のときは、ボタン・帯の文字を濃い色にし、白い背景の上の文字・数字・バッジは同じ色みの読める濃さにします。</li>
 <li>ブラウザのタブのアイコン（ファビコン）と、アドレスバーの色（<code>meta[name=&quot;theme-color&quot;]</code>）もテーマ色に合わせます。</li>
 </ul>
 <h3 id="sec-7">3.3 下層ページの外枠（<code>components/SubPageLayout.tsx</code>）</h3>

@@ -210,10 +210,10 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td>8</td>
-<td>確認</td>
-<td>−</td>
-<td>収入印紙の注意が「現金」のときしか出ない</td>
-<td>要確認</td>
+<td>仕様との違い</td>
+<td>低</td>
+<td>入金の注意が「収入印紙（現金・5万円以上）」のままで、「おまかせ管理プラン以外は見積書と領収書が必要」になっていない</td>
+<td>未対応</td>
 </tr>
 <tr>
 <td>9</td>
@@ -396,7 +396,7 @@ a:hover { text-decoration-thickness: 2px; }
 <td>保存したタブの入力だけを、サーバーの内容で置き換える</td>
 </tr>
 </tbody></table></div>
-<h3 id="sec-11">No.8 収入印紙の注意を出す条件</h3>
+<h3 id="sec-11">No.8 入金の注意（見積書と領収書）</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -405,12 +405,20 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 </thead>
 <tbody><tr>
-<td>今の動き</td>
-<td>お支払い方法が現金で、金額が5万円以上のときだけ、注意を出す</td>
+<td>仕様</td>
+<td>おまかせ管理プラン以外の入金は、見積書と領収書が必要。入金の入力画面（A-08）に「おまかせ管理プラン以外の入金は、見積書と領収書が必要です。」を出す。領収書の印刷画面（A-09）には注意を出さない（2026-11-14 に決定。「5万円以上」の条件はやめる）</td>
 </tr>
 <tr>
-<td>確認したいこと</td>
-<td>紙で渡す領収書は、銀行振込で受け取った代金でも、5万円以上なら収入印紙が必要になる場合があるとされています（クレジットカード払いで、その旨を書いた領収書や、PDF をメールで送る場合は不要とされています）。税務署や税理士に確認して、注意を出す条件を決める</td>
+<td>今の動き</td>
+<td>お支払い方法が現金で、金額が5万円以上のときだけ、A-08 と A-09 に収入印紙の注意を出す</td>
+</tr>
+<tr>
+<td>直し方の案</td>
+<td>A-08 の注意を、条件なしで上の文に変える（<code>frontend/src/pages/admin/AdminPaymentsPage.tsx</code>）。A-09 の注意を消す（<code>frontend/src/pages/admin/PrintPages.tsx</code> の <code>needsStamp</code>・<code>note</code>）</td>
+</tr>
+<tr>
+<td>補足</td>
+<td>収入印紙が要るかどうかは印紙税法で決まるため、画面の注意を消しても、5万円以上の紙の領収書には印紙が必要になる場合がある。領収書の用紙の「収入印紙の枠（5万円以上）」はそのまま残す</td>
 </tr>
 </tbody></table></div>
 <h3 id="sec-12">No.9 入金一覧 API の説明</h3>
