@@ -337,7 +337,7 @@ export function HomePage() {
             <div className="price-table">
               <div className="price-table__head">
                 <p className="price-table__caption">制作内容ごとの、1ページの相場です。</p>
-                <span className="price-table__tax">表示価格はすべて税抜</span>
+                <span className="price-table__tax">表示価格はすべて税込</span>
               </div>
               <table>
                 <thead>

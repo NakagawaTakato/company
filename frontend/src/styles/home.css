@@ -640,7 +640,7 @@
   font-size: 14px;
 }
 
-/* 表の金額がすべて税抜であることを、1か所で目立たせます */
+/* 表の金額がすべて税込であることを、1か所で目立たせます */
 .price-table__tax {
   padding: 4px 12px;
   border-radius: 999px;

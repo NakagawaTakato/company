@@ -259,7 +259,7 @@ function BusinessForm({ value, onChange, err }: { value: Business; onChange: (v:
 function PricesForm({ value, onChange, err }: { value: Prices; onChange: (v: Prices) => void; err: (p: string) => string | undefined }) {
   return (
     <>
-      <h3 className="side-heading">料金表（制作内容と1ページの相場・税抜）</h3>
+      <h3 className="side-heading">料金表（制作内容と1ページの相場・税込）</h3>
       <ListEditor
         items={value.rows}
         onChange={(rows) => onChange({ ...value, rows })}
@@ -272,7 +272,7 @@ function PricesForm({ value, onChange, err }: { value: Prices; onChange: (v: Pri
               <input className="input" value={row.name} onChange={(e) => update({ name: e.target.value })} maxLength={100} aria-label={`${i + 1}行目の制作内容`} />
             </Field>
             <Field label="相場" error={err(`rows.${i}.price`)}>
-              <input className="input" value={row.price} onChange={(e) => update({ price: e.target.value })} maxLength={40} placeholder="例: 5〜15万円" aria-label={`${i + 1}行目の相場`} />
+              <input className="input" value={row.price} onChange={(e) => update({ price: e.target.value })} maxLength={40} placeholder="例: 5.5〜16.5万円" aria-label={`${i + 1}行目の相場`} />
             </Field>
           </div>
         )}
