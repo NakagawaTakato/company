@@ -226,7 +226,7 @@ export const PROMISES: Feature[] = [
   },
   {
     icon: MdPerson,
-    title: '顔の見えるひとり対応',
+    title: '顔の見える一人対応',
     text: '最初から最後まで同じ私が担当し、連絡先と事業者情報を公開します。',
     accent: 'var(--c-accent-4)',
   },
