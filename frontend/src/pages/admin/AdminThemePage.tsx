@@ -130,7 +130,7 @@ export function AdminThemePage() {
             </div>
             <p className="hero__eyebrow">WEBSITE PRODUCTION</p>
             <p className="theme-preview__title">
-              公開まで、<span className="text-primary">私ひとりが</span>担当します。
+              公開まで、<span className="text-primary">私一人が</span>担当します。
             </p>
             <div className="theme-preview__buttons">
               <span className="btn btn--primary btn--small">無料でご相談する</span>
@@ -144,7 +144,7 @@ export function AdminThemePage() {
             </div>
             <div className="theme-preview__band">
               <p className="theme-preview__band-eyebrow">STRENGTH</p>
-              <div className="theme-preview__band-card">ひとりで対応するから、できること</div>
+              <div className="theme-preview__band-card">一人で対応するから、できること</div>
             </div>
             <div className="theme-preview__cards">
               {['var(--c-accent-1)', 'var(--c-accent-2)', 'var(--c-accent-4)', 'var(--c-accent-5)'].map((accent) => (

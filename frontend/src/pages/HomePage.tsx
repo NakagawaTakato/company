@@ -120,7 +120,7 @@ export function HomePage() {
               <h1 className="hero__title">
                 最初のご相談から
                 <br />
-                公開まで、<span className="text-primary">私ひとりが</span>
+                公開まで、<span className="text-primary">私一人が</span>
                 <br />
                 <span className="text-primary">責任をもって</span>担当します。
               </h1>
@@ -200,7 +200,7 @@ export function HomePage() {
         {/* 特長 */}
         <section id="strength" className="section section--blue">
           <div className="container">
-            <SectionHeading eyebrow="STRENGTH" title="ひとりで対応するから、できること" inverse />
+            <SectionHeading eyebrow="STRENGTH" title="一人で対応するから、できること" inverse />
             <div className="grid grid--3">
               {STRENGTHS.map((item) => {
                 const Icon = item.icon
