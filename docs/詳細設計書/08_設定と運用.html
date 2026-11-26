@@ -233,6 +233,11 @@ a:hover { text-decoration-thickness: 2px; }
 <td>API を呼んでよい画面の URL（CORS）。カンマ区切り。末尾の <code>/</code> は除いて比べる</td>
 </tr>
 <tr>
+<td><code>SERVE_FRONTEND</code></td>
+<td>（書いていない＝<code>false</code>）</td>
+<td><code>true</code>・<code>1</code>・<code>yes</code> なら、ビルド済みの画面（<code>frontend/dist/</code>）も API のサーバーから配信する（Heroku 用）。<code>/api/</code> 以外で、ファイルがない URL には <code>index.html</code> を返す。開発中は <code>false</code> のまま</td>
+</tr>
+<tr>
 <td><code>MICROSOFT_CLIENT_ID</code></td>
 <td>空</td>
 <td>Outlook で送るための Azure のアプリのクライアント ID。メールを送るには必要</td>
@@ -506,6 +511,10 @@ a:hover { text-decoration-thickness: 2px; }
 <tr>
 <td><code>data</code> フォルダ</td>
 <td>API から書き込めること（データベース・画像・Outlook のトークン）</td>
+</tr>
+<tr>
+<td>Heroku の場合</td>
+<td><code>git push heroku main</code> で、<code>package.json</code> の <code>heroku-postbuild</code> が画面をビルドし（<code>VITE_API_BASE_URL</code> は空＝同じドメインの API を呼ぶ）、<code>Procfile</code> で API を起動する。設定は <code>.env</code> ではなく <code>heroku config:set</code> で登録し、<code>SERVE_FRONTEND=true</code> にする。画面と API が同じドメインになるので、<code>FRONTEND_ORIGINS</code> は公開 URL だけでよい。<strong>Heroku はファイルを保存し続けられない</strong>ため、<code>data</code> フォルダの内容は再起動のたびに消える（09 課題一覧 No.13）</td>
 </tr>
 </tbody></table></div>
 <h3 id="sec-12">8.3 公開したあとに管理画面で行う設定</h3>

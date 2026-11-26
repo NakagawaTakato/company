@@ -148,7 +148,7 @@ a:hover { text-decoration-thickness: 2px; }
 <main class="doc">
 <h1 id="sec-1">01 システム構成</h1>
 <h2 id="sec-2">1. システムの概要</h2>
-<p>ひとりで営むホームページ制作の事業（屋号: AI Nova ホームページ制作）の公式サイトです。</p>
+<p>一人で営むホームページ制作の事業（屋号: AI Nova ホームページ制作）の公式サイトです。</p>
 <ul>
 <li><strong>お客さま</strong>は公開サイトで事業の内容・料金・経歴を見て、お問い合わせフォームまたは LINE で相談します。</li>
 <li><strong>管理者</strong>（事業者本人の1人）は管理画面で、お問い合わせへの対応から、見積書・入金（領収書）・おまかせ管理プランの管理、公開サイトの文章や色の変更までを行います。</li>
@@ -405,6 +405,10 @@ a:hover { text-decoration-thickness: 2px; }
 │   ├── run_api_tests.sh          … API テストの実行
 │   └── api_test.py               … API テストの本体
 ├── run_backend.sh                … API と画面をまとめて起動
+├── Procfile                      … Heroku での起動コマンド（API と画面を1つのサーバーで配信）
+├── requirements.txt              … Heroku 用（backend/requirements.txt を読み込むだけ）
+├── .python-version               … Heroku で使う Python のバージョン
+├── package.json / package-lock.json … Heroku のビルド用（frontend/dist を作る）
 ├── .env.example                  … .env のひな形
 └── .env                          … API の設定（初回の起動時に自動で作成・git 管理外）
 </code></pre>
@@ -600,7 +604,7 @@ a:hover { text-decoration-thickness: 2px; }
 </tr>
 <tr>
 <td><code>components/Logo.tsx</code></td>
-<td>ロゴ（チップと歯車のアイコン。画像は public/logo-mark.png）</td>
+<td>ロゴ（チップの中に「AI」「Nova」の文字のアイコン。画像は public/logo-mark.png）</td>
 </tr>
 <tr>
 <td><code>components/SectionHeading.tsx</code></td>

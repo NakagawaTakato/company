@@ -1,6 +1,7 @@
-"""AI Nova サイトの FastAPI バックエンド（API 専用・ポート 8000）。
+"""AI Nova サイトの FastAPI バックエンド（API・ポート 8000）。
 
-画面（React）は frontend/ を Vite で別に起動し、.env.fastapi の接続先からこの API を呼び出します。
+開発中は画面（React）を frontend/ の Vite で別に起動し、.env.fastapi の接続先からこの API を呼び出します。
+本番（Heroku）では SERVE_FRONTEND=true にして、ビルド済みの画面（frontend/dist）もこのサーバーから配信します。
 API の説明ページ: http://127.0.0.1:8000/api/docs
 """
 
@@ -15,9 +16,10 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from . import audit, db, maintenance, schemas, security, settings_store
+from .config import ROOT_DIR
 from .db import utc_now_iso
 from .deps import ApiError, settings
 from .routers import admin, admin_billing, admin_manage, contact
@@ -157,9 +159,29 @@ app.include_router(admin_manage.router)
 app.include_router(admin_billing.router)
 
 
-@app.get("/", include_in_schema=False)
-def root() -> dict[str, str]:
-    return {"name": "AI Nova API", "backend": "fastapi", "docs": "/api/docs"}
+FRONTEND_DIST = (ROOT_DIR / "frontend" / "dist").resolve()
+
+
+def _frontend_file(rest: str) -> FileResponse | None:
+    """SERVE_FRONTEND=true のとき、画面のファイル（なければ index.html）を返します。"""
+    index = FRONTEND_DIST / "index.html"
+    if not settings.serve_frontend or rest.startswith("api/") or not index.is_file():
+        return None
+    if rest:
+        path = (FRONTEND_DIST / rest).resolve()
+        if path.is_file() and path.is_relative_to(FRONTEND_DIST):
+            # assets/ のファイル名には内容のハッシュが入るので、長くキャッシュしてかまいません
+            cache = "public, max-age=31536000, immutable" if rest.startswith("assets/") else "public, max-age=3600"
+            return FileResponse(path, headers={"Cache-Control": cache})
+        if "." in rest.rsplit("/", 1)[-1]:
+            return None  # 存在しないファイル（.png など）は 404
+    # /contact や /admin などの画面のパスは React（index.html）が表示します
+    return FileResponse(index, headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/", include_in_schema=False, response_model=None)
+def root() -> dict[str, str] | FileResponse:
+    return _frontend_file("") or {"name": "AI Nova API", "backend": "fastapi", "docs": "/api/docs"}
 
 
 @app.get("/api/health", response_model=schemas.HealthResponse, tags=["共通"], summary="動作確認")
@@ -168,5 +190,7 @@ def health() -> dict[str, str]:
 
 
 @app.api_route("/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
-def not_found(rest: str) -> None:
+def not_found(request: Request, rest: str) -> FileResponse:
+    if request.method == "GET" and (page := _frontend_file(rest)):
+        return page
     raise ApiError(404, "見つかりません。")
