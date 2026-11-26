@@ -44,6 +44,8 @@ class Settings:
     database_path: Path
     cookie_secure: bool
     frontend_origins: list[str]
+    # true なら frontend/dist（npm run build:fastapi の出力）の画面も FastAPI から配信します（Heroku などの本番用）
+    serve_frontend: bool
     options: dict[str, Any]
     # Outlook（Microsoft Graph）でメールを送る設定（元の Laravel 版と同じ Azure のアプリ）
     microsoft_client_id: str
@@ -76,6 +78,7 @@ def load_settings() -> Settings:
         database_path=database_path,
         cookie_secure=get("COOKIE_SECURE", "false").strip().lower() in ("1", "true", "yes"),
         frontend_origins=origins,
+        serve_frontend=get("SERVE_FRONTEND", "false").strip().lower() in ("1", "true", "yes"),
         options=options,
         microsoft_client_id=get("MICROSOFT_CLIENT_ID").strip(),
         microsoft_tenant=get("MICROSOFT_TENANT", "consumers").strip() or "consumers",

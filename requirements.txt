@@ -1,0 +1,2 @@
+# Heroku はプロジェクト直下の requirements.txt を読むため、backend/ の一覧をそのまま使います
+-r backend/requirements.txt

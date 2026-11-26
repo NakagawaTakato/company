@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { BRAND } from '../lib/site'
 
-// AI Nova のアイコン（チップと歯車）です。画像は public/logo-mark.png で、
+// AI Nova のアイコン（チップの中に「AI」「Nova」の文字）です。画像は public/logo-mark.png で、
 // ブラウザのタブのアイコン（index.html と lib/theme.ts の applyBrowserColor）も同じ画像を使います。
 export function LogoMark({ size = 44 }: { size?: number }) {
   return <img className="logo-mark" src="/logo-mark.png" width={size} height={size} alt="" aria-hidden="true" />
