@@ -241,6 +241,27 @@ MIGRATIONS: list[str] = [
     DELETE FROM settings WHERE key IN ('smtp', 'mail.method');
     COMMIT;
     """,
+    """
+    BEGIN;
+    -- 返信テンプレートの署名を、自動返信と同じ形にそろえます（初期のままのテンプレートだけ置き換え）
+    UPDATE reply_templates
+       SET body = REPLACE(body, '――――――――――――――――
+{business_name}　{owner}
+メール: {business_email}
+電話: {business_phone}', '--------------------------------------------------------------------------------
+{business_name}
+代表　中川　嵩斗（ナカガワ タカト）
+Mail: {business_email}
+TEL: {business_phone}
+営業時間: {hours}
+--------------------------------------------------------------------------------'),
+           updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+     WHERE instr(body, '――――――――――――――――
+{business_name}　{owner}
+メール: {business_email}
+電話: {business_phone}') > 0;
+    COMMIT;
+    """,
 ]
 
 
