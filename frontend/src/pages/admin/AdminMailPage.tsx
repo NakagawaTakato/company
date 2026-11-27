@@ -296,7 +296,7 @@ function TemplatesPanel() {
 
   useEffect(() => {
     if (editing && editing !== 'new') setForm({ name: editing.name, subject: editing.subject, body: editing.body })
-    if (editing === 'new') setForm({ name: '', subject: '【{business_name}】', body: '{name} 様\n\n{business_name}の{owner}です。\n\n' })
+    if (editing === 'new') setForm({ name: '', subject: '【{business_name}】', body: '{name} 様\n\n{business_name}の{owner}です。\n\n\n\n--------------------------------------------------------------------------------\n{business_name}\n代表　中川　嵩斗（ナカガワ タカト）\nMail: {business_email}\nTEL: {business_phone}\n営業時間: {hours}\n--------------------------------------------------------------------------------' })
   }, [editing])
 
   const save = async (event: FormEvent) => {
